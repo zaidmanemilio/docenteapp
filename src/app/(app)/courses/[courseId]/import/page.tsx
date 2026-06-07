@@ -147,24 +147,24 @@ export default function ImportPage() {
     const { data: comms } = await supabase.from('commissions').select('id').eq('course_id', courseId)
     const firstCommId = comms?.[0]?.id || null
 
-    const toInsert = preview.filter(r => !r._errors.length).map(r => ({
-      course_id: courseId,
-      class_number: r.class_number ? parseInt(r.class_number) : null,
-      date: r.date,
-      title: r.title,
-      type: (TYPE_MAP[r.type?.toLowerCase()] || 'teorica') as SessionType,
-      responsible: r.responsible,
-      modality: (MODAL_MAP[r.modality?.toLowerCase()] || 'presencial') as SessionModality,
-      status: (STATUS_MAP[r.status?.toLowerCase()] || 'pendiente') as SessionStatus,
-      commission_scope: r.commission_scope === 'all' ? 'all' : (firstCommId || 'all'),
-      canva_url: r.canva_url || '',
-      partial_file_url: r.partial_file_url || '',
-      additional_links: [],
-      guest_bio_url: '',
-      workshop_brief_url: '',
-      shared_notes: r.shared_notes || '',
-      private_notes: '',
-    }))
+const toInsert = preview.filter(r => !r._errors.length).map(r => ({
+  course_id: courseId,
+  class_number: r.class_number ? parseInt(String(r.class_number)) : null,
+  date: String(r.date),
+  title: String(r.title),
+  type: (TYPE_MAP[String(r.type)?.toLowerCase()] || 'teorica') as SessionType,
+  responsible: String(r.responsible),
+  modality: (MODAL_MAP[String(r.modality)?.toLowerCase()] || 'presencial') as SessionModality,
+  status: (STATUS_MAP[String(r.status)?.toLowerCase()] || 'pendiente') as SessionStatus,
+  commission_scope: r.commission_scope === 'all' ? 'all' : (firstCommId || 'all'),
+  canva_url: String(r.canva_url || ''),
+  partial_file_url: String(r.partial_file_url || ''),
+  additional_links: [],
+  guest_bio_url: '',
+  workshop_brief_url: '',
+  shared_notes: String(r.shared_notes || ''),
+  private_notes: '',
+}))
 
     const { error } = await supabase.from('sessions').insert(toInsert)
     setImporting(false)
