@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { Todo, Session, Profile } from '@/types'
+import type { Todo, Profile } from '@/types'
 import { TODO_PRIORITY_LABELS } from '@/types'
 
 const PRIO_STYLE: Record<string, { bg: string; color: string }> = {
@@ -19,16 +19,18 @@ function fmtDate(d: string) {
   return `${day}/${m}/${y}`
 }
 
+interface SessionRef { id: string; class_number: number | null; title: string }
+
 export default function TodosPage() {
   const { courseId } = useParams<{ courseId: string }>()
   const supabase = createClient()
 
   const [todos, setTodos] = useState<Todo[]>([])
-  const [sessions, setSessions] = useState<Session[]>([])
+  const [sessions, setSessions] = useState<SessionRef[]>([])
   const [profile, setProfile] = useState<Profile | null>(null)
   const [courseName, setCourseName] = useState('')
   const [loading, setLoading] = useState(true)
-  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [statusFilter, setStatusFilter] = useState<string>('open')
   const [editTodo, setEditTodo] = useState<Partial<Todo> | null>(null)
   const [isNew, setIsNew] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -59,6 +61,8 @@ export default function TodosPage() {
     if (statusFilter === 'closed') return t.status === 'closed'
     return true
   })
+
+  const openCount = todos.filter(t => t.status === 'open').length
 
   async function toggleTodo(t: Todo) {
     const newStatus = t.status === 'open' ? 'closed' : 'open'
@@ -93,7 +97,7 @@ export default function TodosPage() {
 
   async function deleteTodo() {
     if (!editTodo?.id) return
-    if (!confirm('¿Eliminar este pendiente?')) return
+    if (!confirm('¿Eliminar esta tarea?')) return
     await supabase.from('todos').delete().eq('id', editTodo.id)
     setEditTodo(null)
     load()
@@ -105,22 +109,39 @@ export default function TodosPage() {
     <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.8.0/tabler-icons.min.css" />
 
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '8px' }}>
         <div>
           <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '2px' }}>{courseName}</p>
-          <h2 style={{ fontSize: '20px', fontWeight: 600 }}>Pendientes</h2>
+          <h2 style={{ fontSize: '20px', fontWeight: 600 }}>Tareas pendientes</h2>
         </div>
         {canEdit && (
           <button onClick={() => { setEditTodo({ priority: 'medium', status: 'open' }); setIsNew(true) }}
             style={{ padding: '8px 16px', background: '#6366f1', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <i className="ti ti-plus" aria-hidden="true"></i> Nuevo pendiente
+            <i className="ti ti-plus" aria-hidden="true"></i> Nueva tarea
           </button>
         )}
       </div>
 
+      {/* Texto explicativo */}
+      <div style={{ padding: '10px 14px', background: '#f8f9fb', border: '1px solid #e5e7eb', borderRadius: '8px', marginBottom: '20px', fontSize: '12px', color: '#6b7280', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+        <i className="ti ti-info-circle" style={{ fontSize: '15px', flexShrink: 0, marginTop: '1px' }} aria-hidden="true"></i>
+        <span>
+          Acá se listan <strong>tareas operativas del curso</strong> — cosas como "Cargar Canva de clase 4", "Definir invitado", "Subir archivo del parcial".
+          Las <strong>clases pendientes</strong> de dar se gestionan desde <a href={`/courses/${courseId}/schedule`} style={{ color: '#6366f1' }}>Cronograma</a>, filtrando por estado Pendiente.
+        </span>
+      </div>
+
+      {/* KPI rápido */}
+      {openCount > 0 && (
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: '8px', fontSize: '12px', color: '#92400e', marginBottom: '16px' }}>
+          <i className="ti ti-clock-exclamation" aria-hidden="true"></i>
+          <strong>{openCount}</strong> tarea{openCount !== 1 ? 's' : ''} abierta{openCount !== 1 ? 's' : ''}
+        </div>
+      )}
+
       {/* Filters */}
       <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', flexWrap: 'wrap' }}>
-        {[['all','Todos'],['open','Abiertos'],['closed','Cerrados']].map(([v,l]) => (
+        {[['all','Todas'],['open','Abiertas'],['closed','Cerradas']].map(([v,l]) => (
           <button key={v} className={`filter-pill${statusFilter===v?' active':''}`} onClick={() => setStatusFilter(v)}>{l}</button>
         ))}
       </div>
@@ -128,7 +149,7 @@ export default function TodosPage() {
       {filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '48px', color: '#6b7280' }}>
           <i className="ti ti-checks" style={{ fontSize: '40px', opacity: 0.4, display: 'block', marginBottom: '12px' }} aria-hidden="true"></i>
-          <p>Sin pendientes. ¡Todo al día!</p>
+          <p>{statusFilter === 'open' ? '¡Sin tareas abiertas! Todo al día.' : 'Sin tareas en esta categoría.'}</p>
         </div>
       ) : (
         <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '4px 20px' }}>
@@ -136,25 +157,15 @@ export default function TodosPage() {
             const session = t.session_id ? sessions.find(s => s.id === t.session_id) : null
             return (
               <div key={t.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '12px 0', borderBottom: '1px solid #f3f4f6' }}>
-                {/* Checkbox */}
-                <div
-                  onClick={() => canEdit && toggleTodo(t)}
-                  style={{
-                    width: '20px', height: '20px',
-                    borderRadius: '4px',
-                    border: t.status === 'closed' ? 'none' : '2px solid #d1d5db',
-                    background: t.status === 'closed' ? '#059669' : 'transparent',
-                    color: 'white',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '12px',
-                    cursor: canEdit ? 'pointer' : 'default',
-                    flexShrink: 0,
-                    marginTop: '2px',
-                  }}
-                >
+                <div onClick={() => canEdit && toggleTodo(t)} style={{
+                  width: '20px', height: '20px', borderRadius: '4px',
+                  border: t.status === 'closed' ? 'none' : '2px solid #d1d5db',
+                  background: t.status === 'closed' ? '#059669' : 'transparent',
+                  color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '12px', cursor: canEdit ? 'pointer' : 'default', flexShrink: 0, marginTop: '2px',
+                }}>
                   {t.status === 'closed' && <i className="ti ti-check" aria-hidden="true"></i>}
                 </div>
-
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '13px', fontWeight: 500, textDecoration: t.status === 'closed' ? 'line-through' : 'none', color: t.status === 'closed' ? '#9ca3af' : '#111827' }}>
                     {t.title}
@@ -177,12 +188,11 @@ export default function TodosPage() {
                     {session && (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 8px', borderRadius: '99px', fontSize: '11px', background: '#dbeafe', color: '#1d4ed8' }}>
                         <i className="ti ti-link" style={{ fontSize: '11px' }} aria-hidden="true"></i>
-                        Clase {session.class_number}: {(session.title || '').slice(0, 30)}
+                        Clase {session.class_number}: {(session.title || '').slice(0, 28)}
                       </span>
                     )}
                   </div>
                 </div>
-
                 {canEdit && (
                   <button onClick={() => { setEditTodo({...t}); setIsNew(false) }}
                     style={{ background: 'none', border: '1px solid #e5e7eb', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', color: '#6b7280', fontSize: '13px', flexShrink: 0 }}>
@@ -200,7 +210,7 @@ export default function TodosPage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
           <div style={{ background: 'white', borderRadius: '12px', width: '480px', maxWidth: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
             <div style={{ padding: '18px 22px 14px', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 600, flex: 1 }}>{isNew ? 'Nuevo pendiente' : 'Editar pendiente'}</h3>
+              <h3 style={{ fontSize: '16px', fontWeight: 600, flex: 1 }}>{isNew ? 'Nueva tarea' : 'Editar tarea'}</h3>
               <button onClick={() => setEditTodo(null)} style={{ background: 'none', border: '1px solid #e5e7eb', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer' }}>
                 <i className="ti ti-x" aria-hidden="true"></i>
               </button>
@@ -237,7 +247,7 @@ export default function TodosPage() {
                   <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '5px' }}>Encuentro asociado</label>
                   <select value={editTodo.session_id || ''} onChange={e => setEditTodo({...editTodo, session_id: e.target.value || null})} style={{ width: '100%', padding: '8px 10px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit' }}>
                     <option value="">— Ninguno —</option>
-                    {sessions.map(s => <option key={s.id} value={s.id}>Clase {s.class_number}: {(s.title || '').slice(0, 35)}</option>)}
+                    {sessions.map(s => <option key={s.id} value={s.id}>Clase {s.class_number}: {(s.title || '').slice(0, 32)}</option>)}
                   </select>
                 </div>
               </div>
@@ -251,7 +261,7 @@ export default function TodosPage() {
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button onClick={() => setEditTodo(null)} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: '#6b7280' }}>Cancelar</button>
                 <button onClick={save} disabled={saving} style={{ padding: '8px 16px', background: '#6366f1', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: saving ? 'wait' : 'pointer', opacity: saving ? 0.7 : 1, fontFamily: 'inherit' }}>
-                  {saving ? 'Guardando...' : isNew ? 'Crear' : 'Guardar'}
+                  {saving ? 'Guardando...' : isNew ? 'Crear tarea' : 'Guardar'}
                 </button>
               </div>
             </div>

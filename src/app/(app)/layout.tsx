@@ -5,11 +5,9 @@ import Sidebar from '@/components/layout/Sidebar'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
-
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Obtener perfil
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
@@ -18,12 +16,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   if (!profile) redirect('/login')
 
-  // Obtener cursos accesibles con permisos
+  // Obtener cursos NO archivados accesibles por el usuario
   let courses = []
   if (profile.global_role === 'admin') {
     const { data } = await supabase
       .from('courses')
       .select('*, subjects(name)')
+      .not('status', 'eq', 'archived')
       .order('year', { ascending: false })
       .order('name')
     courses = data || []
@@ -32,12 +31,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       .from('user_course_permissions')
       .select('course_id')
       .eq('user_id', user.id)
-    const courseIds = [...new Set((perms || []).map((p: {course_id: string}) => p.course_id))]
+    const courseIds = [...new Set((perms || []).map((p: { course_id: string }) => p.course_id))]
     if (courseIds.length > 0) {
       const { data } = await supabase
         .from('courses')
         .select('*, subjects(name)')
         .in('id', courseIds)
+        .not('status', 'eq', 'archived')
         .order('year', { ascending: false })
       courses = data || []
     }
