@@ -1,7 +1,4 @@
 'use client'
-// src/app/(app)/courses/[courseId]/schedule/page.tsx
-// Note: For full SSR+client, this is a client component that fetches on load.
-// In production you'd split into a Server Component wrapper + Client shell.
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
@@ -30,8 +27,7 @@ function Badge({ text, style }: { text: string; style?: { bg: string; color: str
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center',
-      padding: '2px 8px',
-      borderRadius: '99px',
+      padding: '2px 8px', borderRadius: '99px',
       fontSize: '11px', fontWeight: 500,
       background: style?.bg || '#f3f4f6',
       color: style?.color || '#6b7280',
@@ -43,6 +39,24 @@ function fmtDate(d: string) {
   if (!d) return ''
   const [y, m, day] = d.split('-')
   return `${day}/${m}/${y}`
+}
+
+function getSessionUrl(s: Session, field: string): string {
+  switch (field) {
+    case 'canva_url': return s.canva_url || ''
+    case 'partial_file_url': return s.partial_file_url || ''
+    case 'guest_bio_url': return s.guest_bio_url || ''
+    case 'workshop_brief_url': return s.workshop_brief_url || ''
+    default: return ''
+  }
+}
+
+const LINK_FIELDS = ['canva_url', 'partial_file_url', 'guest_bio_url', 'workshop_brief_url']
+const LINK_ICONS: Record<string, string> = {
+  canva_url: 'ti-presentation',
+  partial_file_url: 'ti-file-text',
+  guest_bio_url: 'ti-user-circle',
+  workshop_brief_url: 'ti-clipboard-list',
 }
 
 const EMPTY_SESSION: Omit<Session, 'id' | 'created_at' | 'updated_at'> = {
@@ -121,7 +135,11 @@ export default function SchedulePage() {
   const responsables = [...new Set(sessions.map(s => s.responsible))].filter(Boolean)
 
   function openAdd() {
-    const newS = { ...EMPTY_SESSION, course_id: courseId, commission_scope: commissions.length === 1 ? commissions[0].id : 'all' } as Session
+    const newS = {
+      ...EMPTY_SESSION,
+      course_id: courseId,
+      commission_scope: commissions.length === 1 ? commissions[0].id : 'all',
+    } as Session
     setEditSession(newS)
     setAddLinks([])
     setIsNew(true)
@@ -137,15 +155,12 @@ export default function SchedulePage() {
     if (!editSession) return
     if (!editSession.title || !editSession.date) { alert('Título y fecha son obligatorios.'); return }
     setSaving(true)
-    const payload = { ...editSession, additional_links: addLinks, course_id: courseId }
-    delete (payload as Record<string, unknown>).id
-    delete (payload as Record<string, unknown>).created_at
-    delete (payload as Record<string, unknown>).updated_at
-
+    const { id, created_at, updated_at, ...payload } = editSession as Session & { created_at: string; updated_at: string }
+    const finalPayload = { ...payload, additional_links: addLinks, course_id: courseId }
     if (isNew) {
-      await supabase.from('sessions').insert(payload)
+      await supabase.from('sessions').insert(finalPayload)
     } else {
-      await supabase.from('sessions').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', editSession.id)
+      await supabase.from('sessions').update({ ...finalPayload, updated_at: new Date().toISOString() }).eq('id', id)
     }
     setSaving(false)
     setEditSession(null)
@@ -169,8 +184,6 @@ export default function SchedulePage() {
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.8.0/tabler-icons.min.css" />
-
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
         <div>
           <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '2px' }}>{courseName}</p>
@@ -183,7 +196,6 @@ export default function SchedulePage() {
         )}
       </div>
 
-      {/* Filters */}
       <div style={{ marginBottom: '16px' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px', alignItems: 'center' }}>
           <span style={{ fontSize: '11px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Estado</span>
@@ -220,7 +232,6 @@ export default function SchedulePage() {
         </div>
       </div>
 
-      {/* Table */}
       {filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '48px', color: '#6b7280' }}>
           <i className="ti ti-calendar-off" style={{ fontSize: '40px', opacity: 0.4, display: 'block', marginBottom: '12px' }} aria-hidden="true"></i>
@@ -249,9 +260,7 @@ export default function SchedulePage() {
                     </td>
                     <td style={{ padding: '10px 12px' }}><Badge text={SESSION_TYPE_LABELS[s.type] || s.type} style={TYPE_BADGE[s.type]} /></td>
                     <td style={{ padding: '10px 12px', fontSize: '12px' }}>{s.responsible}</td>
-                    <td style={{ padding: '10px 12px' }}>
-                      <Badge text={s.modality === 'presencial' ? '🏫 Pres.' : '💻 Virt.'} />
-                    </td>
+                    <td style={{ padding: '10px 12px' }}><Badge text={s.modality === 'presencial' ? '🏫 Pres.' : '💻 Virt.'} /></td>
                     {commissions.length > 1 && (
                       <td style={{ padding: '10px 12px' }}>
                         {s.commission_scope === 'all'
@@ -263,19 +272,18 @@ export default function SchedulePage() {
                     <td style={{ padding: '10px 12px' }}><Badge text={SESSION_STATUS_LABELS[s.status] || s.status} style={STATUS_BADGE[s.status]} /></td>
                     <td style={{ padding: '10px 12px' }}>
                       <div style={{ display: 'flex', gap: '4px' }}>
-                        {['canva_url','partial_file_url','guest_bio_url','workshop_brief_url'].map(field => {
+                        {LINK_FIELDS.map(field => {
                           if (field === 'partial_file_url' && !['parcial','recuperatorio'].includes(s.type)) return null
                           if (field === 'guest_bio_url' && s.type !== 'invitado') return null
                           if (field === 'workshop_brief_url' && s.type !== 'taller') return null
-                          const url = (s as Record<string, unknown>)[field] as string
-                          const icons: Record<string, string> = { canva_url:'ti-presentation', partial_file_url:'ti-file-text', guest_bio_url:'ti-user-circle', workshop_brief_url:'ti-clipboard-list' }
+                          const url = getSessionUrl(s, field)
                           return url ? (
                             <a key={field} href={url} target="_blank" rel="noopener noreferrer" style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#eef2ff', border: '1px solid #c7d2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1', fontSize: '13px' }}>
-                              <i className={`ti ${icons[field]}`} aria-hidden="true"></i>
+                              <i className={`ti ${LINK_ICONS[field]}`} aria-hidden="true"></i>
                             </a>
                           ) : (
                             <span key={field} style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#f3f4f6', border: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d1d5db', fontSize: '13px' }}>
-                              <i className={`ti ${icons[field]}`} aria-hidden="true"></i>
+                              <i className={`ti ${LINK_ICONS[field]}`} aria-hidden="true"></i>
                             </span>
                           )
                         })}
@@ -299,7 +307,6 @@ export default function SchedulePage() {
         </div>
       )}
 
-      {/* Session Modal */}
       {editSession && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
           <div style={{ background: 'white', borderRadius: '12px', width: '640px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
@@ -309,9 +316,7 @@ export default function SchedulePage() {
                 <i className="ti ti-x" aria-hidden="true"></i>
               </button>
             </div>
-
             <div style={{ padding: '20px 22px' }}>
-              {/* Basic info */}
               <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#6b7280', marginBottom: '12px', paddingBottom: '6px', borderBottom: '1px solid #e5e7eb' }}>Información básica</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
                 <div>
@@ -363,8 +368,6 @@ export default function SchedulePage() {
                   </select>
                 </div>
               )}
-
-              {/* Links */}
               <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#6b7280', margin: '20px 0 12px', paddingBottom: '6px', borderBottom: '1px solid #e5e7eb' }}>Links y recursos</p>
               <div style={{ marginBottom: '12px' }}>
                 <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '5px' }}>Canva / Presentación</label>
@@ -403,8 +406,6 @@ export default function SchedulePage() {
                   <i className="ti ti-plus" aria-hidden="true"></i> Agregar link
                 </button>
               </div>
-
-              {/* Notes */}
               <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#6b7280', margin: '20px 0 12px', paddingBottom: '6px', borderBottom: '1px solid #e5e7eb' }}>Notas</p>
               <div style={{ marginBottom: '12px' }}>
                 <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '5px' }}>Notas compartidas</label>
@@ -414,8 +415,6 @@ export default function SchedulePage() {
                 <label style={{ display: 'block', fontSize: '11px', fontWeight: 500, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '5px' }}>Notas privadas</label>
                 <textarea value={editSession.private_notes || ''} onChange={e => setEditSession({...editSession, private_notes: e.target.value})} placeholder="Solo vos las verás..." rows={2} style={{ width: '100%', padding: '8px 10px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit', resize: 'vertical', opacity: 0.7 }} />
               </div>
-
-              {/* Delete */}
               {!isNew && profile?.global_role === 'admin' && (
                 <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #fee2e2' }}>
                   <button onClick={deleteSession} style={{ background: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', borderRadius: '6px', padding: '6px 12px', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -424,7 +423,6 @@ export default function SchedulePage() {
                 </div>
               )}
             </div>
-
             <div style={{ padding: '14px 22px', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
               <button onClick={() => setEditSession(null)} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: '#6b7280' }}>Cancelar</button>
               {canEdit && (
