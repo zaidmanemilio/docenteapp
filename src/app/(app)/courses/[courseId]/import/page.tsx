@@ -59,7 +59,8 @@ function parseCSV(text: string): Record<string, string>[] {
   })
 }
 
-interface PreviewRow extends Record<string, string> {
+interface PreviewRow {
+  [key: string]: string | string[]
   _errors: string[]
 }
 
