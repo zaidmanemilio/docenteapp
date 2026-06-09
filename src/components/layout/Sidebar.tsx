@@ -1,6 +1,7 @@
 'use client'
+// src/components/layout/Sidebar.tsx
+// Fix: active route calculada reactivamente desde usePathname(), no con useState
 
-import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile, Course } from '@/types'
@@ -27,26 +28,42 @@ function getInitials(name: string) {
 
 const AVATAR_COLORS = ['#6366f1','#0d9488','#be185d','#d97706','#059669','#6b7280']
 function getColor(id: string) {
-  let n = 0; for (const c of id) n += c.charCodeAt(0)
+  let n = 0
+  for (const c of id) n += c.charCodeAt(0)
   return AVATAR_COLORS[n % AVATAR_COLORS.length]
 }
 
 export default function Sidebar({ profile, courses }: SidebarProps) {
-  const router = useRouter()
+  const router   = useRouter()
   const pathname = usePathname()
   const supabase = createClient()
 
-  const courseIdFromPath = pathname.split('/')[3] || courses[0]?.id || ''
-  const [activeCourse, setActiveCourse] = useState(courseIdFromPath)
-  const currentSection = pathname.split('/')[4] || 'dashboard'
+  // ── Calcular curso y sección activos desde pathname (reactivo) ──
+  // pathname ejemplos:
+  //   /courses/abc123/schedule
+  //   /courses/abc123/dashboard
+  //   /courses/new
+  //   /archived
+  const parts = pathname.split('/')
+  // parts[0]='', parts[1]='courses', parts[2]=courseId, parts[3]=section
+  const activeCourseId  = parts[1] === 'courses' && parts[2] && parts[2] !== 'new' ? parts[2] : ''
+  const currentSection  = parts[3] || 'dashboard'
+
+  const isAdmin = profile.global_role === 'admin'
+  const roleLabel = profile.global_role === 'admin' ? 'Administrador'
+    : profile.global_role === 'teacher' ? 'Docente' : 'Invitado'
 
   function navigate(section: string) {
-    if (!activeCourse) return
-    router.push(`/courses/${activeCourse}/${section}`)
+    if (!activeCourseId) {
+      // Si no hay curso activo, ir al primer curso disponible
+      const first = courses[0]?.id
+      if (first) router.push(`/courses/${first}/${section}`)
+      return
+    }
+    router.push(`/courses/${activeCourseId}/${section}`)
   }
 
   function selectCourse(cid: string) {
-    setActiveCourse(cid)
     router.push(`/courses/${cid}/dashboard`)
   }
 
@@ -55,11 +72,6 @@ export default function Sidebar({ profile, courses }: SidebarProps) {
     router.push('/login')
     router.refresh()
   }
-
-  const roleLabel = profile.global_role === 'admin' ? 'Administrador'
-    : profile.global_role === 'teacher' ? 'Docente' : 'Invitado'
-
-  const isAdmin = profile.global_role === 'admin'
 
   return (
     <>
@@ -78,7 +90,7 @@ export default function Sidebar({ profile, courses }: SidebarProps) {
           <p style={{ fontSize: '11px', color: '#a0a0c0', marginTop: '2px' }}>Gestión docente</p>
         </div>
 
-        {/* Cursos */}
+        {/* Lista de cursos */}
         <p style={{ padding: '14px 16px 6px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#555575' }}>
           Mis cursos
         </p>
@@ -90,9 +102,9 @@ export default function Sidebar({ profile, courses }: SidebarProps) {
               style={{
                 padding: '7px 10px', borderRadius: '8px', cursor: 'pointer',
                 marginBottom: '2px',
-                color: activeCourse === c.id ? '#818cf8' : '#a0a0c0',
-                background: activeCourse === c.id ? 'rgba(99,102,241,0.18)' : 'transparent',
-                fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px', lineHeight: '1.3',
+                color: activeCourseId === c.id ? '#818cf8' : '#a0a0c0',
+                background: activeCourseId === c.id ? 'rgba(99,102,241,0.18)' : 'transparent',
+                fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px',
               }}
             >
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'currentColor', flexShrink: 0 }}></span>
@@ -100,7 +112,7 @@ export default function Sidebar({ profile, courses }: SidebarProps) {
             </div>
           ))}
 
-          {/* Crear nuevo curso (solo admin) */}
+          {/* Nuevo curso — solo admin */}
           {isAdmin && (
             <div
               onClick={() => router.push('/courses/new')}
@@ -121,29 +133,32 @@ export default function Sidebar({ profile, courses }: SidebarProps) {
 
         <div style={{ height: '1px', background: '#2d2d4e', margin: '8px 16px' }}></div>
 
-        {/* Nav items */}
+        {/* Navegación del curso */}
         <div style={{ padding: '0 8px', overflowY: 'auto', flex: 1 }}>
           {NAV_ITEMS
             .filter(item => !item.adminOnly || isAdmin)
-            .map(item => (
-              <div
-                key={item.key}
-                onClick={() => navigate(item.key)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '8px',
-                  padding: '7px 10px', borderRadius: '8px', cursor: 'pointer',
-                  color: currentSection === item.key ? '#818cf8' : '#a0a0c0',
-                  background: currentSection === item.key ? 'rgba(99,102,241,0.18)' : 'transparent',
-                  fontSize: '13px', marginBottom: '1px',
-                }}
-              >
-                <i className={`ti ${item.icon}`} style={{ fontSize: '16px', width: '18px' }} aria-hidden="true"></i>
-                {item.label}
-              </div>
-            ))
+            .map(item => {
+              const isActive = currentSection === item.key && !!activeCourseId
+              return (
+                <div
+                  key={item.key}
+                  onClick={() => navigate(item.key)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    padding: '7px 10px', borderRadius: '8px', cursor: 'pointer',
+                    color: isActive ? '#818cf8' : '#a0a0c0',
+                    background: isActive ? 'rgba(99,102,241,0.18)' : 'transparent',
+                    fontSize: '13px', marginBottom: '1px',
+                  }}
+                >
+                  <i className={`ti ${item.icon}`} style={{ fontSize: '16px', width: '18px' }} aria-hidden="true"></i>
+                  {item.label}
+                </div>
+              )
+            })
           }
 
-          {/* Cursos archivados (solo admin) */}
+          {/* Cursos archivados — solo admin */}
           {isAdmin && (
             <>
               <div style={{ height: '1px', background: '#2d2d4e', margin: '8px 4px' }}></div>
@@ -164,7 +179,7 @@ export default function Sidebar({ profile, courses }: SidebarProps) {
           )}
         </div>
 
-        {/* User */}
+        {/* Usuario */}
         <div style={{ borderTop: '1px solid #2d2d4e', padding: '12px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{
