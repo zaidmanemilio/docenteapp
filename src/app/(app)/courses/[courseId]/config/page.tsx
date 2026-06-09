@@ -1,5 +1,6 @@
 'use client'
 // src/app/(app)/courses/[courseId]/config/page.tsx
+// Fix: agregar docente usa select de usuarios reales, no prompt() con UUID
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -7,10 +8,12 @@ import { createClient } from '@/lib/supabase/client'
 import type { Course, Commission, Profile } from '@/types'
 
 interface Permission {
-  id: string; user_id: string; commission_id: string | null; permission: string
+  id: string
+  user_id: string
+  commission_id: string | null
+  permission: string
   profiles: { full_name: string; global_role: string } | null
 }
-interface AllProfile { id: string; full_name: string; global_role: string }
 
 const labelStyle: React.CSSProperties = {
   display: 'block', fontSize: '11px', fontWeight: 600,
@@ -31,14 +34,20 @@ export default function ConfigPage() {
     schedule_text?: string; zoom_url?: string; program_url?: string
     moodle_url?: string; materials_url?: string; modality?: string; internal_notes?: string
   } | null>(null)
-  const [commissions, setCommissions] = useState<Commission[]>([])
-  const [permissions, setPermissions] = useState<Permission[]>([])
-  const [allProfiles, setAllProfiles] = useState<AllProfile[]>([])
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
-  const [tab, setTab] = useState<'general' | 'links' | 'commissions' | 'teachers'>('general')
+  const [commissions,  setCommissions]  = useState<Commission[]>([])
+  const [permissions,  setPermissions]  = useState<Permission[]>([])
+  const [allProfiles,  setAllProfiles]  = useState<Profile[]>([])
+  const [profile,      setProfile]      = useState<Profile | null>(null)
+  const [loading,      setLoading]      = useState(true)
+  const [saving,       setSaving]       = useState(false)
+  const [saved,        setSaved]        = useState(false)
+  const [tab,          setTab]          = useState<'general'|'links'|'commissions'|'teachers'>('general')
+
+  // Estado para el formulario de agregar docente
+  const [addingTeacher,    setAddingTeacher]    = useState(false)
+  const [newTeacherUserId, setNewTeacherUserId] = useState('')
+  const [newTeacherCommId, setNewTeacherCommId] = useState('')  // '' = todas
+  const [newTeacherPerm,   setNewTeacherPerm]   = useState('edit')
 
   const load = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -68,21 +77,21 @@ export default function ConfigPage() {
     if (!course) return
     setSaving(true)
     await supabase.from('courses').update({
-      name: course.name,
-      full_name: course.full_name || '',
-      career: course.career || '',
-      faculty: course.faculty || '',
-      description: course.description || '',
-      status: course.status,
+      name:              course.name,
+      full_name:         course.full_name || '',
+      career:            course.career || '',
+      faculty:           course.faculty || '',
+      description:       course.description || '',
+      status:            course.status,
       expected_sessions: course.expected_sessions,
-      year: course.year,
-      modality: course.modality || 'presencial',
-      schedule_text: course.schedule_text || '',
-      zoom_url: course.zoom_url || '',
-      program_url: course.program_url || '',
-      moodle_url: course.moodle_url || '',
-      materials_url: course.materials_url || '',
-      internal_notes: course.internal_notes || '',
+      year:              course.year,
+      modality:          course.modality || 'presencial',
+      schedule_text:     course.schedule_text || '',
+      zoom_url:          course.zoom_url || '',
+      program_url:       course.program_url || '',
+      moodle_url:        course.moodle_url || '',
+      materials_url:     course.materials_url || '',
+      internal_notes:    course.internal_notes || '',
     }).eq('id', courseId)
     setSaving(false)
     setSaved(true)
@@ -117,14 +126,25 @@ export default function ConfigPage() {
     load()
   }
 
-  async function addPermission() {
-    const userId = prompt('UUID del usuario (copialo de Supabase Auth → Users):')
-    if (!userId) return
-    const perm = prompt('Permiso (full / edit / read):')
-    if (!['full', 'edit', 'read'].includes(perm || '')) { alert('Permiso inválido.'); return }
-    await supabase.from('user_course_permissions').upsert({
-      user_id: userId, course_id: courseId, commission_id: null, permission: perm
+  // Agregar docente — usa select de usuarios reales
+  async function handleAddTeacher() {
+    if (!newTeacherUserId) { alert('Seleccioná un usuario.'); return }
+    const { error } = await supabase.from('user_course_permissions').upsert({
+      user_id:       newTeacherUserId,
+      course_id:     courseId,
+      commission_id: newTeacherCommId || null,
+      permission:    newTeacherPerm,
     }, { onConflict: 'user_id,course_id,commission_id' })
+
+    if (error) {
+      alert('Error al agregar: ' + error.message)
+      return
+    }
+    // Resetear formulario y recargar
+    setNewTeacherUserId('')
+    setNewTeacherCommId('')
+    setNewTeacherPerm('edit')
+    setAddingTeacher(false)
     load()
   }
 
@@ -141,12 +161,16 @@ export default function ConfigPage() {
 
   if (loading || !course) return <div style={{ padding: '24px', color: '#6b7280' }}>Cargando...</div>
 
+  // Usuarios que ya tienen permiso en este curso (para no repetirlos en el select)
+  const usersWithPerm = new Set(permissions.map(p => p.user_id))
+  const availableProfiles = allProfiles.filter(p => !usersWithPerm.has(p.id))
+
   const tabStyle = (t: string): React.CSSProperties => ({
     padding: '8px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
     color: tab === t ? '#6366f1' : '#6b7280',
     borderBottom: tab === t ? '2px solid #6366f1' : '2px solid transparent',
     marginBottom: '-1px', background: 'none', border: 'none', fontFamily: 'inherit',
-    borderBottomStyle: 'solid',
+    borderBottomStyle: 'solid' as const,
   })
 
   return (
@@ -175,7 +199,9 @@ export default function ConfigPage() {
               fontWeight: 500, cursor: saving ? 'wait' : 'pointer', fontFamily: 'inherit',
               display: 'flex', alignItems: 'center', gap: '5px',
             }}>
-              {saved ? <><i className="ti ti-check" aria-hidden="true"></i> Guardado</> : <><i className="ti ti-device-floppy" aria-hidden="true"></i> Guardar</>}
+              {saved
+                ? <><i className="ti ti-check" aria-hidden="true"></i> Guardado</>
+                : <><i className="ti ti-device-floppy" aria-hidden="true"></i> Guardar</>}
             </button>
           )}
         </div>
@@ -183,10 +209,10 @@ export default function ConfigPage() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: '20px' }}>
-        <button style={tabStyle('general')} onClick={() => setTab('general')}>General</button>
-        <button style={tabStyle('links')} onClick={() => setTab('links')}>Links del curso</button>
+        <button style={tabStyle('general')}     onClick={() => setTab('general')}>General</button>
+        <button style={tabStyle('links')}       onClick={() => setTab('links')}>Links del curso</button>
         <button style={tabStyle('commissions')} onClick={() => setTab('commissions')}>Comisiones</button>
-        <button style={tabStyle('teachers')} onClick={() => setTab('teachers')}>Docentes y permisos</button>
+        <button style={tabStyle('teachers')}    onClick={() => setTab('teachers')}>Docentes y permisos</button>
       </div>
 
       <div style={{ maxWidth: '620px' }}>
@@ -196,38 +222,30 @@ export default function ConfigPage() {
           <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px' }}>
             <div style={{ marginBottom: '14px' }}>
               <label style={labelStyle}>Nombre corto del curso</label>
-              <input value={course.name} onChange={e => setCourse({ ...course, name: e.target.value })}
-                disabled={!isAdmin} style={inputStyle} />
+              <input value={course.name} onChange={e => setCourse({...course, name: e.target.value})} disabled={!isAdmin} style={inputStyle} />
             </div>
             <div style={{ marginBottom: '14px' }}>
               <label style={labelStyle}>Nombre completo de la materia</label>
-              <input value={course.full_name || ''} onChange={e => setCourse({ ...course, full_name: e.target.value })}
-                disabled={!isAdmin} placeholder="Nombre oficial de la materia" style={inputStyle} />
+              <input value={course.full_name || ''} onChange={e => setCourse({...course, full_name: e.target.value})} disabled={!isAdmin} placeholder="Nombre oficial de la materia" style={inputStyle} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
               <div>
                 <label style={labelStyle}>Carrera</label>
-                <input value={course.career || ''} onChange={e => setCourse({ ...course, career: e.target.value })}
-                  disabled={!isAdmin} placeholder="Ej: Ing. en Sistemas" style={inputStyle} />
+                <input value={course.career || ''} onChange={e => setCourse({...course, career: e.target.value})} disabled={!isAdmin} placeholder="Ej: Ing. en Sistemas" style={inputStyle} />
               </div>
               <div>
                 <label style={labelStyle}>Año</label>
-                <input type="number" value={course.year}
-                  onChange={e => setCourse({ ...course, year: parseInt(e.target.value) })}
-                  disabled={!isAdmin} style={inputStyle} />
+                <input type="number" value={course.year} onChange={e => setCourse({...course, year: parseInt(e.target.value)})} disabled={!isAdmin} style={inputStyle} />
               </div>
             </div>
             <div style={{ marginBottom: '14px' }}>
               <label style={labelStyle}>Facultad / Universidad</label>
-              <input value={course.faculty || ''} onChange={e => setCourse({ ...course, faculty: e.target.value })}
-                disabled={!isAdmin} placeholder="Ej: UNLP - Informática" style={inputStyle} />
+              <input value={course.faculty || ''} onChange={e => setCourse({...course, faculty: e.target.value})} disabled={!isAdmin} placeholder="Ej: UNLP - Informática" style={inputStyle} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
               <div>
                 <label style={labelStyle}>Modalidad predominante</label>
-                <select value={course.modality || 'presencial'}
-                  onChange={e => setCourse({ ...course, modality: e.target.value })}
-                  disabled={!isAdmin} style={inputStyle}>
+                <select value={course.modality || 'presencial'} onChange={e => setCourse({...course, modality: e.target.value})} disabled={!isAdmin} style={inputStyle}>
                   <option value="presencial">Presencial</option>
                   <option value="virtual">Virtual</option>
                   <option value="hibrida">Híbrida</option>
@@ -235,17 +253,13 @@ export default function ConfigPage() {
               </div>
               <div>
                 <label style={labelStyle}>Encuentros esperados</label>
-                <input type="number" value={course.expected_sessions}
-                  onChange={e => setCourse({ ...course, expected_sessions: parseInt(e.target.value) })}
-                  disabled={!isAdmin} style={inputStyle} />
+                <input type="number" value={course.expected_sessions} onChange={e => setCourse({...course, expected_sessions: parseInt(e.target.value)})} disabled={!isAdmin} style={inputStyle} />
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
               <div>
                 <label style={labelStyle}>Estado</label>
-                <select value={course.status}
-                  onChange={e => setCourse({ ...course, status: e.target.value as Course['status'] })}
-                  disabled={!isAdmin} style={inputStyle}>
+                <select value={course.status} onChange={e => setCourse({...course, status: e.target.value as Course['status']})} disabled={!isAdmin} style={inputStyle}>
                   <option value="draft">Borrador</option>
                   <option value="active">Activo</option>
                   <option value="closed">Cerrado</option>
@@ -254,22 +268,15 @@ export default function ConfigPage() {
             </div>
             <div style={{ marginBottom: '14px' }}>
               <label style={labelStyle}>Días y horarios</label>
-              <input value={course.schedule_text || ''} onChange={e => setCourse({ ...course, schedule_text: e.target.value })}
-                disabled={!isAdmin} placeholder="Ej: Martes 18-21hs y Jueves 18-21hs" style={inputStyle} />
+              <input value={course.schedule_text || ''} onChange={e => setCourse({...course, schedule_text: e.target.value})} disabled={!isAdmin} placeholder="Ej: Martes 18-21hs y Jueves 18-21hs" style={inputStyle} />
             </div>
             <div style={{ marginBottom: '14px' }}>
               <label style={labelStyle}>Descripción</label>
-              <textarea value={course.description || ''}
-                onChange={e => setCourse({ ...course, description: e.target.value })}
-                disabled={!isAdmin} rows={3}
-                style={{ ...inputStyle, resize: 'vertical', minHeight: '72px' }} />
+              <textarea value={course.description || ''} onChange={e => setCourse({...course, description: e.target.value})} disabled={!isAdmin} rows={3} style={{...inputStyle, resize: 'vertical', minHeight: '72px'}} />
             </div>
             <div>
               <label style={labelStyle}>Observaciones internas</label>
-              <textarea value={course.internal_notes || ''}
-                onChange={e => setCourse({ ...course, internal_notes: e.target.value })}
-                disabled={!isAdmin} rows={2} placeholder="Notas visibles solo para el equipo docente..."
-                style={{ ...inputStyle, resize: 'vertical', minHeight: '56px' }} />
+              <textarea value={course.internal_notes || ''} onChange={e => setCourse({...course, internal_notes: e.target.value})} disabled={!isAdmin} rows={2} placeholder="Notas visibles solo para el equipo docente..." style={{...inputStyle, resize: 'vertical', minHeight: '56px'}} />
             </div>
           </div>
         )}
@@ -281,16 +288,16 @@ export default function ConfigPage() {
               Links generales del curso. El link de Zoom aparece en el cronograma para encuentros virtuales sin link específico.
             </p>
             {[
-              { key: 'zoom_url', label: 'Link general de Zoom', placeholder: 'https://zoom.us/j/...', icon: '📹' },
-              { key: 'program_url', label: 'Programa de la materia', placeholder: 'https://drive.google.com/...', icon: '📄' },
-              { key: 'moodle_url', label: 'Aula virtual / Moodle', placeholder: 'https://campus.edu.ar/...', icon: '🎓' },
-              { key: 'materials_url', label: 'Carpeta de materiales', placeholder: 'https://drive.google.com/...', icon: '📁' },
-            ].map(({ key, label, placeholder, icon }) => (
+              { key: 'zoom_url',     label: '📹 Link general de Zoom',     placeholder: 'https://zoom.us/j/...' },
+              { key: 'program_url',  label: '📄 Programa de la materia',   placeholder: 'https://drive.google.com/...' },
+              { key: 'moodle_url',   label: '🎓 Aula virtual / Moodle',    placeholder: 'https://campus.edu.ar/...' },
+              { key: 'materials_url',label: '📁 Carpeta de materiales',    placeholder: 'https://drive.google.com/...' },
+            ].map(({ key, label, placeholder }) => (
               <div key={key} style={{ marginBottom: '16px' }}>
-                <label style={labelStyle}>{icon} {label}</label>
+                <label style={labelStyle}>{label}</label>
                 <input
                   value={(course as Record<string, unknown>)[key] as string || ''}
-                  onChange={e => setCourse({ ...course, [key]: e.target.value })}
+                  onChange={e => setCourse({...course, [key]: e.target.value})}
                   disabled={!isAdmin} placeholder={placeholder} style={inputStyle}
                 />
               </div>
@@ -332,12 +339,13 @@ export default function ConfigPage() {
         {tab === 'teachers' && (
           <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px' }}>
             <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>
-              Docentes con acceso a este curso. El permiso <strong>full</strong> permite eliminar encuentros. <strong>edit</strong> permite editar. <strong>read</strong> es solo lectura.
+              Docentes con acceso a este curso. <strong>full</strong> permite eliminar encuentros, <strong>edit</strong> permite editar, <strong>read</strong> es solo lectura.
             </p>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', marginBottom: '16px' }}>
               <thead>
                 <tr style={{ background: '#f9fafb' }}>
-                  {['Docente', 'Comisión', 'Permiso', ''].map(h => (
+                  {['Docente','Comisión','Permiso',''].map(h => (
                     <th key={h} style={{ textAlign: 'left', padding: '7px 10px', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#6b7280', borderBottom: '1px solid #e5e7eb' }}>{h}</th>
                   ))}
                 </tr>
@@ -354,9 +362,7 @@ export default function ConfigPage() {
                   const pc = permColors[p.permission] || permColors.read
                   return (
                     <tr key={p.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                      <td style={{ padding: '9px 10px' }}>
-                        <span style={{ fontWeight: 500 }}>{u?.full_name || '—'}</span>
-                      </td>
+                      <td style={{ padding: '9px 10px', fontWeight: 500 }}>{u?.full_name || '—'}</td>
                       <td style={{ padding: '9px 10px', color: '#6b7280' }}>
                         {com ? com.name : <span style={{ color: '#9ca3af' }}>Todas</span>}
                       </td>
@@ -386,10 +392,67 @@ export default function ConfigPage() {
                 })}
               </tbody>
             </table>
-            {isAdmin && (
-              <button onClick={addPermission} style={{ marginTop: '14px', background: 'none', border: '1px dashed #d1d5db', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer', color: '#6b7280', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: 'inherit' }}>
+
+            {/* Formulario inline para agregar docente */}
+            {isAdmin && !addingTeacher && (
+              <button onClick={() => setAddingTeacher(true)} style={{
+                background: 'none', border: '1px dashed #d1d5db', borderRadius: '8px',
+                padding: '8px 16px', cursor: 'pointer', color: '#6b7280', fontSize: '13px',
+                display: 'flex', alignItems: 'center', gap: '6px', fontFamily: 'inherit',
+              }}>
                 <i className="ti ti-user-plus" aria-hidden="true"></i> Agregar docente
               </button>
+            )}
+
+            {isAdmin && addingTeacher && (
+              <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '10px', padding: '16px', marginTop: '8px' }}>
+                <p style={{ fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '12px' }}>Agregar docente al curso</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                  <div>
+                    <label style={labelStyle}>Usuario</label>
+                    <select value={newTeacherUserId} onChange={e => setNewTeacherUserId(e.target.value)}
+                      style={inputStyle}>
+                      <option value="">— Seleccionar —</option>
+                      {availableProfiles.map(p => (
+                        <option key={p.id} value={p.id}>{p.full_name}</option>
+                      ))}
+                    </select>
+                    {availableProfiles.length === 0 && (
+                      <p style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px' }}>
+                        Todos los usuarios ya tienen permisos.
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Comisión</label>
+                    <select value={newTeacherCommId} onChange={e => setNewTeacherCommId(e.target.value)} style={inputStyle}>
+                      <option value="">Todas las comisiones</option>
+                      {commissions.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Permiso</label>
+                    <select value={newTeacherPerm} onChange={e => setNewTeacherPerm(e.target.value)} style={inputStyle}>
+                      <option value="full">full</option>
+                      <option value="edit">edit</option>
+                      <option value="read">read</option>
+                    </select>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button onClick={handleAddTeacher} style={{
+                    padding: '7px 16px', background: '#6366f1', color: 'white',
+                    border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
+                    cursor: 'pointer', fontFamily: 'inherit',
+                  }}>
+                    Agregar
+                  </button>
+                  <button onClick={() => { setAddingTeacher(false); setNewTeacherUserId(''); setNewTeacherCommId(''); setNewTeacherPerm('edit') }}
+                    style={{ padding: '7px 14px', background: 'transparent', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: '#6b7280' }}>
+                    Cancelar
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         )}
