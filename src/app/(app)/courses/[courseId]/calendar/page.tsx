@@ -1,36 +1,31 @@
 'use client'
 // src/app/(app)/courses/[courseId]/calendar/page.tsx
+// Fix: abre SessionModal al hacer click en un encuentro
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-
-interface Session {
-  id: string; course_id: string; date: string; class_number: number | null
-  title: string; type: string; responsible: string; modality: string
-  status: string; commission_scope: string
-  start_time?: string; end_time?: string; location?: string; canva_url?: string
-}
-interface Commission { id: string; name: string }
+import type { Commission, AdditionalLink } from '@/types'
+import SessionModal, { type ExtendedSession } from '@/components/schedule/SessionModal'
 
 const TYPE_COLORS: Record<string, string> = {
-  teorica: '#6366f1', practica: '#0d9488', taller: '#d97706',
-  invitado: '#be185d', parcial: '#dc2626', recuperatorio: '#f97316',
-  exposicion: '#7c3aed', proyecto: '#059669',
+  teorica:'#6366f1', practica:'#0d9488', taller:'#d97706',
+  invitado:'#be185d', parcial:'#dc2626', recuperatorio:'#f97316',
+  exposicion:'#7c3aed', proyecto:'#059669',
 }
 const TYPE_LABELS: Record<string, string> = {
-  teorica: 'Teórica', practica: 'Práctica', taller: 'Taller',
-  invitado: 'Invitado', parcial: 'Parcial', recuperatorio: 'Recuperatorio',
-  exposicion: 'Exposición', proyecto: 'Proyecto',
+  teorica:'Teórica', practica:'Práctica', taller:'Taller',
+  invitado:'Invitado', parcial:'Parcial', recuperatorio:'Recuperatorio',
+  exposicion:'Exposición', proyecto:'Proyecto',
 }
 const STATUS_COLORS: Record<string, string> = {
-  dada: '#059669', pendiente: '#6b7280', reprogramada: '#d97706', cancelada: '#dc2626',
+  dada:'#059669', pendiente:'#6b7280', reprogramada:'#d97706', cancelada:'#dc2626',
 }
 
-function groupByMonth(sessions: Session[]) {
-  const groups: Record<string, Session[]> = {}
+function groupByMonth(sessions: ExtendedSession[]) {
+  const groups: Record<string, ExtendedSession[]> = {}
   sessions.forEach(s => {
-    const key = s.date.slice(0, 7) // YYYY-MM
+    const key = s.date.slice(0, 7)
     if (!groups[key]) groups[key] = []
     groups[key].push(s)
   })
@@ -54,19 +49,43 @@ export default function CalendarPage() {
   const { courseId } = useParams<{ courseId: string }>()
   const supabase = createClient()
 
-  const [sessions, setSessions] = useState<Session[]>([])
-  const [commissions, setCommissions] = useState<Commission[]>([])
-  const [courseName, setCourseName] = useState('')
-  const [zoomUrl, setZoomUrl] = useState('')
-  const [loading, setLoading] = useState(true)
+  const [sessions,     setSessions]     = useState<ExtendedSession[]>([])
+  const [commissions,  setCommissions]  = useState<Commission[]>([])
+  const [courseName,   setCourseName]   = useState('')
+  const [zoomUrl,      setZoomUrl]      = useState('')
+  const [loading,      setLoading]      = useState(true)
   const [filterStatus, setFilterStatus] = useState('all')
+  const [coursePermission, setCoursePermission] = useState<string | null>(null)
+
+  // Estado del modal (igual que en schedule)
+  const [editSession, setEditSession] = useState<ExtendedSession | null>(null)
+  const [addLinks,    setAddLinks]    = useState<AdditionalLink[]>([])
+  const [saving,      setSaving]      = useState(false)
 
   const load = useCallback(async () => {
-    const [courseRes, sessionsRes, commsRes] = await Promise.all([
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const [profileRes, courseRes, sessionsRes, commsRes, permRes] = await Promise.all([
+      supabase.from('profiles').select('global_role').eq('id', user.id).single(),
       supabase.from('courses').select('name, zoom_url').eq('id', courseId).single(),
       supabase.from('sessions').select('*').eq('course_id', courseId).order('date').order('start_time'),
       supabase.from('commissions').select('id, name').eq('course_id', courseId),
+      supabase.from('user_course_permissions').select('permission').eq('user_id', user.id).eq('course_id', courseId),
     ])
+
+    const globalRole = profileRes.data?.global_role
+    if (globalRole === 'admin') {
+      setCoursePermission('full')
+    } else {
+      const PERM_RANK: Record<string, number> = { full: 3, edit: 2, read: 1 }
+      const best = (permRes.data || []).reduce((acc: string | null, row) => {
+        if (!acc) return row.permission
+        return (PERM_RANK[row.permission] || 0) > (PERM_RANK[acc] || 0) ? row.permission : acc
+      }, null)
+      setCoursePermission(best)
+    }
+
     setCourseName(courseRes.data?.name || '')
     setZoomUrl(courseRes.data?.zoom_url || '')
     setSessions(sessionsRes.data || [])
@@ -76,6 +95,9 @@ export default function CalendarPage() {
 
   useEffect(() => { load() }, [load])
 
+  const canEdit  = coursePermission === 'full' || coursePermission === 'edit'
+  const canDelete = coursePermission === 'full'
+
   const filtered = sessions.filter(s =>
     filterStatus === 'all' || s.status === filterStatus
   )
@@ -83,7 +105,7 @@ export default function CalendarPage() {
   const grouped = groupByMonth(filtered)
   const today = new Date().toISOString().slice(0, 10)
 
-  // Detectar superposiciones (clases el mismo día con horarios cruzados y con start/end_time)
+  // Detección de superposición
   const overlaps = new Set<string>()
   for (let i = 0; i < sessions.length; i++) {
     for (let j = i + 1; j < sessions.length; j++) {
@@ -91,10 +113,40 @@ export default function CalendarPage() {
       if (a.date !== b.date) continue
       if (!a.start_time || !b.start_time || !a.end_time || !b.end_time) continue
       if (a.start_time < b.end_time && b.start_time < a.end_time) {
-        overlaps.add(a.id)
-        overlaps.add(b.id)
+        overlaps.add(a.id as string)
+        overlaps.add(b.id as string)
       }
     }
+  }
+
+  function openEdit(s: ExtendedSession) {
+    setEditSession({ ...s })
+    setAddLinks([...(s.additional_links || [])])
+  }
+
+  function handleClose() { setEditSession(null) }
+
+  async function handleSave() {
+    if (!editSession) return
+    if (!canEdit) { alert('No tenés permiso para editar encuentros en este curso.'); return }
+    if (!editSession.title || !editSession.date) { alert('Título y fecha son obligatorios.'); return }
+    setSaving(true)
+    const { id, created_at, updated_at, ...payload } = editSession as ExtendedSession & { created_at: string; updated_at: string }
+    await supabase.from('sessions')
+      .update({ ...payload, additional_links: addLinks, updated_at: new Date().toISOString() })
+      .eq('id', id)
+    setSaving(false)
+    setEditSession(null)
+    load()
+  }
+
+  async function handleDelete() {
+    if (!editSession?.id) return
+    if (!canDelete) { alert('No tenés permiso para eliminar encuentros.'); return }
+    if (!confirm('¿Eliminar este encuentro?')) return
+    await supabase.from('sessions').delete().eq('id', editSession.id)
+    setEditSession(null)
+    load()
   }
 
   if (loading) return <div style={{ padding: '24px', color: '#6b7280' }}>Cargando...</div>
@@ -108,7 +160,6 @@ export default function CalendarPage() {
         <h2 style={{ fontSize: '20px', fontWeight: 600 }}>Agenda</h2>
       </div>
 
-      {/* Zoom del curso */}
       {zoomUrl && (
         <a href={zoomUrl} target="_blank" rel="noopener noreferrer" style={{
           display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '16px',
@@ -121,20 +172,16 @@ export default function CalendarPage() {
         </a>
       )}
 
-      {/* Alerta de superposiciones */}
       {overlaps.size > 0 && (
         <div style={{ padding: '10px 14px', background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: '8px', marginBottom: '16px', fontSize: '13px', color: '#92400e', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <i className="ti ti-alert-triangle" aria-hidden="true"></i>
-          <span>Se detectaron <strong>{overlaps.size / 2} posibles superposiciones</strong> de horarios. Las clases afectadas están marcadas en naranja.</span>
+          <span>Se detectaron posibles superposiciones de horarios. Las clases afectadas están marcadas.</span>
         </div>
       )}
 
-      {/* Filtros */}
       <div style={{ display: 'flex', gap: '6px', marginBottom: '20px', flexWrap: 'wrap' }}>
         {[['all','Todas'],['pendiente','Pendiente'],['dada','Dada'],['reprogramada','Reprog.'],['cancelada','Cancelada']].map(([v, l]) => (
-          <button key={v}
-            className={`filter-pill${filterStatus === v ? ' active' : ''}`}
-            onClick={() => setFilterStatus(v)}>{l}</button>
+          <button key={v} className={`filter-pill${filterStatus===v?' active':''}`} onClick={() => setFilterStatus(v)}>{l}</button>
         ))}
       </div>
 
@@ -152,20 +199,28 @@ export default function CalendarPage() {
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {monthSessions.map(s => {
-                const isToday = s.date === today
-                const isPast = s.date < today && s.status === 'pendiente'
-                const isOverlap = overlaps.has(s.id)
-                const com = commissions.find(c => c.id === s.commission_scope)
-                const showZoom = s.modality === 'virtual' && !s.canva_url && zoomUrl
+                const isToday    = s.date === today
+                const isPast     = s.date < today && s.status === 'pendiente'
+                const isOverlap  = overlaps.has(s.id as string)
+                const com        = commissions.find(c => c.id === s.commission_scope)
+                const showZoom   = s.modality === 'virtual' && !s.canva_url && zoomUrl
 
                 return (
-                  <div key={s.id} style={{
-                    background: 'white',
-                    border: `1px solid ${isOverlap ? '#fcd34d' : isToday ? '#c7d2fe' : isPast ? '#fecaca' : '#e5e7eb'}`,
-                    borderLeft: `4px solid ${TYPE_COLORS[s.type] || '#6b7280'}`,
-                    borderRadius: '8px', padding: '12px 16px',
-                    display: 'flex', alignItems: 'flex-start', gap: '14px',
-                  }}>
+                  <div
+                    key={s.id}
+                    onClick={() => openEdit(s)}
+                    style={{
+                      background: 'white',
+                      border: `1px solid ${isOverlap ? '#fcd34d' : isToday ? '#c7d2fe' : isPast ? '#fecaca' : '#e5e7eb'}`,
+                      borderLeft: `4px solid ${TYPE_COLORS[s.type] || '#6b7280'}`,
+                      borderRadius: '8px', padding: '12px 16px',
+                      display: 'flex', alignItems: 'flex-start', gap: '14px',
+                      cursor: 'pointer',
+                      transition: 'box-shadow 0.15s',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)')}
+                    onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
+                  >
                     {/* Fecha */}
                     <div style={{ width: '60px', flexShrink: 0, textAlign: 'center' }}>
                       <div style={{ fontSize: '11px', fontWeight: 600, color: isToday ? '#6366f1' : '#6b7280', textTransform: 'uppercase' }}>
@@ -186,10 +241,10 @@ export default function CalendarPage() {
                       </div>
                       <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: '#6b7280', flexWrap: 'wrap' }}>
                         {s.class_number && <span>Clase {s.class_number}</span>}
-                        {s.responsible && <span><i className="ti ti-user" style={{ fontSize: '11px' }} aria-hidden="true"></i> {s.responsible}</span>}
-                        {s.start_time && <span><i className="ti ti-clock" style={{ fontSize: '11px' }} aria-hidden="true"></i> {s.start_time}{s.end_time ? `–${s.end_time}` : ''}</span>}
-                        {s.location && <span><i className="ti ti-map-pin" style={{ fontSize: '11px' }} aria-hidden="true"></i> {s.location}</span>}
-                        {com && <span><i className="ti ti-users" style={{ fontSize: '11px' }} aria-hidden="true"></i> {com.name}</span>}
+                        {s.responsible  && <span><i className="ti ti-user" style={{ fontSize: '11px' }} aria-hidden="true"></i> {s.responsible}</span>}
+                        {s.start_time   && <span><i className="ti ti-clock" style={{ fontSize: '11px' }} aria-hidden="true"></i> {s.start_time}{s.end_time ? `–${s.end_time}` : ''}</span>}
+                        {s.location     && <span><i className="ti ti-map-pin" style={{ fontSize: '11px' }} aria-hidden="true"></i> {s.location}</span>}
+                        {com            && <span><i className="ti ti-users" style={{ fontSize: '11px' }} aria-hidden="true"></i> {com.name}</span>}
                         <span style={{ color: STATUS_COLORS[s.status] || '#6b7280', fontWeight: 500 }}>
                           {s.status.charAt(0).toUpperCase() + s.status.slice(1)}
                         </span>
@@ -197,8 +252,8 @@ export default function CalendarPage() {
                       {(isOverlap || isPast || showZoom) && (
                         <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
                           {isOverlap && (
-                            <span style={{ fontSize: '11px', padding: '2px 8px', background: '#fef3c7', color: '#92400e', borderRadius: '99px', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                              <i className="ti ti-alert-triangle" style={{ fontSize: '11px' }} aria-hidden="true"></i> Posible superposición
+                            <span style={{ fontSize: '11px', padding: '2px 8px', background: '#fef3c7', color: '#92400e', borderRadius: '99px' }}>
+                              ⚠ Posible superposición
                             </span>
                           )}
                           {isPast && (
@@ -207,19 +262,46 @@ export default function CalendarPage() {
                             </span>
                           )}
                           {showZoom && (
-                            <a href={zoomUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: '11px', padding: '2px 8px', background: '#eef2ff', color: '#4338ca', borderRadius: '99px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                              <i className="ti ti-video" style={{ fontSize: '11px' }} aria-hidden="true"></i> Zoom del curso
+                            <a href={zoomUrl} target="_blank" rel="noopener noreferrer"
+                              onClick={e => e.stopPropagation()}
+                              style={{ fontSize: '11px', padding: '2px 8px', background: '#eef2ff', color: '#4338ca', borderRadius: '99px', textDecoration: 'none' }}>
+                              📹 Zoom del curso
                             </a>
                           )}
                         </div>
                       )}
                     </div>
+
+                    {/* Indicador de editable */}
+                    {canEdit && (
+                      <div style={{ color: '#d1d5db', fontSize: '16px', flexShrink: 0, alignSelf: 'center' }}>
+                        <i className="ti ti-pencil" aria-hidden="true"></i>
+                      </div>
+                    )}
                   </div>
                 )
               })}
             </div>
           </div>
         ))
+      )}
+
+      {/* Modal — mismo componente que Cronograma */}
+      {editSession && (
+        <SessionModal
+          session={editSession}
+          isNew={false}
+          commissions={commissions}
+          addLinks={addLinks}
+          canEdit={canEdit}
+          isAdmin={canDelete}
+          saving={saving}
+          onClose={handleClose}
+          onSave={handleSave}
+          onDelete={handleDelete}
+          onSessionChange={setEditSession}
+          onAddLinksChange={setAddLinks}
+        />
       )}
     </div>
   )
