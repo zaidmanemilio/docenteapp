@@ -1,12 +1,15 @@
 // src/app/(app)/courses/[courseId]/dashboard/page.tsx
+// Fix: empty state con CTA a Importar cronograma cuando no hay encuentros
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import Link from 'next/link'
 
 function KpiCard({ label, value, sub, variant = 'default' }: {
-  label: string; value: string | number; sub?: string; variant?: 'accent'|'success'|'warning'|'danger'|'default'
+  label: string; value: string | number; sub?: string
+  variant?: 'accent'|'success'|'warning'|'danger'|'default'
 }) {
   const borders: Record<string, string> = { accent:'#6366f1', success:'#6ee7b7', warning:'#fcd34d', danger:'#fca5a5', default:'#e5e7eb' }
-  const colors: Record<string, string> = { accent:'#6366f1', success:'#059669', warning:'#d97706', danger:'#dc2626', default:'#111827' }
+  const colors:  Record<string, string> = { accent:'#6366f1', success:'#059669', warning:'#d97706', danger:'#dc2626', default:'#111827' }
   return (
     <div style={{ background:'white', border:`1px solid ${borders[variant]}`, borderRadius:'12px', padding:'14px 16px' }}>
       <div style={{ fontSize:'11px', color:'#6b7280', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'6px' }}>{label}</div>
@@ -39,52 +42,96 @@ export default async function DashboardPage({ params }: { params: Promise<{ cour
     supabase.from('todos').select('*').eq('course_id', courseId),
   ])
 
-  const course = courseRes.data
+  const course   = courseRes.data
   const sessions = sessionsRes.data || []
-  const todos = todosRes.data || []
+  const todos    = todosRes.data    || []
 
   if (!course) return <div style={{ padding:'24px', color:'#6b7280' }}>Curso no encontrado.</div>
 
-  const total = sessions.length
-  const dadas = sessions.filter(s => s.status === 'dada').length
-  const pendientes = sessions.filter(s => s.status === 'pendiente').length
-  const reprog = sessions.filter(s => s.status === 'reprogramada').length
-  const canceladas = sessions.filter(s => s.status === 'cancelada').length
-  const pct = total ? Math.round((dadas / total) * 100) : 0
+  // ── Empty state: curso sin encuentros ──────────────────────────────────────
+  if (sessions.length === 0) {
+    return (
+      <div style={{ flex:1, overflow:'auto', padding:'24px' }}>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.8.0/tabler-icons.min.css" />
+        <div style={{ marginBottom:'20px' }}>
+          <p style={{ fontSize:'12px', color:'#6b7280', marginBottom:'2px' }}>{course.name}</p>
+          <h2 style={{ fontSize:'20px', fontWeight:600 }}>Dashboard</h2>
+        </div>
 
-  // Calidad operativa
-  const sinCanva = sessions.filter(s => !s.canva_url && !['parcial','recuperatorio','exposicion','proyecto'].includes(s.type) && s.status !== 'cancelada').length
-  const sinBrief = sessions.filter(s => s.type === 'taller' && !s.workshop_brief_url && s.status !== 'cancelada').length
-  const sinParcial = sessions.filter(s => ['parcial','recuperatorio'].includes(s.type) && !s.partial_file_url && s.status !== 'cancelada').length
-  const sinBio = sessions.filter(s => s.type === 'invitado' && !s.guest_bio_url && s.status !== 'cancelada').length
-  const sinResponsable = sessions.filter(s => !s.responsible && s.status !== 'cancelada').length
+        <div style={{
+          maxWidth: '480px', margin: '48px auto', textAlign: 'center',
+          background: 'white', border: '1px solid #e5e7eb', borderRadius: '16px', padding: '40px 32px',
+        }}>
+          <div style={{ width:'64px', height:'64px', background:'#eef2ff', borderRadius:'16px', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', fontSize:'28px' }}>
+            📅
+          </div>
+          <h3 style={{ fontSize:'18px', fontWeight:700, marginBottom:'8px', color:'#111827' }}>
+            Este curso no tiene clases todavía
+          </h3>
+          <p style={{ fontSize:'13px', color:'#6b7280', lineHeight:'1.6', marginBottom:'28px' }}>
+            Para empezar, podés importar tu cronograma desde un archivo CSV o Excel, o agregar las clases manualmente una por una.
+          </p>
+          <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
+            <Link href={`/courses/${courseId}/import`} style={{
+              display:'flex', alignItems:'center', justifyContent:'center', gap:'8px',
+              padding:'12px 20px', background:'#6366f1', color:'white',
+              borderRadius:'10px', textDecoration:'none', fontSize:'14px', fontWeight:600,
+            }}>
+              <i className="ti ti-upload" aria-hidden="true"></i>
+              Importar cronograma desde CSV / Excel
+            </Link>
+            <Link href={`/courses/${courseId}/schedule`} style={{
+              display:'flex', alignItems:'center', justifyContent:'center', gap:'8px',
+              padding:'12px 20px', background:'white', color:'#374151',
+              border:'1px solid #e5e7eb', borderRadius:'10px', textDecoration:'none', fontSize:'14px',
+            }}>
+              <i className="ti ti-plus" aria-hidden="true"></i>
+              Agregar clases manualmente
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Dashboard normal ───────────────────────────────────────────────────────
+  const total     = sessions.length
+  const dadas     = sessions.filter(s => s.status === 'dada').length
+  const pendientes= sessions.filter(s => s.status === 'pendiente').length
+  const reprog    = sessions.filter(s => s.status === 'reprogramada').length
+  const canceladas= sessions.filter(s => s.status === 'cancelada').length
+  const pct       = total ? Math.round((dadas / total) * 100) : 0
+
+  const sinCanva  = sessions.filter(s => !s.canva_url && !['parcial','recuperatorio','exposicion','proyecto'].includes(s.type) && s.status !== 'cancelada').length
+  const sinBrief  = sessions.filter(s => s.type === 'taller'      && !s.workshop_brief_url && s.status !== 'cancelada').length
+  const sinParcial= sessions.filter(s => ['parcial','recuperatorio'].includes(s.type) && !s.partial_file_url && s.status !== 'cancelada').length
+  const sinBio    = sessions.filter(s => s.type === 'invitado'    && !s.guest_bio_url    && s.status !== 'cancelada').length
+  const sinResp   = sessions.filter(s => !s.responsible           && s.status !== 'cancelada').length
   const todosOpen = todos.filter(t => t.status === 'open').length
+  const dadasSinReview    = sessions.filter(s => s.status === 'dada' && !s.review_what_worked && !s.review_what_didnt && !s.review_change_next).length
+  const fechaPasadaPend   = sessions.filter(s => s.status === 'pendiente' && s.date < today).length
+  const virtualSinZoom    = course.zoom_url ? 0 : sessions.filter(s => s.modality === 'virtual' && !s.canva_url && s.status !== 'cancelada').length
 
-  // Nuevas métricas v2
-  const dadasSinReview = sessions.filter(s => s.status === 'dada' && !s.review_what_worked && !s.review_what_didnt && !s.review_change_next).length
-  const fechaPasadaPendiente = sessions.filter(s => s.status === 'pendiente' && s.date < today).length
-  const virtualSinZoom = course.zoom_url ? 0 : sessions.filter(s => s.modality === 'virtual' && !s.canva_url && s.status !== 'cancelada').length
-
-  // Tipos
   const typeCounts: Record<string, number> = {}
   sessions.forEach(s => { typeCounts[s.type] = (typeCounts[s.type] || 0) + 1 })
-  const typeLabels: Record<string, string> = { teorica:'Teórica', practica:'Práctica', taller:'Taller', invitado:'Invitado', parcial:'Parcial', recuperatorio:'Recuperatorio', exposicion:'Exposición', proyecto:'Proyecto' }
-  const typeColors: Record<string, string> = { teorica:'#6366f1', practica:'#0d9488', taller:'#d97706', invitado:'#be185d', parcial:'#dc2626', recuperatorio:'#f97316', exposicion:'#7c3aed', proyecto:'#059669' }
+  const typeLabels: Record<string,string> = { teorica:'Teórica', practica:'Práctica', taller:'Taller', invitado:'Invitado', parcial:'Parcial', recuperatorio:'Recuperatorio', exposicion:'Exposición', proyecto:'Proyecto' }
+  const typeColors: Record<string,string> = { teorica:'#6366f1', practica:'#0d9488', taller:'#d97706', invitado:'#be185d', parcial:'#dc2626', recuperatorio:'#f97316', exposicion:'#7c3aed', proyecto:'#059669' }
   const maxType = Math.max(...Object.values(typeCounts), 1)
 
   const presencial = sessions.filter(s => s.modality === 'presencial').length
-  const virtual = sessions.filter(s => s.modality === 'virtual').length
+  const virtual    = sessions.filter(s => s.modality === 'virtual').length
 
-  const alerts = []
-  if (dadasSinReview > 0) alerts.push({ text: `${dadasSinReview} clase${dadasSinReview>1?'s':''} dada${dadasSinReview>1?'s':''} sin review post-clase`, icon:'ti-notes-off', color:'#92400e', bg:'#fef3c7' })
-  if (fechaPasadaPendiente > 0) alerts.push({ text: `${fechaPasadaPendiente} clase${fechaPasadaPendiente>1?'s':''} con fecha pasada y estado Pendiente`, icon:'ti-calendar-x', color:'#991b1b', bg:'#fee2e2' })
-  if (sinCanva > 0) alerts.push({ text: `${sinCanva} clase${sinCanva>1?'s':''} sin link a presentación/Canva`, icon:'ti-brand-figma', color:'#92400e', bg:'#fef3c7' })
-  if (sinBrief > 0) alerts.push({ text: `${sinBrief} taller${sinBrief>1?'es':''} sin brief/consigna`, icon:'ti-file-description', color:'#92400e', bg:'#fef3c7' })
-  if (sinParcial > 0) alerts.push({ text: `${sinParcial} parcial/recuperatorio sin archivo cargado`, icon:'ti-file-alert', color:'#92400e', bg:'#fef3c7' })
-  if (sinBio > 0) alerts.push({ text: `${sinBio} invitado${sinBio>1?'s':''} sin bio cargada`, icon:'ti-user-question', color:'#92400e', bg:'#fef3c7' })
-  if (sinResponsable > 0) alerts.push({ text: `${sinResponsable} encuentro${sinResponsable>1?'s':''} sin responsable asignado`, icon:'ti-user-x', color:'#92400e', bg:'#fef3c7' })
-  if (virtualSinZoom > 0) alerts.push({ text: `${virtualSinZoom} clase${virtualSinZoom>1?'s':''} virtual${virtualSinZoom>1?'es':''} sin link de Zoom`, icon:'ti-video-off', color:'#1d4ed8', bg:'#dbeafe' })
-  if (todosOpen > 0) alerts.push({ text: `${todosOpen} tarea${todosOpen>1?'s':''} pendiente${todosOpen>1?'s':''} abierta${todosOpen>1?'s':''}`, icon:'ti-clock-exclamation', color:'#92400e', bg:'#fef3c7' })
+  const alerts = [
+    dadasSinReview   > 0 && { text:`${dadasSinReview} clase${dadasSinReview>1?'s':''} dada${dadasSinReview>1?'s':''} sin review post-clase`, icon:'ti-notes-off',         color:'#92400e', bg:'#fef3c7' },
+    fechaPasadaPend  > 0 && { text:`${fechaPasadaPend} clase${fechaPasadaPend>1?'s':''} con fecha pasada y estado Pendiente`, icon:'ti-calendar-x',     color:'#991b1b', bg:'#fee2e2' },
+    sinCanva         > 0 && { text:`${sinCanva} clase${sinCanva>1?'s':''} sin link a presentación/Canva`, icon:'ti-brand-figma',       color:'#92400e', bg:'#fef3c7' },
+    sinBrief         > 0 && { text:`${sinBrief} taller${sinBrief>1?'es':''} sin brief/consigna`, icon:'ti-file-description',  color:'#92400e', bg:'#fef3c7' },
+    sinParcial       > 0 && { text:`${sinParcial} parcial/recuperatorio sin archivo cargado`, icon:'ti-file-alert',         color:'#92400e', bg:'#fef3c7' },
+    sinBio           > 0 && { text:`${sinBio} invitado${sinBio>1?'s':''} sin bio cargada`, icon:'ti-user-question',      color:'#92400e', bg:'#fef3c7' },
+    sinResp          > 0 && { text:`${sinResp} encuentro${sinResp>1?'s':''} sin responsable asignado`, icon:'ti-user-x',            color:'#92400e', bg:'#fef3c7' },
+    virtualSinZoom   > 0 && { text:`${virtualSinZoom} clase${virtualSinZoom>1?'s':''} virtual sin link de Zoom`, icon:'ti-video-off',        color:'#1d4ed8', bg:'#dbeafe' },
+    todosOpen        > 0 && { text:`${todosOpen} tarea${todosOpen>1?'s':''} pendiente${todosOpen>1?'s':''} abierta${todosOpen>1?'s':''}`, icon:'ti-clock-exclamation', color:'#92400e', bg:'#fef3c7' },
+  ].filter(Boolean) as { text: string; icon: string; color: string; bg: string }[]
 
   return (
     <div style={{ flex:1, overflow:'auto', padding:'24px' }}>
@@ -95,15 +142,15 @@ export default async function DashboardPage({ params }: { params: Promise<{ cour
         <h2 style={{ fontSize:'20px', fontWeight:600 }}>Dashboard</h2>
       </div>
 
-      {/* KPIs principales */}
+      {/* KPIs */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(130px, 1fr))', gap:'12px', marginBottom:'20px' }}>
-        <KpiCard label="Total encuentros" value={total} sub={`de ${course.expected_sessions} esperados`} variant="accent" />
-        <KpiCard label="Clases dadas" value={dadas} sub={`${pct}% del curso`} variant="success" />
-        <KpiCard label="Pendientes" value={pendientes} sub="por dar" />
-        {reprog > 0 && <KpiCard label="Reprogramadas" value={reprog} variant="warning" />}
-        {canceladas > 0 && <KpiCard label="Canceladas" value={canceladas} variant="danger" />}
-        <KpiCard label="Tareas abiertas" value={todosOpen} variant={todosOpen > 0 ? 'warning' : 'default'} />
-        <KpiCard label="Sin review" value={dadasSinReview} sub="clases dadas" variant={dadasSinReview > 0 ? 'warning' : 'default'} />
+        <KpiCard label="Total encuentros"  value={total}     sub={`de ${course.expected_sessions} esperados`} variant="accent"  />
+        <KpiCard label="Clases dadas"      value={dadas}     sub={`${pct}% del curso`}                        variant="success" />
+        <KpiCard label="Pendientes"        value={pendientes} sub="por dar" />
+        {reprog    > 0 && <KpiCard label="Reprogramadas"   value={reprog}    variant="warning" />}
+        {canceladas> 0 && <KpiCard label="Canceladas"      value={canceladas} variant="danger"  />}
+        <KpiCard label="Tareas abiertas"   value={todosOpen}  variant={todosOpen > 0 ? 'warning' : 'default'} />
+        <KpiCard label="Sin review"        value={dadasSinReview} sub="clases dadas" variant={dadasSinReview > 0 ? 'warning' : 'default'} />
       </div>
 
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px', marginBottom:'16px' }}>
@@ -116,10 +163,9 @@ export default async function DashboardPage({ params }: { params: Promise<{ cour
           </div>
           <div className="progress-bar"><div className="progress-fill" style={{ width:`${pct}%` }}></div></div>
           <p style={{ fontSize:'11px', color:'#6b7280', marginTop:'8px' }}>Faltan {pendientes} encuentros por dar</p>
-          {fechaPasadaPendiente > 0 && (
+          {fechaPasadaPend > 0 && (
             <p style={{ fontSize:'11px', color:'#dc2626', marginTop:'4px', display:'flex', alignItems:'center', gap:'4px' }}>
-              <i className="ti ti-alert-circle" aria-hidden="true"></i>
-              {fechaPasadaPendiente} con fecha pasada
+              <i className="ti ti-alert-circle" aria-hidden="true"></i> {fechaPasadaPend} con fecha pasada
             </p>
           )}
         </div>
@@ -158,7 +204,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ cour
           <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
             {Object.entries(typeCounts).map(([type, count]) => (
               <div key={type} style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-                <span style={{ fontSize:'12px', color:'#6b7280', width:'90px', textAlign:'right', flexShrink:0 }}>{typeLabels[type] || type}</span>
+                <span style={{ fontSize:'12px', color:'#6b7280', width:'90px', textAlign:'right', flexShrink:0 }}>{typeLabels[type]||type}</span>
                 <div style={{ flex:1, height:'20px', background:'#f3f4f6', borderRadius:'4px', overflow:'hidden' }}>
                   <div style={{ width:`${Math.round(count/maxType*100)}%`, height:'100%', background:typeColors[type]||'#6366f1', borderRadius:'4px', display:'flex', alignItems:'center', paddingLeft:'8px' }}>
                     <span style={{ fontSize:'11px', fontWeight:600, color:'white' }}>{count}</span>
