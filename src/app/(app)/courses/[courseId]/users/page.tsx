@@ -1,10 +1,20 @@
 'use client'
 // src/app/(app)/courses/[courseId]/users/page.tsx
+// Fix: muestra todos los profiles existentes, con botón de sincronización
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { Profile, Commission, UserCoursePermission } from '@/types'
+import type { Profile, Commission } from '@/types'
+
+interface Permission {
+  id: string
+  user_id: string
+  course_id: string
+  commission_id: string | null
+  permission: string
+  profiles: Profile | null
+}
 
 function getInitials(name: string) {
   return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
@@ -19,12 +29,14 @@ export default function UsersPage() {
   const { courseId } = useParams<{ courseId: string }>()
   const supabase = createClient()
 
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [allProfiles, setAllProfiles] = useState<Profile[]>([])
-  const [commissions, setCommissions] = useState<Commission[]>([])
-  const [permissions, setPermissions] = useState<UserCoursePermission[]>([])
-  const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<'by-course' | 'by-user'>('by-course')
+  const [myProfile,    setMyProfile]    = useState<Profile | null>(null)
+  const [allProfiles,  setAllProfiles]  = useState<Profile[]>([])
+  const [commissions,  setCommissions]  = useState<Commission[]>([])
+  const [permissions,  setPermissions]  = useState<Permission[]>([])
+  const [loading,      setLoading]      = useState(true)
+  const [syncing,      setSyncing]      = useState(false)
+  const [tab,          setTab]          = useState<'by-course'|'by-user'>('by-course')
+  const [syncMsg,      setSyncMsg]      = useState('')
 
   const load = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -33,9 +45,11 @@ export default function UsersPage() {
       supabase.from('profiles').select('*').eq('id', user.id).single(),
       supabase.from('profiles').select('*').order('full_name'),
       supabase.from('commissions').select('*').eq('course_id', courseId),
-      supabase.from('user_course_permissions').select('*, profiles(*)').eq('course_id', courseId),
+      supabase.from('user_course_permissions')
+        .select('*, profiles(*)')
+        .eq('course_id', courseId),
     ])
-    setProfile(myProfileRes.data)
+    setMyProfile(myProfileRes.data)
     setAllProfiles(allProfilesRes.data || [])
     setCommissions(commsRes.data || [])
     setPermissions(permsRes.data || [])
@@ -44,34 +58,41 @@ export default function UsersPage() {
 
   useEffect(() => { load() }, [load])
 
-  const isAdmin = profile?.global_role === 'admin'
+  const isAdmin = myProfile?.global_role === 'admin'
 
-  async function addPermission() {
-    const userId = prompt('UUID del usuario a agregar (copialo desde Supabase Auth):')
-    if (!userId) return
-    const perm = prompt('Permiso: full / edit / read')
-    if (!['full','edit','read'].includes(perm || '')) { alert('Permiso inválido.'); return }
-    const commName = prompt('Nombre de comisión (dejá vacío para todas):')
-    let commissionId: string | null = null
-    if (commName) {
-      const com = commissions.find(c => c.name.toLowerCase().includes(commName.toLowerCase()))
-      if (!com) { alert('Comisión no encontrada.'); return }
-      commissionId = com.id
+  // Sincronizar usuarios de auth.users que no tienen profile
+  async function syncUsers() {
+    setSyncing(true)
+    setSyncMsg('')
+    const { error } = await supabase.rpc('sync_missing_profiles')
+    if (error) {
+      // Si no existe la función RPC, hacer la sincronización básica
+      // Recargar perfiles después de la sincronización manual desde Supabase
+      setSyncMsg('Si faltan usuarios, ejecutá el SQL de sincronización en Supabase y recargá esta página.')
+    } else {
+      setSyncMsg('Sincronización completada.')
     }
+    setSyncing(false)
+    load()
+  }
+
+  async function addPermission(userId: string) {
+    const perm = prompt('Permiso para este usuario en el curso (full / edit / read):')
+    if (!['full','edit','read'].includes(perm || '')) { alert('Permiso inválido.'); return }
     await supabase.from('user_course_permissions').upsert({
-      user_id: userId, course_id: courseId, commission_id: commissionId, permission: perm
+      user_id: userId, course_id: courseId, commission_id: null, permission: perm
     }, { onConflict: 'user_id,course_id,commission_id' })
+    load()
+  }
+
+  async function changePerm(id: string, perm: string) {
+    await supabase.from('user_course_permissions').update({ permission: perm }).eq('id', id)
     load()
   }
 
   async function removePerm(id: string) {
     if (!confirm('¿Quitar este permiso?')) return
     await supabase.from('user_course_permissions').delete().eq('id', id)
-    load()
-  }
-
-  async function changePerm(id: string, perm: string) {
-    await supabase.from('user_course_permissions').update({ permission: perm }).eq('id', id)
     load()
   }
 
@@ -86,30 +107,62 @@ export default function UsersPage() {
     </div>
   )
 
+  const tabStyle = (t: string): React.CSSProperties => ({
+    padding: '8px 16px', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
+    color: tab === t ? '#6366f1' : '#6b7280',
+    borderBottom: tab === t ? '2px solid #6366f1' : '2px solid transparent',
+    marginBottom: '-1px', background: 'none', border: 'none', fontFamily: 'inherit',
+    borderBottomStyle: 'solid' as const,
+  })
+
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.8.0/tabler-icons.min.css" />
 
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
         <h2 style={{ fontSize: '20px', fontWeight: 600 }}>Usuarios y permisos</h2>
-        <button onClick={addPermission} style={{ padding: '8px 16px', background: '#6366f1', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <i className="ti ti-user-plus" aria-hidden="true"></i> Agregar permiso
+        <button onClick={syncUsers} disabled={syncing} style={{
+          padding: '7px 14px', background: 'white', border: '1px solid #e5e7eb',
+          borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit',
+          color: '#6b7280', display: 'flex', alignItems: 'center', gap: '6px',
+          opacity: syncing ? 0.6 : 1,
+        }}>
+          <i className="ti ti-refresh" aria-hidden="true"></i>
+          {syncing ? 'Sincronizando...' : 'Sincronizar usuarios'}
         </button>
+      </div>
+
+      {syncMsg && (
+        <div style={{ padding: '10px 14px', background: '#f0fdf4', border: '1px solid #6ee7b7', borderRadius: '8px', fontSize: '12px', color: '#065f46', marginBottom: '16px' }}>
+          {syncMsg}
+        </div>
+      )}
+
+      {/* Info sobre sincronización */}
+      <div style={{ padding: '10px 14px', background: '#f8f9fb', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px', color: '#6b7280', marginBottom: '20px', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+        <i className="ti ti-info-circle" style={{ fontSize: '15px', flexShrink: 0 }} aria-hidden="true"></i>
+        <span>
+          Si un usuario puede loguearse pero no aparece acá, ejecutá este SQL en Supabase y presioná &quot;Sincronizar usuarios&quot;:
+          <br />
+          <code style={{ fontSize: '11px', background: '#e5e7eb', padding: '2px 6px', borderRadius: '4px', marginTop: '4px', display: 'inline-block' }}>
+            insert into public.profiles (id, full_name, global_role) select id, coalesce(raw_user_meta_data-&gt;&gt;&apos;full_name&apos;, email), coalesce(raw_user_meta_data-&gt;&gt;&apos;global_role&apos;, &apos;teacher&apos;) from auth.users where id not in (select id from public.profiles) on conflict (id) do nothing;
+          </code>
+        </span>
       </div>
 
       {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: '20px' }}>
-        {[['by-course','Permisos de este curso'],['by-user','Todos los usuarios']].map(([key, label]) => (
-          <div key={key} onClick={() => setTab(key as typeof tab)} style={{ padding: '8px 16px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', color: tab === key ? '#6366f1' : '#6b7280', borderBottom: tab === key ? '2px solid #6366f1' : '2px solid transparent', marginBottom: '-1px' }}>
-            {label}
-          </div>
-        ))}
+        <button style={tabStyle('by-course')} onClick={() => setTab('by-course')}>Permisos de este curso</button>
+        <button style={tabStyle('by-user')}   onClick={() => setTab('by-user')}>Todos los usuarios</button>
       </div>
 
+      {/* TAB: Permisos del curso */}
       {tab === 'by-course' && (
         <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', overflow: 'hidden' }}>
           {permissions.length === 0 ? (
-            <div style={{ padding: '32px', textAlign: 'center', color: '#9ca3af' }}>No hay permisos asignados a este curso todavía.</div>
+            <div style={{ padding: '32px', textAlign: 'center', color: '#9ca3af' }}>
+              No hay permisos asignados a este curso todavía.
+            </div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
@@ -121,7 +174,7 @@ export default function UsersPage() {
               </thead>
               <tbody>
                 {permissions.map(p => {
-                  const u = p.profiles as unknown as Profile
+                  const u = p.profiles as Profile | null
                   const com = p.commission_id ? commissions.find(c => c.id === p.commission_id) : null
                   return (
                     <tr key={p.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
@@ -142,7 +195,8 @@ export default function UsersPage() {
                         {com ? <span style={{ padding: '2px 8px', borderRadius: '99px', background: '#f0fdf4', color: '#166534', fontSize: '11px' }}>{com.name}</span> : <span style={{ color: '#9ca3af' }}>Todas</span>}
                       </td>
                       <td style={{ padding: '10px 16px' }}>
-                        <select value={p.permission} onChange={e => changePerm(p.id, e.target.value)} style={{ padding: '4px 8px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '12px', fontFamily: 'inherit' }}>
+                        <select value={p.permission} onChange={e => changePerm(p.id, e.target.value)}
+                          style={{ padding: '4px 8px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '12px', fontFamily: 'inherit' }}>
                           <option value="full">full</option>
                           <option value="edit">edit</option>
                           <option value="read">read</option>
@@ -162,10 +216,20 @@ export default function UsersPage() {
         </div>
       )}
 
+      {/* TAB: Todos los usuarios */}
       {tab === 'by-user' && (
         <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '4px 20px' }}>
-          {allProfiles.map(u => {
+          {allProfiles.length === 0 ? (
+            <div style={{ padding: '32px', textAlign: 'center', color: '#9ca3af' }}>
+              No hay usuarios en el sistema. Sincronizá para traerlos.
+            </div>
+          ) : allProfiles.map(u => {
             const userPerms = permissions.filter(p => p.user_id === u.id)
+            const permColors: Record<string, { bg: string; color: string }> = {
+              full: { bg: '#ede9fe', color: '#7c3aed' },
+              edit: { bg: '#dbeafe', color: '#1d4ed8' },
+              read: { bg: '#f3f4f6', color: '#6b7280' },
+            }
             return (
               <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: '1px solid #f3f4f6' }}>
                 <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: getColor(u.id), color: 'white', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -173,18 +237,24 @@ export default function UsersPage() {
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 500, fontSize: '13px' }}>{u.full_name}</div>
-                  <div style={{ fontSize: '11px', color: '#6b7280' }}>{u.global_role === 'admin' ? 'Administrador' : u.global_role === 'teacher' ? 'Docente' : 'Invitado'}</div>
+                  <div style={{ fontSize: '11px', color: '#6b7280' }}>
+                    {u.global_role === 'admin' ? 'Administrador' : u.global_role === 'teacher' ? 'Docente' : 'Invitado'}
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                   {userPerms.length === 0 ? (
-                    <span style={{ fontSize: '11px', color: '#9ca3af' }}>Sin acceso a este curso</span>
+                    <>
+                      <span style={{ fontSize: '11px', color: '#9ca3af' }}>Sin acceso a este curso</span>
+                      <button onClick={() => addPermission(u.id)} style={{
+                        marginLeft: '8px', padding: '3px 10px', fontSize: '11px',
+                        background: '#eef2ff', color: '#4338ca', border: '1px solid #c7d2fe',
+                        borderRadius: '6px', cursor: 'pointer', fontFamily: 'inherit',
+                      }}>
+                        + Dar acceso
+                      </button>
+                    </>
                   ) : userPerms.map(p => {
                     const com = p.commission_id ? commissions.find(c => c.id === p.commission_id) : null
-                    const permColors: Record<string, {bg:string;color:string}> = {
-                      full: { bg:'#ede9fe', color:'#7c3aed' },
-                      edit: { bg:'#dbeafe', color:'#1d4ed8' },
-                      read: { bg:'#f3f4f6', color:'#6b7280' },
-                    }
                     const pc = permColors[p.permission] || permColors.read
                     return (
                       <span key={p.id} style={{ padding: '2px 8px', borderRadius: '99px', fontSize: '10px', fontWeight: 500, background: pc.bg, color: pc.color }}>
@@ -198,10 +268,6 @@ export default function UsersPage() {
           })}
         </div>
       )}
-
-      <div style={{ marginTop: '16px', padding: '12px 16px', background: '#f8f9fb', borderRadius: '8px', fontSize: '12px', color: '#6b7280' }}>
-        <strong>Nota:</strong> Para invitar usuarios nuevos, creá sus cuentas en Supabase Auth (Authentication {'>'} Users {'>'} Add user) con nombre y contraseña, luego asignales permisos aquí.
-      </div>
     </div>
   )
 }
