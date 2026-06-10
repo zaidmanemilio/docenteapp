@@ -506,8 +506,8 @@ export default function SchedulePage() {
                     <td style={{ padding: '10px 12px' }}>
 <button onClick={() => openEdit(s)}
   title="Ver y editar clase"
-  style={{ background: 'none', border: '1px solid #e5e7eb', borderRadius: '6px', padding: '5px 10px', cursor: 'pointer', color: '#6366f1', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-  <i className="ti ti-arrow-right" aria-hidden="true"></i>
+  style={{ background: '#6366f1', border: 'none', borderRadius: '6px', padding: '5px 10px', cursor: 'pointer', color: 'white', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+  <i className="ti ti-player-play-filled" aria-hidden="true"></i>
 </button>
                     </td>
                   </tr>
