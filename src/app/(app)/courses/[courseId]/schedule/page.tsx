@@ -430,7 +430,7 @@ export default function SchedulePage() {
             <thead>
               <tr style={{ background: '#f9fafb' }}>
                 {bulkMode && <th style={{ width: '36px', padding: '8px 12px', borderBottom: '1px solid #e5e7eb' }}></th>}
-                {['#','Fecha','Clase','Tipo','Responsable','Modalidad',...(commissions.length>1?['Comisión']:[]),'Estado','Links',''].map((h, i) => (
+                {['#','Fecha','Clase','Tipo','Responsable','Modalidad',...(commissions.length>1?['Comisión']:[]),'Estado','Links','Ver'].map((h, i) => (
                   <th key={i} style={{ textAlign: 'left', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6b7280', padding: '8px 12px', borderBottom: '1px solid #e5e7eb' }}>{h}</th>
                 ))}
               </tr>
@@ -495,18 +495,20 @@ export default function SchedulePage() {
                             <i className="ti ti-video" aria-hidden="true"></i>
                           </a>
                         )}
-                        {(s.additional_links?.length || 0) > 0 && (
-                          <span style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#eef2ff', border: '1px solid #c7d2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1', fontSize: '13px' }}>
-                            <i className="ti ti-link" aria-hidden="true"></i>
-                          </span>
-                        )}
-                      </div>
+{(s.additional_links || []).map((link, idx) => (
+  <a key={idx} href={link.url} target="_blank" rel="noopener noreferrer"
+    title={link.label || `Link ${idx + 1}`}
+    style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#eef2ff', border: '1px solid #c7d2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1', fontSize: '13px', textDecoration: 'none' }}>
+    <i className="ti ti-link" aria-hidden="true"></i>
+  </a>
+))}                      </div>
                     </td>
                     <td style={{ padding: '10px 12px' }}>
-                      <button onClick={() => openEdit(s)}
-                        style={{ background: 'none', border: '1px solid #e5e7eb', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', color: '#6b7280', fontSize: '13px' }}>
-                        <i className="ti ti-pencil" aria-hidden="true"></i>
-                      </button>
+<button onClick={() => openEdit(s)}
+  title="Ver y editar clase"
+  style={{ background: 'none', border: '1px solid #e5e7eb', borderRadius: '6px', padding: '5px 10px', cursor: 'pointer', color: '#6366f1', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+  <i className="ti ti-arrow-right" aria-hidden="true"></i>
+</button>
                     </td>
                   </tr>
                 )
