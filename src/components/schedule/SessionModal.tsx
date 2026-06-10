@@ -376,7 +376,7 @@ export default function SessionModal({
           {modalTab === 'notes' && (
             <>
               <div style={{ marginBottom: '16px' }}>
-                <label style={labelStyle}>Notas compartidas</label>
+                <label style={labelStyle}>Alcance del encuentro / Notas compartidas</label>
                 <p style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '6px' }}>
                   Visibles para todo el equipo con acceso a este curso.
                 </p>
