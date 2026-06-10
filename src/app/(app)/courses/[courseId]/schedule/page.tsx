@@ -479,11 +479,16 @@ export default function SchedulePage() {
                           if (field === 'workshop_brief_url' && s.type !== 'taller')   return null
                           const url = getSessionUrl(s, field)
                           return url ? (
-                            <a key={field} href={url} target="_blank" rel="noopener noreferrer"
-                              style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#eef2ff', border: '1px solid #c7d2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1', fontSize: '13px' }}>
-                              <i className={`ti ${LINK_ICONS[field]}`} aria-hidden="true"></i>
-                            </a>
-                          ) : (
+<a key={field} href={url} target="_blank" rel="noopener noreferrer"
+  title={
+    field === 'canva_url' ? 'Canva / Presentación' :
+    field === 'partial_file_url' ? 'Archivo del parcial' :
+    field === 'guest_bio_url' ? 'Bio del invitado' :
+    field === 'workshop_brief_url' ? 'Brief / Consigna' : field
+  }
+  style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#eef2ff', border: '1px solid #c7d2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1', fontSize: '13px', textDecoration: 'none' }}>
+  <i className={`ti ${LINK_ICONS[field]}`} aria-hidden="true"></i>
+</a>                          ) : (
                             <span key={field} style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#f3f4f6', border: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d1d5db', fontSize: '13px' }}>
                               <i className={`ti ${LINK_ICONS[field]}`} aria-hidden="true"></i>
                             </span>
