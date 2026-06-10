@@ -1,6 +1,6 @@
 'use client'
 // src/components/layout/Sidebar.tsx
-// Fix: active route calculada reactivamente desde usePathname(), no con useState
+// Agrega "Calendario unificado" como sección global (fuera del curso activo)
 
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -38,24 +38,16 @@ export default function Sidebar({ profile, courses }: SidebarProps) {
   const pathname = usePathname()
   const supabase = createClient()
 
-  // ── Calcular curso y sección activos desde pathname (reactivo) ──
-  // pathname ejemplos:
-  //   /courses/abc123/schedule
-  //   /courses/abc123/dashboard
-  //   /courses/new
-  //   /archived
   const parts = pathname.split('/')
-  // parts[0]='', parts[1]='courses', parts[2]=courseId, parts[3]=section
-  const activeCourseId  = parts[1] === 'courses' && parts[2] && parts[2] !== 'new' ? parts[2] : ''
-  const currentSection  = parts[3] || 'dashboard'
+  const activeCourseId = parts[1] === 'courses' && parts[2] && parts[2] !== 'new' ? parts[2] : ''
+  const currentSection = parts[3] || 'dashboard'
 
-  const isAdmin = profile.global_role === 'admin'
+  const isAdmin   = profile.global_role === 'admin'
   const roleLabel = profile.global_role === 'admin' ? 'Administrador'
     : profile.global_role === 'teacher' ? 'Docente' : 'Invitado'
 
   function navigate(section: string) {
     if (!activeCourseId) {
-      // Si no hay curso activo, ir al primer curso disponible
       const first = courses[0]?.id
       if (first) router.push(`/courses/${first}/${section}`)
       return
@@ -72,6 +64,8 @@ export default function Sidebar({ profile, courses }: SidebarProps) {
     router.push('/login')
     router.refresh()
   }
+
+  const isUnifiedCalendar = pathname === '/calendar'
 
   return (
     <>
@@ -90,11 +84,28 @@ export default function Sidebar({ profile, courses }: SidebarProps) {
           <p style={{ fontSize: '11px', color: '#a0a0c0', marginTop: '2px' }}>Gestión docente</p>
         </div>
 
+        {/* Calendario unificado — sección global */}
+        <div style={{ padding: '8px 8px 0' }}>
+          <div
+            onClick={() => router.push('/calendar')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              padding: '8px 10px', borderRadius: '8px', cursor: 'pointer',
+              color: isUnifiedCalendar ? '#818cf8' : '#a0a0c0',
+              background: isUnifiedCalendar ? 'rgba(99,102,241,0.18)' : 'rgba(255,255,255,0.04)',
+              fontSize: '13px', border: '1px solid rgba(99,102,241,0.2)',
+            }}
+          >
+            <i className="ti ti-calendar-stats" style={{ fontSize: '16px', width: '18px' }} aria-hidden="true"></i>
+            <span style={{ fontWeight: isUnifiedCalendar ? 600 : 400 }}>Calendario unificado</span>
+          </div>
+        </div>
+
         {/* Lista de cursos */}
-        <p style={{ padding: '14px 16px 6px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#555575' }}>
+        <p style={{ padding: '12px 16px 6px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#555575' }}>
           Mis cursos
         </p>
-        <div style={{ padding: '0 8px', overflowY: 'auto', maxHeight: '200px' }}>
+        <div style={{ padding: '0 8px', overflowY: 'auto', maxHeight: '180px' }}>
           {courses.map(c => (
             <div
               key={c.id}
@@ -112,7 +123,6 @@ export default function Sidebar({ profile, courses }: SidebarProps) {
             </div>
           ))}
 
-          {/* Nuevo curso — solo admin */}
           {isAdmin && (
             <div
               onClick={() => router.push('/courses/new')}
@@ -133,12 +143,12 @@ export default function Sidebar({ profile, courses }: SidebarProps) {
 
         <div style={{ height: '1px', background: '#2d2d4e', margin: '8px 16px' }}></div>
 
-        {/* Navegación del curso */}
+        {/* Navegación del curso activo */}
         <div style={{ padding: '0 8px', overflowY: 'auto', flex: 1 }}>
           {NAV_ITEMS
             .filter(item => !item.adminOnly || isAdmin)
             .map(item => {
-              const isActive = currentSection === item.key && !!activeCourseId
+              const isActive = currentSection === item.key && !!activeCourseId && !isUnifiedCalendar
               return (
                 <div
                   key={item.key}
@@ -158,7 +168,6 @@ export default function Sidebar({ profile, courses }: SidebarProps) {
             })
           }
 
-          {/* Cursos archivados — solo admin */}
           {isAdmin && (
             <>
               <div style={{ height: '1px', background: '#2d2d4e', margin: '8px 4px' }}></div>
