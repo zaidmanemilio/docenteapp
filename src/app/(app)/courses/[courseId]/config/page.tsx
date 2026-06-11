@@ -86,6 +86,7 @@ export default function ConfigPage() {
       expected_sessions: course.expected_sessions,
       year:              course.year,
       modality:          course.modality || 'presencial',
+      level:             (course as Record<string, unknown>).level || 'grado',
       schedule_text:     course.schedule_text || '',
       zoom_url:          course.zoom_url || '',
       program_url:       course.program_url || '',
@@ -243,6 +244,18 @@ export default function ConfigPage() {
               <input value={course.faculty || ''} onChange={e => setCourse({...course, faculty: e.target.value})} disabled={!isAdmin} placeholder="Ej: UNLP - Informática" style={inputStyle} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
+              <div style={{ marginBottom: '14px' }}>
+  <label style={labelStyle}>Nivel académico</label>
+  <select
+    value={(course as Record<string, unknown>).level as string || 'grado'}
+    onChange={e => setCourse({...course, level: e.target.value})}
+    disabled={!isAdmin}
+    style={inputStyle}
+  >
+    <option value="grado">Grado</option>
+    <option value="posgrado">Posgrado</option>
+  </select>
+</div>
               <div>
                 <label style={labelStyle}>Modalidad predominante</label>
                 <select value={course.modality || 'presencial'} onChange={e => setCourse({...course, modality: e.target.value})} disabled={!isAdmin} style={inputStyle}>
