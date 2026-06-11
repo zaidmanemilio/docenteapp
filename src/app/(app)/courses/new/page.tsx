@@ -24,6 +24,7 @@ export default function NewCoursePage() {
     year:              new Date().getFullYear(),
     description:       '',
     modality:          'presencial',
+    level:             'grado',
     expected_sessions: 16,
     status:            'draft',
   })
@@ -46,6 +47,7 @@ export default function NewCoursePage() {
         year:              form.year,
         description:       form.description.trim(),
         modality:          form.modality,
+        level:             form.level, 
         expected_sessions: form.expected_sessions,
         status:            form.status,
       })
@@ -142,7 +144,13 @@ export default function NewCoursePage() {
         {/* Configuración */}
         <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px', marginBottom: '16px' }}>
           <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#6b7280', marginBottom: '16px' }}>Configuración</p>
-
+<div style={{ marginBottom: '14px' }}>
+  <label style={labelStyle}>Nivel académico</label>
+  <select value={form.level} onChange={e => updateField('level', e.target.value)} style={inputStyle}>
+    <option value="grado">Grado</option>
+    <option value="posgrado">Posgrado</option>
+  </select>
+</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
             <div>
               <label style={labelStyle}>Modalidad predominante</label>
