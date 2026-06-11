@@ -2,6 +2,7 @@
 // src/components/layout/Sidebar.tsx
 // Agrega "Calendario unificado" como sección global (fuera del curso activo)
 
+import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile, Course } from '@/types'
@@ -43,6 +44,10 @@ export default function Sidebar({ profile, courses }: SidebarProps) {
   const currentSection = parts[3] || 'dashboard'
 
   const isAdmin   = profile.global_role === 'admin'
+  const [levelFilter, setLevelFilter] = useState('all')
+const filteredCourses = levelFilter === 'all'
+  ? courses
+  : courses.filter(c => (c as Record<string, unknown>).level === levelFilter || (!(c as Record<string, unknown>).level && levelFilter === 'grado'))
   const roleLabel = profile.global_role === 'admin' ? 'Administrador'
     : profile.global_role === 'teacher' ? 'Docente' : 'Invitado'
 
@@ -102,44 +107,59 @@ export default function Sidebar({ profile, courses }: SidebarProps) {
         </div>
 
         {/* Lista de cursos */}
-        <p style={{ padding: '12px 16px 6px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#555575' }}>
-          Mis cursos
-        </p>
-        <div style={{ padding: '0 8px', overflowY: 'auto', maxHeight: '180px' }}>
-          {courses.map(c => (
-            <div
-              key={c.id}
-              onClick={() => selectCourse(c.id)}
-              style={{
-                padding: '7px 10px', borderRadius: '8px', cursor: 'pointer',
-                marginBottom: '2px',
-                color: activeCourseId === c.id ? '#818cf8' : '#a0a0c0',
-                background: activeCourseId === c.id ? 'rgba(99,102,241,0.18)' : 'transparent',
-                fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px',
-              }}
-            >
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'currentColor', flexShrink: 0 }}></span>
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
-            </div>
-          ))}
-
-          {isAdmin && (
-            <div
-              onClick={() => router.push('/courses/new')}
-              style={{
-                padding: '7px 10px', borderRadius: '8px', cursor: 'pointer',
-                marginBottom: '2px', marginTop: '4px',
-                color: pathname === '/courses/new' ? '#818cf8' : '#555575',
-                background: pathname === '/courses/new' ? 'rgba(99,102,241,0.18)' : 'transparent',
-                fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px',
-                borderTop: '1px solid #2d2d4e', paddingTop: '10px',
-              }}
-            >
-              <i className="ti ti-plus" style={{ fontSize: '13px' }} aria-hidden="true"></i>
-              <span>Nuevo curso</span>
-            </div>
-          )}
-        </div>
+        <div style={{ padding: '12px 16px 6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+  <p style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#555575', margin: 0 }}>
+    Mis cursos
+  </p>
+  <select
+    value={levelFilter}
+    onChange={e => setLevelFilter(e.target.value)}
+    style={{ fontSize: '10px', background: 'transparent', border: '1px solid #3d3d5e', borderRadius: '4px', color: '#a0a0c0', padding: '2px 4px', cursor: 'pointer', fontFamily: 'inherit' }}
+  >
+    <option value="all">Todos</option>
+    <option value="grado">Grado</option>
+    <option value="posgrado">Posgrado</option>
+  </select>
+</div>
+<div style={{ padding: '0 8px', overflowY: 'auto', maxHeight: '180px' }}>
+  {filteredCourses.map(c => (
+    <div
+      key={c.id}
+      onClick={() => selectCourse(c.id)}
+      style={{
+        padding: '7px 10px', borderRadius: '8px', cursor: 'pointer',
+        marginBottom: '2px',
+        color: activeCourseId === c.id ? '#818cf8' : '#a0a0c0',
+        background: activeCourseId === c.id ? 'rgba(99,102,241,0.18)' : 'transparent',
+        fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px',
+      }}
+    >
+      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'currentColor', flexShrink: 0 }}></span>
+      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
+    </div>
+  ))}
+  {filteredCourses.length === 0 && (
+    <p style={{ fontSize: '11px', color: '#555575', padding: '6px 10px' }}>
+      Sin cursos de {levelFilter === 'grado' ? 'Grado' : 'Posgrado'}.
+    </p>
+  )}
+  {isAdmin && (
+    <div
+      onClick={() => router.push('/courses/new')}
+      style={{
+        padding: '7px 10px', borderRadius: '8px', cursor: 'pointer',
+        marginBottom: '2px', marginTop: '4px',
+        color: pathname === '/courses/new' ? '#818cf8' : '#555575',
+        background: pathname === '/courses/new' ? 'rgba(99,102,241,0.18)' : 'transparent',
+        fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px',
+        borderTop: '1px solid #2d2d4e', paddingTop: '10px',
+      }}
+    >
+      <i className="ti ti-plus" style={{ fontSize: '13px' }} aria-hidden="true"></i>
+      <span>Nuevo curso</span>
+    </div>
+  )}
+</div>
 
         <div style={{ height: '1px', background: '#2d2d4e', margin: '8px 16px' }}></div>
 
