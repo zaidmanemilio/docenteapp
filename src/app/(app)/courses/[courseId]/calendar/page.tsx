@@ -126,7 +126,7 @@ export default function CalendarPage() {
       id: s.id as string,
       date: s.date,
       title: s.title,
-      color: TYPE_COLORS[s.type] || '#6b7280',
+      color: TYPE_COLORS[s.type] || 'var(--text-muted)',
       time: s.start_time || undefined,
       muted: s.status === 'cancelada',
       flagPast: s.date < today && s.status === 'pendiente',
@@ -189,7 +189,7 @@ export default function CalendarPage() {
     load()
   }
 
-  if (loading) return <div style={{ padding: '24px', color: '#6b7280' }}>Cargando...</div>
+  if (loading) return <div style={{ padding: '24px', color: 'var(--text-muted)' }}>Cargando...</div>
 
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
@@ -197,7 +197,7 @@ export default function CalendarPage() {
 
       <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
         <div>
-          <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '2px' }}>{courseName}</p>
+          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '2px' }}>{courseName}</p>
           <h2 style={{ fontSize: '20px', fontWeight: 600 }}>Agenda</h2>
         </div>
         <ViewSwitch value={view} onChange={setView} />
@@ -249,7 +249,7 @@ export default function CalendarPage() {
       {view !== 'month' && (() => {
         const listData = view === 'week' ? weekGrouped : grouped
         return Object.keys(listData).length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '48px', color: '#6b7280' }}>
+          <div style={{ textAlign: 'center', padding: '48px', color: 'var(--text-muted)' }}>
             <i className="ti ti-calendar-off" style={{ fontSize: '40px', opacity: 0.3, display: 'block', marginBottom: '12px' }} aria-hidden="true"></i>
             <p>{view === 'week' ? 'Sin encuentros esta semana.' : 'Sin encuentros para mostrar.'}</p>
           </div>
@@ -275,7 +275,7 @@ export default function CalendarPage() {
                     style={{
                       background: 'var(--surface)',
                       border: `1px solid ${isOverlap ? 'var(--warning)' : isToday ? 'var(--accent)' : isPast ? 'var(--danger)' : 'var(--border)'}`,
-                      borderLeft: `4px solid ${TYPE_COLORS[s.type] || '#6b7280'}`,
+                      borderLeft: `4px solid ${TYPE_COLORS[s.type] || 'var(--text-muted)'}`,
                       borderRadius: '8px', padding: '12px 16px',
                       display: 'flex', alignItems: 'flex-start', gap: '14px',
                       cursor: 'pointer',
@@ -286,10 +286,10 @@ export default function CalendarPage() {
                   >
                     {/* Fecha */}
                     <div style={{ width: '60px', flexShrink: 0, textAlign: 'center' }}>
-                      <div style={{ fontSize: '11px', fontWeight: 600, color: isToday ? '#6366f1' : '#6b7280', textTransform: 'uppercase' }}>
+                      <div style={{ fontSize: '11px', fontWeight: 600, color: isToday ? 'var(--accent)' : 'var(--text-muted)', textTransform: 'uppercase' }}>
                         {fmtDate(s.date).split(' ')[0]}
                       </div>
-                      <div style={{ fontSize: '22px', fontWeight: 700, color: isToday ? '#6366f1' : '#111827', lineHeight: 1.1 }}>
+                      <div style={{ fontSize: '22px', fontWeight: 700, color: isToday ? 'var(--accent)' : 'var(--text-primary)', lineHeight: 1.1 }}>
                         {fmtDate(s.date).split(' ')[1]?.split('/')[0]}
                       </div>
                     </div>
@@ -302,13 +302,13 @@ export default function CalendarPage() {
                           {TYPE_LABELS[s.type] || s.type}
                         </span>
                       </div>
-                      <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: '#6b7280', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
                         {s.class_number && <span>Clase {s.class_number}</span>}
                         {s.responsible  && <span><i className="ti ti-user" style={{ fontSize: '11px' }} aria-hidden="true"></i> {s.responsible}</span>}
                         {s.start_time   && <span><i className="ti ti-clock" style={{ fontSize: '11px' }} aria-hidden="true"></i> {s.start_time}{s.end_time ? `–${s.end_time}` : ''}</span>}
                         {s.location     && <span><i className="ti ti-map-pin" style={{ fontSize: '11px' }} aria-hidden="true"></i> {s.location}</span>}
                         {com            && <span><i className="ti ti-users" style={{ fontSize: '11px' }} aria-hidden="true"></i> {com.name}</span>}
-                        <span style={{ color: STATUS_COLORS[s.status] || '#6b7280', fontWeight: 500 }}>
+                        <span style={{ color: STATUS_COLORS[s.status] || 'var(--text-muted)', fontWeight: 500 }}>
                           {s.status.charAt(0).toUpperCase() + s.status.slice(1)}
                         </span>
                       </div>
