@@ -76,17 +76,17 @@ const filteredCourses = levelFilter === 'all'
     <>
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.8.0/tabler-icons.min.css" />
       <nav style={{
-        width: '220px', background: '#1a1a2e',
-        borderRight: '1px solid #2d2d4e',
+        width: '220px', background: 'var(--sidebar-bg)',
+        borderRight: '1px solid var(--sidebar-border)',
         display: 'flex', flexDirection: 'column',
         flexShrink: 0, overflow: 'hidden',
       }}>
         {/* Logo */}
-        <div style={{ padding: '18px 16px 14px', borderBottom: '1px solid #2d2d4e' }}>
+        <div style={{ padding: '18px 16px 14px', borderBottom: '1px solid var(--sidebar-border)' }}>
           <h1 style={{ fontSize: '13px', fontWeight: 600, color: '#fff', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
             DocenteApp
           </h1>
-          <p style={{ fontSize: '11px', color: '#a0a0c0', marginTop: '2px' }}>Gestión docente</p>
+          <p style={{ fontSize: '11px', color: 'var(--sidebar-text)', marginTop: '2px' }}>Gestión docente</p>
         </div>
 
         {/* Calendario unificado — sección global */}
@@ -96,7 +96,7 @@ const filteredCourses = levelFilter === 'all'
             style={{
               display: 'flex', alignItems: 'center', gap: '8px',
               padding: '8px 10px', borderRadius: '8px', cursor: 'pointer',
-              color: isUnifiedCalendar ? '#818cf8' : '#a0a0c0',
+              color: isUnifiedCalendar ? 'var(--accent-light)' : 'var(--sidebar-text)',
               background: isUnifiedCalendar ? 'rgba(99,102,241,0.18)' : 'rgba(255,255,255,0.04)',
               fontSize: '13px', border: '1px solid rgba(99,102,241,0.2)',
             }}
@@ -114,7 +114,7 @@ const filteredCourses = levelFilter === 'all'
   <select
     value={levelFilter}
     onChange={e => setLevelFilter(e.target.value)}
-    style={{ fontSize: '10px', background: 'transparent', border: '1px solid #3d3d5e', borderRadius: '4px', color: '#a0a0c0', padding: '2px 4px', cursor: 'pointer', fontFamily: 'inherit' }}
+    style={{ fontSize: '10px', background: 'transparent', border: '1px solid #3d3d5e', borderRadius: '4px', color: 'var(--sidebar-text)', padding: '2px 4px', cursor: 'pointer', fontFamily: 'inherit' }}
   >
     <option value="all">Todos</option>
     <option value="grado">Grado</option>
@@ -129,7 +129,7 @@ const filteredCourses = levelFilter === 'all'
       style={{
         padding: '7px 10px', borderRadius: '8px', cursor: 'pointer',
         marginBottom: '2px',
-        color: activeCourseId === c.id ? '#818cf8' : '#a0a0c0',
+        color: activeCourseId === c.id ? 'var(--accent-light)' : 'var(--sidebar-text)',
         background: activeCourseId === c.id ? 'rgba(99,102,241,0.18)' : 'transparent',
         fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px',
       }}
@@ -149,10 +149,10 @@ const filteredCourses = levelFilter === 'all'
       style={{
         padding: '7px 10px', borderRadius: '8px', cursor: 'pointer',
         marginBottom: '2px', marginTop: '4px',
-        color: pathname === '/courses/new' ? '#818cf8' : '#555575',
+        color: pathname === '/courses/new' ? 'var(--accent-light)' : '#555575',
         background: pathname === '/courses/new' ? 'rgba(99,102,241,0.18)' : 'transparent',
         fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px',
-        borderTop: '1px solid #2d2d4e', paddingTop: '10px',
+        borderTop: '1px solid var(--sidebar-border)', paddingTop: '10px',
       }}
     >
       <i className="ti ti-plus" style={{ fontSize: '13px' }} aria-hidden="true"></i>
@@ -161,7 +161,7 @@ const filteredCourses = levelFilter === 'all'
   )}
 </div>
 
-        <div style={{ height: '1px', background: '#2d2d4e', margin: '8px 16px' }}></div>
+        <div style={{ height: '1px', background: 'var(--sidebar-border)', margin: '8px 16px' }}></div>
 
         {/* Navegación del curso activo */}
         <div style={{ padding: '0 8px', overflowY: 'auto', flex: 1 }}>
@@ -176,7 +176,7 @@ const filteredCourses = levelFilter === 'all'
                   style={{
                     display: 'flex', alignItems: 'center', gap: '8px',
                     padding: '7px 10px', borderRadius: '8px', cursor: 'pointer',
-                    color: isActive ? '#818cf8' : '#a0a0c0',
+                    color: isActive ? 'var(--accent-light)' : 'var(--sidebar-text)',
                     background: isActive ? 'rgba(99,102,241,0.18)' : 'transparent',
                     fontSize: '13px', marginBottom: '1px',
                   }}
@@ -190,13 +190,13 @@ const filteredCourses = levelFilter === 'all'
 
           {isAdmin && (
             <>
-              <div style={{ height: '1px', background: '#2d2d4e', margin: '8px 4px' }}></div>
+              <div style={{ height: '1px', background: 'var(--sidebar-border)', margin: '8px 4px' }}></div>
               <div
                 onClick={() => router.push('/archived')}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '8px',
                   padding: '7px 10px', borderRadius: '8px', cursor: 'pointer',
-                  color: pathname === '/archived' ? '#818cf8' : '#555575',
+                  color: pathname === '/archived' ? 'var(--accent-light)' : '#555575',
                   background: pathname === '/archived' ? 'rgba(99,102,241,0.18)' : 'transparent',
                   fontSize: '12px', marginBottom: '1px',
                 }}
@@ -209,7 +209,7 @@ const filteredCourses = levelFilter === 'all'
         </div>
 
         {/* Usuario */}
-        <div style={{ borderTop: '1px solid #2d2d4e', padding: '12px 16px' }}>
+        <div style={{ borderTop: '1px solid var(--sidebar-border)', padding: '12px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{
               width: '28px', height: '28px', borderRadius: '50%',
@@ -220,10 +220,10 @@ const filteredCourses = levelFilter === 'all'
               {getInitials(profile.full_name)}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: '12px', color: '#e8e8f0', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <p style={{ fontSize: '12px', color: 'var(--sidebar-active)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {profile.full_name}
               </p>
-              <span style={{ fontSize: '10px', color: '#a0a0c0' }}>{roleLabel}</span>
+              <span style={{ fontSize: '10px', color: 'var(--sidebar-text)' }}>{roleLabel}</span>
             </div>
             <button
               onClick={handleLogout}
