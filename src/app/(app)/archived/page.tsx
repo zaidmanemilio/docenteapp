@@ -156,26 +156,26 @@ export default function ArchivedPage() {
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                   <span style={{ fontWeight: 600, fontSize: '15px' }}>{c.name}</span>
-                  <span style={{ fontSize: '11px', color: '#9ca3af', background: '#f3f4f6', padding: '1px 7px', borderRadius: '99px' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'var(--hover-bg)', padding: '1px 7px', borderRadius: '99px' }}>
                     {c.year}
                   </span>
-                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: '#f3f4f6', padding: '1px 7px', borderRadius: '99px' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'var(--hover-bg)', padding: '1px 7px', borderRadius: '99px' }}>
                     Archivado
                   </span>
                 </div>
-                {c.description && <p style={{ fontSize: '12px', color: '#9ca3af' }}>{c.description}</p>}
+                {c.description && <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{c.description}</p>}
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button onClick={() => restore(c.id)} style={{
-                  padding: '7px 14px', background: '#d1fae5', color: '#065f46',
+                  padding: '7px 14px', background: 'var(--badge-success-bg)', color: 'var(--badge-success-fg)',
                   border: '1px solid #6ee7b7', borderRadius: '8px', fontSize: '12px',
                   cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '5px',
                 }}>
                   <i className="ti ti-restore" aria-hidden="true"></i> Restaurar
                 </button>
                 <button onClick={() => duplicate(c)} disabled={duplicating === c.id} style={{
-                  padding: '7px 14px', background: '#eef2ff', color: '#4338ca',
-                  border: '1px solid #c7d2fe', borderRadius: '8px', fontSize: '12px',
+                  padding: '7px 14px', background: 'var(--chip-accent-bg)', color: 'var(--chip-accent-fg)',
+                  border: '1px solid var(--chip-accent-bd)', borderRadius: '8px', fontSize: '12px',
                   cursor: duplicating === c.id ? 'wait' : 'pointer', fontFamily: 'inherit',
                   display: 'flex', alignItems: 'center', gap: '5px', opacity: duplicating === c.id ? 0.6 : 1,
                 }}>
