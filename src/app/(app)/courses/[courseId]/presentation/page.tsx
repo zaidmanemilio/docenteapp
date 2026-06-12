@@ -48,8 +48,8 @@ function InfoRow({ label, value }: { label: string; value?: string }) {
   if (!value) return null
   return (
     <div style={{ display: 'flex', gap: '12px', padding: '8px 0', borderBottom: '1px solid #f3f4f6' }}>
-      <span style={{ fontSize: '12px', color: '#6b7280', width: '140px', flexShrink: 0, fontWeight: 500 }}>{label}</span>
-      <span style={{ fontSize: '13px', color: '#111827' }}>{value}</span>
+      <span style={{ fontSize: '12px', color: 'var(--text-muted)', width: '140px', flexShrink: 0, fontWeight: 500 }}>{label}</span>
+      <span style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{value}</span>
     </div>
   )
 }
@@ -92,8 +92,8 @@ export default function PresentationPage() {
 
   useEffect(() => { load() }, [load])
 
-  if (loading) return <div style={{ padding: '24px', color: '#6b7280' }}>Cargando...</div>
-  if (!course) return <div style={{ padding: '24px', color: '#6b7280' }}>Curso no encontrado.</div>
+  if (loading) return <div style={{ padding: '24px', color: 'var(--text-muted)' }}>Cargando...</div>
+  if (!course) return <div style={{ padding: '24px', color: 'var(--text-muted)' }}>Curso no encontrado.</div>
 
   const hasAnyLink = course.zoom_url || course.program_url || course.moodle_url || course.materials_url
 
@@ -108,20 +108,20 @@ export default function PresentationPage() {
             <span style={{
               padding: '2px 10px', borderRadius: '99px', fontSize: '11px', fontWeight: 600,
               background: course.status === 'active' ? '#d1fae5' : '#f3f4f6',
-              color: course.status === 'active' ? '#059669' : '#6b7280',
+              color: course.status === 'active' ? 'var(--success)' : 'var(--text-muted)',
             }}>
               {STATUS_LABELS[course.status] || course.status}
             </span>
-            <span style={{ fontSize: '12px', color: '#6b7280' }}>{course.year}</span>
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{course.year}</span>
           </div>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#111827', marginBottom: '4px' }}>{course.name}</h1>
-          {course.full_name && <p style={{ fontSize: '14px', color: '#6b7280' }}>{course.full_name}</p>}
+          <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>{course.name}</h1>
+          {course.full_name && <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>{course.full_name}</p>}
         </div>
         <a href={`/courses/${courseId}/config`} style={{
           display: 'flex', alignItems: 'center', gap: '6px',
           padding: '7px 14px', borderRadius: '8px',
-          border: '1px solid #e5e7eb', background: 'white',
-          color: '#6b7280', fontSize: '13px', textDecoration: 'none',
+          border: '1px solid var(--border)', background: 'var(--surface)',
+          color: 'var(--text-muted)', fontSize: '13px', textDecoration: 'none',
         }}>
           <i className="ti ti-settings" aria-hidden="true"></i> Editar
         </a>
@@ -130,8 +130,8 @@ export default function PresentationPage() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
 
         {/* Información general */}
-        <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '20px 24px' }}>
-          <h3 style={{ fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6b7280', marginBottom: '14px' }}>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px 24px' }}>
+          <h3 style={{ fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '14px' }}>
             Información general
           </h3>
           <InfoRow label="Materia" value={course.full_name || course.name} />
@@ -143,29 +143,29 @@ export default function PresentationPage() {
           <InfoRow label="Días y horarios" value={course.schedule_text} />
           {course.description && (
             <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #f3f4f6' }}>
-              <p style={{ fontSize: '12px', color: '#6b7280', fontWeight: 500, marginBottom: '6px' }}>Descripción</p>
-              <p style={{ fontSize: '13px', color: '#111827', lineHeight: '1.6' }}>{course.description}</p>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '6px' }}>Descripción</p>
+              <p style={{ fontSize: '13px', color: 'var(--text-primary)', lineHeight: '1.6' }}>{course.description}</p>
             </div>
           )}
         </div>
 
         {/* Comisiones y docentes */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '20px 24px' }}>
-            <h3 style={{ fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6b7280', marginBottom: '14px' }}>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px 24px' }}>
+            <h3 style={{ fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '14px' }}>
               Comisiones
             </h3>
             {commissions.map(c => (
               <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0', borderBottom: '1px solid #f3f4f6' }}>
-                <i className="ti ti-users" style={{ color: '#6366f1', fontSize: '15px' }} aria-hidden="true"></i>
+                <i className="ti ti-users" style={{ color: 'var(--accent)', fontSize: '15px' }} aria-hidden="true"></i>
                 <span style={{ fontSize: '13px', fontWeight: 500 }}>{c.name}</span>
-                {c.description && <span style={{ fontSize: '12px', color: '#6b7280' }}>— {c.description}</span>}
+                {c.description && <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>— {c.description}</span>}
               </div>
             ))}
           </div>
 
-          <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '20px 24px' }}>
-            <h3 style={{ fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6b7280', marginBottom: '14px' }}>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px 24px' }}>
+            <h3 style={{ fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '14px' }}>
               Equipo docente
             </h3>
             {permissions.map((p, i) => {
@@ -174,9 +174,9 @@ export default function PresentationPage() {
               const permLabels: Record<string, string> = { full: 'Full', edit: 'Edición', read: 'Lectura' }
               return (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0', borderBottom: '1px solid #f3f4f6' }}>
-                  <i className="ti ti-user" style={{ color: '#6b7280', fontSize: '15px' }} aria-hidden="true"></i>
+                  <i className="ti ti-user" style={{ color: 'var(--text-muted)', fontSize: '15px' }} aria-hidden="true"></i>
                   <span style={{ fontSize: '13px', fontWeight: 500, flex: 1 }}>{name}</span>
-                  <span style={{ fontSize: '11px', color: '#6b7280' }}>{com ? com.name : 'Todas'}</span>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{com ? com.name : 'Todas'}</span>
                   <span style={{
                     fontSize: '10px', fontWeight: 600, padding: '1px 7px', borderRadius: '99px',
                     background: p.permission === 'full' ? '#ede9fe' : p.permission === 'edit' ? '#dbeafe' : '#f3f4f6',
@@ -192,8 +192,8 @@ export default function PresentationPage() {
 
         {/* Links del curso */}
         {hasAnyLink && (
-          <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '20px 24px' }}>
-            <h3 style={{ fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6b7280', marginBottom: '14px' }}>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px 24px' }}>
+            <h3 style={{ fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '14px' }}>
               Links del curso
             </h3>
             <LinkRow label="Zoom del curso" url={course.zoom_url || ''} icon="ti-video" />
