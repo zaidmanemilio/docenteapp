@@ -8,13 +8,13 @@ function KpiCard({ label, value, sub, variant = 'default' }: {
   label: string; value: string | number; sub?: string
   variant?: 'accent'|'success'|'warning'|'danger'|'default'
 }) {
-  const borders: Record<string, string> = { accent:'#6366f1', success:'#6ee7b7', warning:'#fcd34d', danger:'#fca5a5', default:'#e5e7eb' }
-  const colors:  Record<string, string> = { accent:'#6366f1', success:'#059669', warning:'#d97706', danger:'#dc2626', default:'#111827' }
+  const borders: Record<string, string> = { accent:'var(--accent)', success:'#6ee7b7', warning:'#fcd34d', danger:'#fca5a5', default:'var(--border)' }
+  const colors:  Record<string, string> = { accent:'var(--accent)', success:'var(--success)', warning:'var(--warning)', danger:'var(--danger)', default:'var(--text-primary)' }
   return (
-    <div style={{ background:'white', border:`1px solid ${borders[variant]}`, borderRadius:'12px', padding:'14px 16px' }}>
-      <div style={{ fontSize:'11px', color:'#6b7280', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'6px' }}>{label}</div>
+    <div style={{ background:'var(--surface)', border:`1px solid ${borders[variant]}`, borderRadius:'12px', padding:'14px 16px' }}>
+      <div style={{ fontSize:'11px', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'6px' }}>{label}</div>
       <div style={{ fontSize:'26px', fontWeight:600, color:colors[variant], lineHeight:1 }}>{value}</div>
-      {sub && <div style={{ fontSize:'11px', color:'#6b7280', marginTop:'4px' }}>{sub}</div>}
+      {sub && <div style={{ fontSize:'11px', color:'var(--text-muted)', marginTop:'4px' }}>{sub}</div>}
     </div>
   )
 }
@@ -46,7 +46,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ cour
   const sessions = sessionsRes.data || []
   const todos    = todosRes.data    || []
 
-  if (!course) return <div style={{ padding:'24px', color:'#6b7280' }}>Curso no encontrado.</div>
+  if (!course) return <div style={{ padding:'24px', color:'var(--text-muted)' }}>Curso no encontrado.</div>
 
   // ── Empty state: curso sin encuentros ──────────────────────────────────────
   if (sessions.length === 0) {
@@ -54,27 +54,27 @@ export default async function DashboardPage({ params }: { params: Promise<{ cour
       <div style={{ flex:1, overflow:'auto', padding:'24px' }}>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.8.0/tabler-icons.min.css" />
         <div style={{ marginBottom:'20px' }}>
-          <p style={{ fontSize:'12px', color:'#6b7280', marginBottom:'2px' }}>{course.name}</p>
+          <p style={{ fontSize:'12px', color:'var(--text-muted)', marginBottom:'2px' }}>{course.name}</p>
           <h2 style={{ fontSize:'20px', fontWeight:600 }}>Dashboard</h2>
         </div>
 
         <div style={{
           maxWidth: '480px', margin: '48px auto', textAlign: 'center',
-          background: 'white', border: '1px solid #e5e7eb', borderRadius: '16px', padding: '40px 32px',
+          background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '16px', padding: '40px 32px',
         }}>
           <div style={{ width:'64px', height:'64px', background:'#eef2ff', borderRadius:'16px', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', fontSize:'28px' }}>
             📅
           </div>
-          <h3 style={{ fontSize:'18px', fontWeight:700, marginBottom:'8px', color:'#111827' }}>
+          <h3 style={{ fontSize:'18px', fontWeight:700, marginBottom:'8px', color:'var(--text-primary)' }}>
             Este curso no tiene clases todavía
           </h3>
-          <p style={{ fontSize:'13px', color:'#6b7280', lineHeight:'1.6', marginBottom:'28px' }}>
+          <p style={{ fontSize:'13px', color:'var(--text-muted)', lineHeight:'1.6', marginBottom:'28px' }}>
             Para empezar, podés importar tu cronograma desde un archivo CSV o Excel, o agregar las clases manualmente una por una.
           </p>
           <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
             <Link href={`/courses/${courseId}/import`} style={{
               display:'flex', alignItems:'center', justifyContent:'center', gap:'8px',
-              padding:'12px 20px', background:'#6366f1', color:'white',
+              padding:'12px 20px', background:'var(--accent)', color:'white',
               borderRadius:'10px', textDecoration:'none', fontSize:'14px', fontWeight:600,
             }}>
               <i className="ti ti-upload" aria-hidden="true"></i>
@@ -82,8 +82,8 @@ export default async function DashboardPage({ params }: { params: Promise<{ cour
             </Link>
             <Link href={`/courses/${courseId}/schedule`} style={{
               display:'flex', alignItems:'center', justifyContent:'center', gap:'8px',
-              padding:'12px 20px', background:'white', color:'#374151',
-              border:'1px solid #e5e7eb', borderRadius:'10px', textDecoration:'none', fontSize:'14px',
+              padding:'12px 20px', background:'var(--surface)', color:'var(--text-secondary)',
+              border:'1px solid var(--border)', borderRadius:'10px', textDecoration:'none', fontSize:'14px',
             }}>
               <i className="ti ti-plus" aria-hidden="true"></i>
               Agregar clases manualmente
@@ -138,7 +138,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ cour
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.8.0/tabler-icons.min.css" />
 
       <div style={{ marginBottom:'20px' }}>
-        <p style={{ fontSize:'12px', color:'#6b7280', marginBottom:'2px' }}>{course.name}</p>
+        <p style={{ fontSize:'12px', color:'var(--text-muted)', marginBottom:'2px' }}>{course.name}</p>
         <h2 style={{ fontSize:'20px', fontWeight:600 }}>Dashboard</h2>
       </div>
 
@@ -155,35 +155,35 @@ export default async function DashboardPage({ params }: { params: Promise<{ cour
 
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px', marginBottom:'16px' }}>
         {/* Avance */}
-        <div style={{ background:'white', border:'1px solid #e5e7eb', borderRadius:'12px', padding:'16px 20px' }}>
+        <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:'12px', padding:'16px 20px' }}>
           <h3 style={{ fontSize:'15px', fontWeight:600, marginBottom:'12px' }}>Avance del semestre</h3>
           <div style={{ display:'flex', alignItems:'baseline', gap:'8px', marginBottom:'8px' }}>
-            <span style={{ fontSize:'32px', fontWeight:600, color:'#6366f1' }}>{pct}%</span>
-            <span style={{ fontSize:'12px', color:'#6b7280' }}>{dadas} de {total} clases</span>
+            <span style={{ fontSize:'32px', fontWeight:600, color:'var(--accent)' }}>{pct}%</span>
+            <span style={{ fontSize:'12px', color:'var(--text-muted)' }}>{dadas} de {total} clases</span>
           </div>
           <div className="progress-bar"><div className="progress-fill" style={{ width:`${pct}%` }}></div></div>
-          <p style={{ fontSize:'11px', color:'#6b7280', marginTop:'8px' }}>Faltan {pendientes} encuentros por dar</p>
+          <p style={{ fontSize:'11px', color:'var(--text-muted)', marginTop:'8px' }}>Faltan {pendientes} encuentros por dar</p>
           {fechaPasadaPend > 0 && (
-            <p style={{ fontSize:'11px', color:'#dc2626', marginTop:'4px', display:'flex', alignItems:'center', gap:'4px' }}>
+            <p style={{ fontSize:'11px', color:'var(--danger)', marginTop:'4px', display:'flex', alignItems:'center', gap:'4px' }}>
               <i className="ti ti-alert-circle" aria-hidden="true"></i> {fechaPasadaPend} con fecha pasada
             </p>
           )}
         </div>
 
         {/* Modalidad */}
-        <div style={{ background:'white', border:'1px solid #e5e7eb', borderRadius:'12px', padding:'16px 20px' }}>
+        <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:'12px', padding:'16px 20px' }}>
           <h3 style={{ fontSize:'15px', fontWeight:600, marginBottom:'12px' }}>Modalidad</h3>
           <div style={{ display:'flex', gap:'16px' }}>
             <div style={{ flex:1, textAlign:'center' }}>
-              <div style={{ fontSize:'28px', fontWeight:600, color:'#6366f1' }}>{presencial}</div>
-              <div style={{ fontSize:'11px', color:'#6b7280', marginTop:'2px' }}>Presencial</div>
+              <div style={{ fontSize:'28px', fontWeight:600, color:'var(--accent)' }}>{presencial}</div>
+              <div style={{ fontSize:'11px', color:'var(--text-muted)', marginTop:'2px' }}>Presencial</div>
               <div className="progress-bar" style={{ marginTop:'6px' }}>
                 <div className="progress-fill" style={{ width: total ? `${Math.round(presencial/total*100)}%`:'0%' }}></div>
               </div>
             </div>
             <div style={{ flex:1, textAlign:'center' }}>
               <div style={{ fontSize:'28px', fontWeight:600, color:'#0d9488' }}>{virtual}</div>
-              <div style={{ fontSize:'11px', color:'#6b7280', marginTop:'2px' }}>Virtual</div>
+              <div style={{ fontSize:'11px', color:'var(--text-muted)', marginTop:'2px' }}>Virtual</div>
               <div className="progress-bar" style={{ marginTop:'6px' }}>
                 <div className="progress-fill" style={{ width: total ? `${Math.round(virtual/total*100)}%`:'0%', background:'#0d9488' }}></div>
               </div>
@@ -199,12 +199,12 @@ export default async function DashboardPage({ params }: { params: Promise<{ cour
 
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px' }}>
         {/* Por tipo */}
-        <div style={{ background:'white', border:'1px solid #e5e7eb', borderRadius:'12px', padding:'16px 20px' }}>
+        <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:'12px', padding:'16px 20px' }}>
           <h3 style={{ fontSize:'15px', fontWeight:600, marginBottom:'14px' }}>Encuentros por tipo</h3>
           <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
             {Object.entries(typeCounts).map(([type, count]) => (
               <div key={type} style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-                <span style={{ fontSize:'12px', color:'#6b7280', width:'90px', textAlign:'right', flexShrink:0 }}>{typeLabels[type]||type}</span>
+                <span style={{ fontSize:'12px', color:'var(--text-muted)', width:'90px', textAlign:'right', flexShrink:0 }}>{typeLabels[type]||type}</span>
                 <div style={{ flex:1, height:'20px', background:'#f3f4f6', borderRadius:'4px', overflow:'hidden' }}>
                   <div style={{ width:`${Math.round(count/maxType*100)}%`, height:'100%', background:typeColors[type]||'#6366f1', borderRadius:'4px', display:'flex', alignItems:'center', paddingLeft:'8px' }}>
                     <span style={{ fontSize:'11px', fontWeight:600, color:'white' }}>{count}</span>
@@ -216,10 +216,10 @@ export default async function DashboardPage({ params }: { params: Promise<{ cour
         </div>
 
         {/* Alertas */}
-        <div style={{ background:'white', border:'1px solid #e5e7eb', borderRadius:'12px', padding:'16px 20px' }}>
+        <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:'12px', padding:'16px 20px' }}>
           <h3 style={{ fontSize:'15px', fontWeight:600, marginBottom:'14px' }}>Alertas operativas</h3>
           {alerts.length === 0 ? (
-            <div style={{ textAlign:'center', padding:'24px 0', color:'#059669' }}>
+            <div style={{ textAlign:'center', padding:'24px 0', color:'var(--success)' }}>
               <i className="ti ti-circle-check" style={{ fontSize:'28px' }} aria-hidden="true"></i>
               <p style={{ marginTop:'8px', fontWeight:500 }}>¡Todo en orden!</p>
             </div>
