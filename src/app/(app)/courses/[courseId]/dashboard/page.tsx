@@ -8,7 +8,7 @@ function KpiCard({ label, value, sub, variant = 'default' }: {
   label: string; value: string | number; sub?: string
   variant?: 'accent'|'success'|'warning'|'danger'|'default'
 }) {
-  const borders: Record<string, string> = { accent:'var(--accent)', success:'#6ee7b7', warning:'#fcd34d', danger:'#fca5a5', default:'var(--border)' }
+  const borders: Record<string, string> = { accent:'var(--accent)', success:'var(--badge-success-fg)', warning:'var(--badge-warning-fg)', danger:'var(--badge-danger-fg)', default:'var(--border)' }
   const colors:  Record<string, string> = { accent:'var(--accent)', success:'var(--success)', warning:'var(--warning)', danger:'var(--danger)', default:'var(--text-primary)' }
   return (
     <div style={{ background:'var(--surface)', border:`1px solid ${borders[variant]}`, borderRadius:'12px', padding:'14px 16px' }}>
@@ -19,9 +19,9 @@ function KpiCard({ label, value, sub, variant = 'default' }: {
   )
 }
 
-function AlertRow({ text, icon, color = '#92400e', bg = '#fef3c7' }: { text: string; icon: string; color?: string; bg?: string }) {
+function AlertRow({ text, icon, variant = 'warning' }: { text: string; icon: string; variant?: 'warning'|'danger'|'info'|'success' }) {
   return (
-    <div style={{ display:'flex', alignItems:'center', gap:'8px', padding:'8px 12px', borderRadius:'8px', background:bg, color, fontSize:'12px', marginBottom:'8px' }}>
+    <div className={`alert alert-${variant}`} style={{ alignItems:'center', marginBottom:'8px' }}>
       <i className={`ti ${icon}`} style={{ fontSize:'15px', flexShrink:0 }} aria-hidden="true"></i>
       <span>{text}</span>
     </div>
@@ -62,7 +62,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ cour
           maxWidth: '480px', margin: '48px auto', textAlign: 'center',
           background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '16px', padding: '40px 32px',
         }}>
-          <div style={{ width:'64px', height:'64px', background:'#eef2ff', borderRadius:'16px', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', fontSize:'28px' }}>
+          <div style={{ width:'64px', height:'64px', background:'var(--chip-accent-bg)', borderRadius:'16px', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', fontSize:'28px' }}>
             📅
           </div>
           <h3 style={{ fontSize:'18px', fontWeight:700, marginBottom:'8px', color:'var(--text-primary)' }}>
@@ -122,16 +122,16 @@ export default async function DashboardPage({ params }: { params: Promise<{ cour
   const virtual    = sessions.filter(s => s.modality === 'virtual').length
 
   const alerts = [
-    dadasSinReview   > 0 && { text:`${dadasSinReview} clase${dadasSinReview>1?'s':''} dada${dadasSinReview>1?'s':''} sin review post-clase`, icon:'ti-notes-off',         color:'#92400e', bg:'#fef3c7' },
-    fechaPasadaPend  > 0 && { text:`${fechaPasadaPend} clase${fechaPasadaPend>1?'s':''} con fecha pasada y estado Pendiente`, icon:'ti-calendar-x',     color:'#991b1b', bg:'#fee2e2' },
-    sinCanva         > 0 && { text:`${sinCanva} clase${sinCanva>1?'s':''} sin link a presentación/Canva`, icon:'ti-brand-figma',       color:'#92400e', bg:'#fef3c7' },
-    sinBrief         > 0 && { text:`${sinBrief} taller${sinBrief>1?'es':''} sin brief/consigna`, icon:'ti-file-description',  color:'#92400e', bg:'#fef3c7' },
-    sinParcial       > 0 && { text:`${sinParcial} parcial/recuperatorio sin archivo cargado`, icon:'ti-file-alert',         color:'#92400e', bg:'#fef3c7' },
-    sinBio           > 0 && { text:`${sinBio} invitado${sinBio>1?'s':''} sin bio cargada`, icon:'ti-user-question',      color:'#92400e', bg:'#fef3c7' },
-    sinResp          > 0 && { text:`${sinResp} encuentro${sinResp>1?'s':''} sin responsable asignado`, icon:'ti-user-x',            color:'#92400e', bg:'#fef3c7' },
-    virtualSinZoom   > 0 && { text:`${virtualSinZoom} clase${virtualSinZoom>1?'s':''} virtual sin link de Zoom`, icon:'ti-video-off',        color:'#1d4ed8', bg:'#dbeafe' },
-    todosOpen        > 0 && { text:`${todosOpen} tarea${todosOpen>1?'s':''} pendiente${todosOpen>1?'s':''} abierta${todosOpen>1?'s':''}`, icon:'ti-clock-exclamation', color:'#92400e', bg:'#fef3c7' },
-  ].filter(Boolean) as { text: string; icon: string; color: string; bg: string }[]
+    dadasSinReview   > 0 && { text:`${dadasSinReview} clase${dadasSinReview>1?'s':''} dada${dadasSinReview>1?'s':''} sin review post-clase`, icon:'ti-notes-off',         variant:'warning' },
+    fechaPasadaPend  > 0 && { text:`${fechaPasadaPend} clase${fechaPasadaPend>1?'s':''} con fecha pasada y estado Pendiente`, icon:'ti-calendar-x',     variant:'danger' },
+    sinCanva         > 0 && { text:`${sinCanva} clase${sinCanva>1?'s':''} sin link a presentación/Canva`, icon:'ti-brand-figma',       variant:'warning' },
+    sinBrief         > 0 && { text:`${sinBrief} taller${sinBrief>1?'es':''} sin brief/consigna`, icon:'ti-file-description',  variant:'warning' },
+    sinParcial       > 0 && { text:`${sinParcial} parcial/recuperatorio sin archivo cargado`, icon:'ti-file-alert',         variant:'warning' },
+    sinBio           > 0 && { text:`${sinBio} invitado${sinBio>1?'s':''} sin bio cargada`, icon:'ti-user-question',      variant:'warning' },
+    sinResp          > 0 && { text:`${sinResp} encuentro${sinResp>1?'s':''} sin responsable asignado`, icon:'ti-user-x',            variant:'warning' },
+    virtualSinZoom   > 0 && { text:`${virtualSinZoom} clase${virtualSinZoom>1?'s':''} virtual sin link de Zoom`, icon:'ti-video-off',        variant:'info' },
+    todosOpen        > 0 && { text:`${todosOpen} tarea${todosOpen>1?'s':''} pendiente${todosOpen>1?'s':''} abierta${todosOpen>1?'s':''}`, icon:'ti-clock-exclamation', variant:'warning' },
+  ].filter(Boolean) as { text: string; icon: string; variant: 'warning'|'danger'|'info'|'success' }[]
 
   return (
     <div style={{ flex:1, overflow:'auto', padding:'24px' }}>
@@ -190,7 +190,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ cour
             </div>
           </div>
           {course.zoom_url && (
-            <a href={course.zoom_url} target="_blank" rel="noopener noreferrer" style={{ display:'flex', alignItems:'center', gap:'6px', marginTop:'12px', padding:'6px 10px', background:'#eef2ff', border:'1px solid #c7d2fe', borderRadius:'6px', color:'#4338ca', fontSize:'12px', textDecoration:'none' }}>
+            <a href={course.zoom_url} target="_blank" rel="noopener noreferrer" className="chip-accent" style={{ display:'flex', alignItems:'center', gap:'6px', marginTop:'12px', padding:'6px 10px', borderRadius:'6px', fontSize:'12px', textDecoration:'none' }}>
               <i className="ti ti-video" aria-hidden="true"></i> Zoom del curso
             </a>
           )}
@@ -205,7 +205,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ cour
             {Object.entries(typeCounts).map(([type, count]) => (
               <div key={type} style={{ display:'flex', alignItems:'center', gap:'10px' }}>
                 <span style={{ fontSize:'12px', color:'var(--text-muted)', width:'90px', textAlign:'right', flexShrink:0 }}>{typeLabels[type]||type}</span>
-                <div style={{ flex:1, height:'20px', background:'#f3f4f6', borderRadius:'4px', overflow:'hidden' }}>
+                <div style={{ flex:1, height:'20px', background:'var(--hover-bg)', borderRadius:'4px', overflow:'hidden' }}>
                   <div style={{ width:`${Math.round(count/maxType*100)}%`, height:'100%', background:typeColors[type]||'#6366f1', borderRadius:'4px', display:'flex', alignItems:'center', paddingLeft:'8px' }}>
                     <span style={{ fontSize:'11px', fontWeight:600, color:'white' }}>{count}</span>
                   </div>
@@ -225,7 +225,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ cour
             </div>
           ) : (
             <div style={{ maxHeight:'280px', overflowY:'auto' }}>
-              {alerts.map((a, i) => <AlertRow key={i} text={a.text} icon={a.icon} color={a.color} bg={a.bg} />)}
+              {alerts.map((a, i) => <AlertRow key={i} text={a.text} icon={a.icon} variant={a.variant} />)}
             </div>
           )}
         </div>
