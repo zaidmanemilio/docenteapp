@@ -33,7 +33,7 @@ export default function LoginPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#1a1a2e',
+      background: 'var(--sidebar)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -111,7 +111,7 @@ export default function LoginPage() {
             style={{
               width: '100%',
               padding: '10px',
-              background: '#6366f1',
+              background: 'var(--accent)',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
