@@ -1,267 +1,251 @@
 'use client'
-// src/app/(app)/courses/[courseId]/users/page.tsx
-// Fix: muestra todos los profiles existentes, con botón de sincronización
+// src/app/(app)/courses/new/page.tsx
+// Fix: después de crear, redirige a /import en vez de /dashboard
 
-import { useState, useEffect, useCallback } from 'react'
-import { useParams } from 'next/navigation'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { Profile, Commission } from '@/types'
 
-interface Permission {
-  id: string
-  user_id: string
-  course_id: string
-  commission_id: string | null
-  permission: string
-  profiles: Profile | null
-}
+type CommissionMode = 'single' | 'multi'
 
-function getInitials(name: string) {
-  return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
-}
-const COLORS = ['#6366f1','#0d9488','#be185d','#d97706','#059669','#6b7280']
-function getColor(id: string) {
-  let n = 0; for (const c of id) n += c.charCodeAt(0)
-  return COLORS[n % COLORS.length]
-}
-
-export default function UsersPage() {
-  const { courseId } = useParams<{ courseId: string }>()
+export default function NewCoursePage() {
+  const router = useRouter()
   const supabase = createClient()
 
-  const [myProfile,    setMyProfile]    = useState<Profile | null>(null)
-  const [allProfiles,  setAllProfiles]  = useState<Profile[]>([])
-  const [commissions,  setCommissions]  = useState<Commission[]>([])
-  const [permissions,  setPermissions]  = useState<Permission[]>([])
-  const [loading,      setLoading]      = useState(true)
-  const [syncing,      setSyncing]      = useState(false)
-  const [tab,          setTab]          = useState<'by-course'|'by-user'>('by-course')
-  const [syncMsg,      setSyncMsg]      = useState('')
+  const [saving,          setSaving]          = useState(false)
+  const [commissionMode,  setCommissionMode]  = useState<CommissionMode>('single')
+  const [multiCommissions,setMultiCommissions]= useState(['Comisión 1', 'Comisión 2'])
 
-  const load = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    const [myProfileRes, allProfilesRes, commsRes, permsRes] = await Promise.all([
-      supabase.from('profiles').select('*').eq('id', user.id).single(),
-      supabase.from('profiles').select('*').order('full_name'),
-      supabase.from('commissions').select('*').eq('course_id', courseId),
-      supabase.from('user_course_permissions')
-        .select('*, profiles(*)')
-        .eq('course_id', courseId),
-    ])
-    setMyProfile(myProfileRes.data)
-    setAllProfiles(allProfilesRes.data || [])
-    setCommissions(commsRes.data || [])
-    setPermissions(permsRes.data || [])
-    setLoading(false)
-  }, [courseId])
-
-  useEffect(() => { load() }, [load])
-
-  const isAdmin = myProfile?.global_role === 'admin'
-
-  // Sincronizar usuarios de auth.users que no tienen profile
-  async function syncUsers() {
-    setSyncing(true)
-    setSyncMsg('')
-    const { error } = await supabase.rpc('sync_missing_profiles')
-    if (error) {
-      // Si no existe la función RPC, hacer la sincronización básica
-      // Recargar perfiles después de la sincronización manual desde Supabase
-      setSyncMsg('Si faltan usuarios, ejecutá el SQL de sincronización en Supabase y recargá esta página.')
-    } else {
-      setSyncMsg('Sincronización completada.')
-    }
-    setSyncing(false)
-    load()
-  }
-
-  async function addPermission(userId: string) {
-    const perm = prompt('Permiso para este usuario en el curso (full / edit / read):')
-    if (!['full','edit','read'].includes(perm || '')) { alert('Permiso inválido.'); return }
-    await supabase.from('user_course_permissions').upsert({
-      user_id: userId, course_id: courseId, commission_id: null, permission: perm
-    }, { onConflict: 'user_id,course_id,commission_id' })
-    load()
-  }
-
-  async function changePerm(id: string, perm: string) {
-    await supabase.from('user_course_permissions').update({ permission: perm }).eq('id', id)
-    load()
-  }
-
-  async function removePerm(id: string) {
-    if (!confirm('¿Quitar este permiso?')) return
-    await supabase.from('user_course_permissions').delete().eq('id', id)
-    load()
-  }
-
-  if (loading) return <div style={{ padding: '24px', color: 'var(--text-muted)' }}>Cargando...</div>
-
-  if (!isAdmin) return (
-    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
-        <i className="ti ti-lock" style={{ fontSize: '40px', opacity: 0.4, display: 'block', marginBottom: '12px' }}></i>
-        <p>Solo los administradores pueden gestionar usuarios y permisos.</p>
-      </div>
-    </div>
-  )
-
-  const tabStyle = (t: string): React.CSSProperties => ({
-    padding: '8px 16px', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
-    color: tab === t ? 'var(--accent)' : 'var(--text-muted)',
-    borderBottom: tab === t ? '2px solid var(--accent)' : '2px solid transparent',
-    marginBottom: '-1px', background: 'none', border: 'none', fontFamily: 'inherit',
-    borderBottomStyle: 'solid' as const,
+  const [form, setForm] = useState({
+    name:              '',
+    full_name:         '',
+    career:            '',
+    faculty:           '',
+    year:              new Date().getFullYear(),
+    description:       '',
+    modality:          'presencial',
+    level:             'grado',
+    expected_sessions: 16,
+    status:            'draft',
   })
+
+  function updateField(key: string, value: string | number) {
+    setForm(f => ({ ...f, [key]: value }))
+  }
+
+  async function handleCreate() {
+    if (!form.name.trim()) { alert('El nombre del curso es obligatorio.'); return }
+    setSaving(true)
+
+    const { data: courseData, error: courseErr } = await supabase
+      .from('courses')
+      .insert({
+        name:              form.name.trim(),
+        full_name:         form.full_name.trim(),
+        career:            form.career.trim(),
+        faculty:           form.faculty.trim(),
+        year:              form.year,
+        description:       form.description.trim(),
+        modality:          form.modality,
+        level:             form.level, 
+        expected_sessions: form.expected_sessions,
+        status:            form.status,
+      })
+      .select()
+      .single()
+
+    if (courseErr || !courseData) {
+      alert('Error al crear el curso: ' + courseErr?.message)
+      setSaving(false)
+      return
+    }
+
+    const courseId = courseData.id
+
+    // Crear comisiones
+    const commissionsToCreate = commissionMode === 'single'
+      ? [{ course_id: courseId, name: 'Única', description: '' }]
+      : multiCommissions.filter(c => c.trim()).map(name => ({ course_id: courseId, name: name.trim(), description: '' }))
+
+    await supabase.from('commissions').insert(commissionsToCreate)
+
+    // Asignar permiso full al usuario actual
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      await supabase.from('user_course_permissions').insert({
+        user_id: user.id, course_id: courseId, commission_id: null, permission: 'full',
+      })
+    }
+
+    setSaving(false)
+    // Redirigir a Importar cronograma en vez de Dashboard
+    router.push(`/courses/${courseId}/import`)
+    router.refresh()
+  }
+
+  const labelStyle: React.CSSProperties = {
+    display: 'block', fontSize: '11px', fontWeight: 600,
+    color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '5px',
+  }
+  const inputStyle: React.CSSProperties = {
+    width: '100%', padding: '8px 10px', border: '1px solid #e5e7eb',
+    borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit', color: '#111827',
+  }
 
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.8.0/tabler-icons.min.css" />
 
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h2 style={{ fontSize: '20px', fontWeight: 600 }}>Usuarios y permisos</h2>
-        <button onClick={syncUsers} disabled={syncing} style={{
-          padding: '7px 14px', background: 'var(--surface)', border: '1px solid var(--border)',
-          borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit',
-          color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px',
-          opacity: syncing ? 0.6 : 1,
-        }}>
-          <i className="ti ti-refresh" aria-hidden="true"></i>
-          {syncing ? 'Sincronizando...' : 'Sincronizar usuarios'}
-        </button>
-      </div>
-
-      {syncMsg && (
-        <div className="alert alert-success" style={{ padding: '10px 14px', borderRadius: '8px', fontSize: '12px', marginBottom: '16px' }}>
-          {syncMsg}
+      <div style={{ maxWidth: '620px' }}>
+        <div style={{ marginBottom: '24px' }}>
+          <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#111827' }}>Nuevo curso</h2>
+          <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
+            Una vez creado, vas a poder importar el cronograma desde un archivo CSV o Excel.
+          </p>
         </div>
-      )}
 
-      {/* Info sobre sincronización */}
-      <div style={{ padding: '10px 14px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '20px', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-        <i className="ti ti-info-circle" style={{ fontSize: '15px', flexShrink: 0 }} aria-hidden="true"></i>
-        <span>
-          Si un usuario puede loguearse pero no aparece acá, ejecutá este SQL en Supabase y presioná &quot;Sincronizar usuarios&quot;:
-          <br />
-          <code style={{ fontSize: '11px', background: 'var(--hover-bg)', padding: '2px 6px', borderRadius: '4px', marginTop: '4px', display: 'inline-block' }}>
-            insert into public.profiles (id, full_name, global_role) select id, coalesce(raw_user_meta_data-&gt;&gt;&apos;full_name&apos;, email), coalesce(raw_user_meta_data-&gt;&gt;&apos;global_role&apos;, &apos;teacher&apos;) from auth.users where id not in (select id from public.profiles) on conflict (id) do nothing;
-          </code>
-        </span>
-      </div>
+        {/* Datos del curso */}
+        <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px', marginBottom: '16px' }}>
+          <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#6b7280', marginBottom: '16px' }}>Identificación</p>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', marginBottom: '20px' }}>
-        <button style={tabStyle('by-course')} onClick={() => setTab('by-course')}>Permisos de este curso</button>
-        <button style={tabStyle('by-user')}   onClick={() => setTab('by-user')}>Todos los usuarios</button>
-      </div>
+          <div style={{ marginBottom: '14px' }}>
+            <label style={labelStyle}>Nombre corto del curso *</label>
+            <input value={form.name} onChange={e => updateField('name', e.target.value)} placeholder="Ej: TISI 2027" style={inputStyle} />
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>Nombre que aparece en el menú lateral.</p>
+          </div>
 
-      {/* TAB: Permisos del curso */}
-      {tab === 'by-course' && (
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden' }}>
-          {permissions.length === 0 ? (
-            <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>
-              No hay permisos asignados a este curso todavía.
+          <div style={{ marginBottom: '14px' }}>
+            <label style={labelStyle}>Nombre completo de la materia</label>
+            <input value={form.full_name} onChange={e => updateField('full_name', e.target.value)} placeholder="Ej: Tecnología de la Información y Sistemas Integrados" style={inputStyle} />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
+            <div>
+              <label style={labelStyle}>Carrera</label>
+              <input value={form.career} onChange={e => updateField('career', e.target.value)} placeholder="Ej: Ing. en Sistemas" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Año</label>
+              <input type="number" value={form.year} onChange={e => updateField('year', parseInt(e.target.value))} style={inputStyle} />
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '14px' }}>
+            <label style={labelStyle}>Facultad / Universidad</label>
+            <input value={form.faculty} onChange={e => updateField('faculty', e.target.value)} placeholder="Ej: UNLP - Facultad de Informática" style={inputStyle} />
+          </div>
+
+          <div style={{ marginBottom: '14px' }}>
+            <label style={labelStyle}>Descripción</label>
+            <textarea value={form.description} onChange={e => updateField('description', e.target.value)} rows={3} style={{ ...inputStyle, resize: 'vertical', minHeight: '72px' }} />
+          </div>
+        </div>
+
+        {/* Configuración */}
+        <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px', marginBottom: '16px' }}>
+          <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#6b7280', marginBottom: '16px' }}>Configuración</p>
+<div style={{ marginBottom: '14px' }}>
+  <label style={labelStyle}>Nivel académico</label>
+  <select value={form.level} onChange={e => updateField('level', e.target.value)} style={inputStyle}>
+    <option value="grado">Grado</option>
+    <option value="posgrado">Posgrado</option>
+  </select>
+</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
+            <div>
+              <label style={labelStyle}>Modalidad predominante</label>
+              <select value={form.modality} onChange={e => updateField('modality', e.target.value)} style={inputStyle}>
+                <option value="presencial">Presencial</option>
+                <option value="virtual">Virtual</option>
+                <option value="hibrida">Híbrida</option>
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Encuentros esperados</label>
+              <input type="number" value={form.expected_sessions} onChange={e => updateField('expected_sessions', parseInt(e.target.value))} style={inputStyle} />
+            </div>
+          </div>
+
+          <div>
+            <label style={labelStyle}>Estado inicial</label>
+            <select value={form.status} onChange={e => updateField('status', e.target.value)} style={inputStyle}>
+              <option value="draft">Borrador</option>
+              <option value="active">Activo</option>
+            </select>
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>Un curso en Borrador aparece en el menú pero indica que está en preparación.</p>
+          </div>
+        </div>
+
+        {/* Comisiones */}
+        <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px', marginBottom: '24px' }}>
+          <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#6b7280', marginBottom: '16px' }}>Comisiones</p>
+
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+            {(['single', 'multi'] as CommissionMode[]).map(mode => (
+              <button key={mode} onClick={() => setCommissionMode(mode)} style={{
+                padding: '7px 16px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer',
+                border: '1px solid',
+                borderColor: commissionMode === mode ? 'var(--accent)' : 'var(--border)',
+                background: commissionMode === mode ? 'var(--chip-accent-bg)' : 'var(--surface)',
+                color: commissionMode === mode ? 'var(--chip-accent-fg)' : 'var(--text-muted)',
+                fontFamily: 'inherit', fontWeight: commissionMode === mode ? 600 : 400,
+              }}>
+                {mode === 'single' ? 'Comisión única' : 'Múltiples comisiones'}
+              </button>
+            ))}
+          </div>
+
+          {commissionMode === 'single' ? (
+            <div style={{ padding: '10px 14px', background: '#f9fafb', borderRadius: '8px', fontSize: '13px', color: '#6b7280' }}>
+              Se creará automáticamente una comisión llamada <strong>&quot;Única&quot;</strong>.
             </div>
           ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ background: 'var(--hover-bg)' }}>
-                  {['Usuario','Comisión','Permiso',''].map(h => (
-                    <th key={h} style={{ textAlign: 'left', padding: '8px 16px', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {permissions.map(p => {
-                  const u = p.profiles as Profile | null
-                  const com = p.commission_id ? commissions.find(c => c.id === p.commission_id) : null
-                  return (
-                    <tr key={p.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                      <td style={{ padding: '10px 16px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          {u && (
-                            <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: getColor(u.id), color: 'white', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                              {getInitials(u.full_name)}
-                            </div>
-                          )}
-                          <div>
-                            <div style={{ fontSize: '13px', fontWeight: 500 }}>{u?.full_name || p.user_id}</div>
-                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{u?.global_role === 'admin' ? 'Administrador' : u?.global_role === 'teacher' ? 'Docente' : 'Invitado'}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text-muted)' }}>
-                        {com ? <span className="badge badge-success" style={{ fontSize: '11px' }}>{com.name}</span> : <span style={{ color: 'var(--text-muted)' }}>Todas</span>}
-                      </td>
-                      <td style={{ padding: '10px 16px' }}>
-                        <select value={p.permission} onChange={e => changePerm(p.id, e.target.value)}
-                          style={{ padding: '4px 8px', border: '1px solid var(--input-border)', borderRadius: '6px', fontSize: '12px', fontFamily: 'inherit' }}>
-                          <option value="full">full</option>
-                          <option value="edit">edit</option>
-                          <option value="read">read</option>
-                        </select>
-                      </td>
-                      <td style={{ padding: '10px 16px' }}>
-                        <button onClick={() => removePerm(p.id)} style={{ background: 'none', border: '1px solid var(--badge-danger-bd)', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', color: 'var(--danger)', fontSize: '12px' }}>
-                          <i className="ti ti-trash" aria-hidden="true"></i>
-                        </button>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+            <div>
+              {multiCommissions.map((c, i) => (
+                <div key={i} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                  <input value={c} onChange={e => setMultiCommissions(prev => prev.map((v, j) => j === i ? e.target.value : v))}
+                    placeholder={`Comisión ${i + 1}`}
+                    style={{ ...inputStyle, flex: 1, marginBottom: 0 }} />
+                  {multiCommissions.length > 1 && (
+                    <button onClick={() => setMultiCommissions(prev => prev.filter((_, j) => j !== i))}
+                      style={{ background: 'none', border: '1px solid #fca5a5', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', color: 'var(--danger)', fontSize: '13px' }}>
+                      <i className="ti ti-trash" aria-hidden="true"></i>
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button onClick={() => setMultiCommissions(prev => [...prev, `Comisión ${prev.length + 1}`])}
+                style={{ background: 'none', border: '1px dashed #d1d5db', borderRadius: '8px', padding: '7px 14px', cursor: 'pointer', color: '#6b7280', fontSize: '13px', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                <i className="ti ti-plus" aria-hidden="true"></i> Agregar comisión
+              </button>
+            </div>
           )}
         </div>
-      )}
 
-      {/* TAB: Todos los usuarios */}
-      {tab === 'by-user' && (
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '4px 20px' }}>
-          {allProfiles.length === 0 ? (
-            <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>
-              No hay usuarios en el sistema. Sincronizá para traerlos.
-            </div>
-          ) : allProfiles.map(u => {
-            const userPerms = permissions.filter(p => p.user_id === u.id)
-            const permCls: Record<string, string> = { full: 'badge-accent', edit: 'badge-info', read: 'badge-neutral' }
-            return (
-              <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: getColor(u.id), color: 'white', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  {getInitials(u.full_name)}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 500, fontSize: '13px' }}>{u.full_name}</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                    {u.global_role === 'admin' ? 'Administrador' : u.global_role === 'teacher' ? 'Docente' : 'Invitado'}
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                  {userPerms.length === 0 ? (
-                    <>
-                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Sin acceso a este curso</span>
-                      <button onClick={() => addPermission(u.id)} className="chip-accent" style={{
-                        marginLeft: '8px', padding: '3px 10px', fontSize: '11px', borderRadius: '6px', cursor: 'pointer', fontFamily: 'inherit',
-                      }}>
-                        + Dar acceso
-                      </button>
-                    </>
-                  ) : userPerms.map(p => {
-                    const com = p.commission_id ? commissions.find(c => c.id === p.commission_id) : null
-                    const pc = permCls[p.permission] || permCls.read
-                    return (
-                      <span key={p.id} className={`badge ${pc}`} style={{ fontSize: '10px' }}>
-                        {com?.name || 'Todas'} · {p.permission}
-                      </span>
-                    )
-                  })}
-                </div>
-              </div>
-            )
-          })}
+        {/* Aviso sobre el siguiente paso */}
+        <div style={{ padding: '14px 16px', background: 'var(--chip-accent-bg)', border: '1px solid var(--chip-accent-bd)', borderRadius: '10px', marginBottom: '20px', fontSize: '13px', color: 'var(--chip-accent-fg)', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+          <i className="ti ti-info-circle" style={{ fontSize: '18px', flexShrink: 0, marginTop: '1px' }} aria-hidden="true"></i>
+          <span>Al crear el curso, vas a ser redirigido a <strong>Importar cronograma</strong> para cargar tus clases desde un archivo CSV o Excel.</span>
         </div>
-      )}
+
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+          <button onClick={() => router.back()} style={{
+            padding: '9px 18px', background: 'transparent', border: '1px solid #e5e7eb',
+            borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: '#6b7280',
+          }}>
+            Cancelar
+          </button>
+          <button onClick={handleCreate} disabled={saving} style={{
+            padding: '9px 20px', background: '#6366f1', color: 'white',
+            border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
+            cursor: saving ? 'wait' : 'pointer', opacity: saving ? 0.7 : 1, fontFamily: 'inherit',
+            display: 'flex', alignItems: 'center', gap: '6px',
+          }}>
+            <i className="ti ti-plus" aria-hidden="true"></i>
+            {saving ? 'Creando...' : 'Crear curso e ir a importar'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
