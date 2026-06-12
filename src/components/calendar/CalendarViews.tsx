@@ -121,10 +121,14 @@ export function MonthNav({
 }: { label: string; onPrev: () => void; onNext: () => void; onToday: () => void }) {
   return (
     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
-      <button onClick={onPrev} aria-label="Mes anterior" className="nav-btn"><i className="ti ti-chevron-left" aria-hidden="true"></i></button>
+      <button onClick={onPrev} aria-label="Mes anterior" className="nav-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6" /></svg>
+      </button>
       <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', minWidth: '150px', textAlign: 'center' }}>{label}</div>
       <button onClick={onToday} className="nav-today">Hoy</button>
-      <button onClick={onNext} aria-label="Mes siguiente" className="nav-btn"><i className="ti ti-chevron-right" aria-hidden="true"></i></button>
+      <button onClick={onNext} aria-label="Mes siguiente" className="nav-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6" /></svg>
+      </button>
     </div>
   )
 }
@@ -179,13 +183,13 @@ export function MonthGrid({
               const dayEv   = byDate[dateStr] || []
               return (
                 <div key={di} style={{
-                  minHeight: '94px', background: 'var(--surface)',
+                  minHeight: '94px', minWidth: 0, background: 'var(--surface)',
                   border: `1px solid ${isToday ? 'var(--accent)' : 'var(--border)'}`,
                   borderRadius: '8px', padding: '6px',
                   display: 'flex', flexDirection: 'column', gap: '4px',
                 }}>
                   <div style={{ fontSize: '12px', fontWeight: isToday ? 700 : 600, color: isToday ? 'var(--accent)' : 'var(--text-secondary)', textAlign: 'right', lineHeight: 1 }}>{dayNum}</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', minWidth: 0, overflow: 'hidden' }}>
                     {dayEv.map(e => (
                       <button
                         key={e.id}
@@ -198,6 +202,7 @@ export function MonthGrid({
                           textDecoration: e.muted ? 'line-through' : 'none',
                           borderRadius: '4px', padding: '3px 5px', fontSize: '11px', lineHeight: 1.2,
                           cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                          display: 'block', width: '100%', maxWidth: '100%',
                           opacity: e.muted ? 0.7 : 1,
                         }}
                       >
