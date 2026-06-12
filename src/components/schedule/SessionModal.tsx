@@ -142,11 +142,7 @@ export default function SessionModal({
               {isNew ? 'Nueva clase' : 'Editar clase'}
             </h3>
             {session.status === 'dada' && (
-              <span style={{
-                fontSize: '11px', padding: '2px 8px',
-                background: '#d1fae5', color: '#059669',
-                borderRadius: '99px', marginRight: '8px',
-              }}>
+              <span className="badge badge-success" style={{ marginRight: '8px' }}>
                 Clase dada
               </span>
             )}
@@ -377,7 +373,7 @@ export default function SessionModal({
             <>
               <div style={{ marginBottom: '16px' }}>
                 <label style={labelStyle}>Alcance del encuentro / Notas compartidas</label>
-                <p style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '6px' }}>
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px' }}>
                   Visibles para todo el equipo con acceso a este curso.
                 </p>
                 <textarea
@@ -389,10 +385,10 @@ export default function SessionModal({
                 />
               </div>
               <div>
-                <label style={{ ...labelStyle, color: '#9ca3af' }}>
+                <label style={{ ...labelStyle, color: 'var(--text-muted)' }}>
                   Notas privadas <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(solo vos)</span>
                 </label>
-                <p style={{ fontSize: '11px', color: '#d1d5db', marginBottom: '6px' }}>Solo vos las ves.</p>
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px' }}>Solo vos las ves.</p>
                 <textarea
                   value={session.private_notes || ''}
                   onChange={e => onSessionChange({ ...session, private_notes: e.target.value })}
@@ -408,10 +404,7 @@ export default function SessionModal({
           {modalTab === 'review' && (
             <>
               {session.status !== 'dada' && (
-                <div style={{
-                  padding: '10px 14px', background: '#fef3c7',
-                  borderRadius: '8px', fontSize: '12px', color: '#92400e', marginBottom: '16px',
-                }}>
+                <div className="alert alert-warning" style={{ padding: '10px 14px', borderRadius: '8px', fontSize: '12px', marginBottom: '16px' }}>
                   Esta sección es para revisar la clase después de haberla dado.
                   Podés completarla cuando el estado sea &quot;Dada&quot;.
                 </div>
@@ -499,12 +492,12 @@ export default function SessionModal({
 
           {/* Eliminar — solo admin, solo en edición */}
           {!isNew && isAdmin && (
-            <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #fee2e2' }}>
+            <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
               <button
                 onClick={onDelete}
+                className="badge-danger"
                 style={{
-                  background: '#fee2e2', color: '#dc2626',
-                  border: '1px solid #fca5a5', borderRadius: '6px',
+                  border: '1px solid var(--badge-danger-bd)', borderRadius: '6px',
                   padding: '6px 12px', fontSize: '12px',
                   cursor: 'pointer', fontFamily: 'inherit',
                   display: 'flex', alignItems: 'center', gap: '6px',
