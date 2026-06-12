@@ -175,3 +175,21 @@ body {
   transition: all 0.12s;
 }
 .nav-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--hover-bg); }
+
+/* ── Campos de formulario: fondo y texto del tema en todos los inputs ── */
+/* Arregla el caso dark donde el campo quedaba con fondo blanco por defecto
+   del navegador y el texto se volvía ilegible. Aplica a todos los
+   input/select/textarea sin tener que tocar cada style inline. */
+input, select, textarea {
+  background-color: var(--input-bg);
+  color: var(--text-primary);
+  border-color: var(--input-border);
+}
+input::placeholder, textarea::placeholder { color: var(--text-muted); }
+/* Opciones del dropdown nativo (algunos navegadores las pintan aparte) */
+select option { background-color: var(--surface); color: var(--text-primary); }
+/* Inputs nativos de fecha/hora: ícono y texto legibles en dark */
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator,
+[data-theme="dark"] input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8);
+}
