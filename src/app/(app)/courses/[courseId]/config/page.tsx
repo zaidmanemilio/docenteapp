@@ -17,11 +17,11 @@ interface Permission {
 
 const labelStyle: React.CSSProperties = {
   display: 'block', fontSize: '11px', fontWeight: 600,
-  color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '5px',
+  color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '5px',
 }
 const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '8px 10px', border: '1px solid #e5e7eb',
-  borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit', color: '#111827',
+  width: '100%', padding: '8px 10px', border: '1px solid var(--input-border)',
+  borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit', color: 'var(--text-primary)',
 }
 
 export default function ConfigPage() {
@@ -160,7 +160,7 @@ export default function ConfigPage() {
     load()
   }
 
-  if (loading || !course) return <div style={{ padding: '24px', color: '#6b7280' }}>Cargando...</div>
+  if (loading || !course) return <div style={{ padding: '24px', color: 'var(--text-muted)' }}>Cargando...</div>
 
   // Usuarios que ya tienen permiso en este curso (para no repetirlos en el select)
   const usersWithPerm = new Set(permissions.map(p => p.user_id))
@@ -168,8 +168,8 @@ export default function ConfigPage() {
 
   const tabStyle = (t: string): React.CSSProperties => ({
     padding: '8px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
-    color: tab === t ? '#6366f1' : '#6b7280',
-    borderBottom: tab === t ? '2px solid #6366f1' : '2px solid transparent',
+    color: tab === t ? 'var(--accent)' : 'var(--text-muted)',
+    borderBottom: tab === t ? '2px solid var(--accent)' : '2px solid transparent',
     marginBottom: '-1px', background: 'none', border: 'none', fontFamily: 'inherit',
     borderBottomStyle: 'solid' as const,
   })
@@ -180,22 +180,22 @@ export default function ConfigPage() {
 
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
         <div>
-          <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '2px' }}>{course.name}</p>
+          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '2px' }}>{course.name}</p>
           <h2 style={{ fontSize: '20px', fontWeight: 600 }}>Configuración del curso</h2>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           {isAdmin && (
             <button onClick={archiveCourse} style={{
-              padding: '7px 14px', background: 'transparent', border: '1px solid #d1d5db',
+              padding: '7px 14px', background: 'transparent', border: '1px solid var(--input-border)',
               borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit',
-              color: '#6b7280', display: 'flex', alignItems: 'center', gap: '5px',
+              color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '5px',
             }}>
               <i className="ti ti-archive" aria-hidden="true"></i> Archivar
             </button>
           )}
           {isAdmin && (
             <button onClick={saveCourse} disabled={saving} style={{
-              padding: '7px 16px', background: saving ? '#9ca3af' : '#6366f1',
+              padding: '7px 16px', background: saving ? 'var(--text-muted)' : 'var(--accent)',
               color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px',
               fontWeight: 500, cursor: saving ? 'wait' : 'pointer', fontFamily: 'inherit',
               display: 'flex', alignItems: 'center', gap: '5px',
@@ -209,7 +209,7 @@ export default function ConfigPage() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', marginBottom: '20px' }}>
         <button style={tabStyle('general')}     onClick={() => setTab('general')}>General</button>
         <button style={tabStyle('links')}       onClick={() => setTab('links')}>Links del curso</button>
         <button style={tabStyle('commissions')} onClick={() => setTab('commissions')}>Comisiones</button>
@@ -220,7 +220,7 @@ export default function ConfigPage() {
 
         {/* TAB: General */}
         {tab === 'general' && (
-          <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px' }}>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '24px' }}>
             <div style={{ marginBottom: '14px' }}>
               <label style={labelStyle}>Nombre corto del curso</label>
               <input value={course.name} onChange={e => setCourse({...course, name: e.target.value})} disabled={!isAdmin} style={inputStyle} />
@@ -296,8 +296,8 @@ export default function ConfigPage() {
 
         {/* TAB: Links */}
         {tab === 'links' && (
-          <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px' }}>
-            <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '20px' }}>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '24px' }}>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '20px' }}>
               Links generales del curso. El link de Zoom aparece en el cronograma para encuentros virtuales sin link específico.
             </p>
             {[
@@ -320,20 +320,20 @@ export default function ConfigPage() {
 
         {/* TAB: Comisiones */}
         {tab === 'commissions' && (
-          <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px' }}>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '24px' }}>
             {commissions.map(c => (
-              <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0', borderBottom: '1px solid #f3f4f6' }}>
-                <i className="ti ti-users" style={{ color: '#6366f1', fontSize: '16px' }} aria-hidden="true"></i>
+              <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+                <i className="ti ti-users" style={{ color: 'var(--accent)', fontSize: '16px' }} aria-hidden="true"></i>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 500, fontSize: '13px' }}>{c.name}</div>
-                  {c.description && <div style={{ fontSize: '12px', color: '#6b7280' }}>{c.description}</div>}
+                  {c.description && <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{c.description}</div>}
                 </div>
                 {isAdmin && (
                   <div style={{ display: 'flex', gap: '4px' }}>
-                    <button onClick={() => editCommission(c)} style={{ background: 'none', border: '1px solid #e5e7eb', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', color: '#6b7280', fontSize: '12px' }}>
+                    <button onClick={() => editCommission(c)} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '12px' }}>
                       <i className="ti ti-pencil" aria-hidden="true"></i>
                     </button>
-                    <button onClick={() => deleteCommission(c.id)} style={{ background: 'none', border: '1px solid #fca5a5', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', color: '#dc2626', fontSize: '12px' }}>
+                    <button onClick={() => deleteCommission(c.id)} style={{ background: 'none', border: '1px solid var(--badge-danger-bd)', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', color: 'var(--danger)', fontSize: '12px' }}>
                       <i className="ti ti-trash" aria-hidden="true"></i>
                     </button>
                   </div>
@@ -341,7 +341,7 @@ export default function ConfigPage() {
               </div>
             ))}
             {isAdmin && (
-              <button onClick={addCommission} style={{ marginTop: '12px', background: 'none', border: '1px dashed #d1d5db', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer', color: '#6b7280', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: 'inherit' }}>
+              <button onClick={addCommission} style={{ marginTop: '12px', background: 'none', border: '1px dashed var(--input-border)', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: 'inherit' }}>
                 <i className="ti ti-plus" aria-hidden="true"></i> Agregar comisión
               </button>
             )}
@@ -350,16 +350,16 @@ export default function ConfigPage() {
 
         {/* TAB: Docentes y permisos */}
         {tab === 'teachers' && (
-          <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px' }}>
-            <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '24px' }}>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
               Docentes con acceso a este curso. <strong>full</strong> permite eliminar encuentros, <strong>edit</strong> permite editar, <strong>read</strong> es solo lectura.
             </p>
 
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', marginBottom: '16px' }}>
               <thead>
-                <tr style={{ background: '#f9fafb' }}>
+                <tr style={{ background: 'var(--hover-bg)' }}>
                   {['Docente','Comisión','Permiso',''].map(h => (
-                    <th key={h} style={{ textAlign: 'left', padding: '7px 10px', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#6b7280', borderBottom: '1px solid #e5e7eb' }}>{h}</th>
+                    <th key={h} style={{ textAlign: 'left', padding: '7px 10px', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -367,35 +367,31 @@ export default function ConfigPage() {
                 {permissions.map(p => {
                   const u = p.profiles as { full_name: string; global_role: string } | null
                   const com = p.commission_id ? commissions.find(c => c.id === p.commission_id) : null
-                  const permColors: Record<string, { bg: string; color: string }> = {
-                    full: { bg: '#ede9fe', color: '#7c3aed' },
-                    edit: { bg: '#dbeafe', color: '#1d4ed8' },
-                    read: { bg: '#f3f4f6', color: '#6b7280' },
-                  }
-                  const pc = permColors[p.permission] || permColors.read
+                  const permCls: Record<string, string> = { full: 'badge-accent', edit: 'badge-info', read: 'badge-neutral' }
+                  const pc = permCls[p.permission] || permCls.read
                   return (
-                    <tr key={p.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                    <tr key={p.id} style={{ borderBottom: '1px solid var(--border)' }}>
                       <td style={{ padding: '9px 10px', fontWeight: 500 }}>{u?.full_name || '—'}</td>
-                      <td style={{ padding: '9px 10px', color: '#6b7280' }}>
-                        {com ? com.name : <span style={{ color: '#9ca3af' }}>Todas</span>}
+                      <td style={{ padding: '9px 10px', color: 'var(--text-muted)' }}>
+                        {com ? com.name : <span style={{ color: 'var(--text-muted)' }}>Todas</span>}
                       </td>
                       <td style={{ padding: '9px 10px' }}>
                         {isAdmin ? (
                           <select value={p.permission} onChange={e => changePermission(p.id, e.target.value)}
-                            style={{ padding: '3px 7px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '12px', fontFamily: 'inherit' }}>
+                            style={{ padding: '3px 7px', border: '1px solid var(--input-border)', borderRadius: '6px', fontSize: '12px', fontFamily: 'inherit' }}>
                             <option value="full">full</option>
                             <option value="edit">edit</option>
                             <option value="read">read</option>
                           </select>
                         ) : (
-                          <span style={{ padding: '2px 8px', borderRadius: '99px', fontSize: '11px', fontWeight: 600, background: pc.bg, color: pc.color }}>
+                          <span className={`badge ${pc}`}>
                             {p.permission}
                           </span>
                         )}
                       </td>
                       <td style={{ padding: '9px 10px' }}>
                         {isAdmin && (
-                          <button onClick={() => removePermission(p.id)} style={{ background: 'none', border: '1px solid #fca5a5', borderRadius: '6px', padding: '3px 7px', cursor: 'pointer', color: '#dc2626', fontSize: '12px' }}>
+                          <button onClick={() => removePermission(p.id)} style={{ background: 'none', border: '1px solid var(--badge-danger-bd)', borderRadius: '6px', padding: '3px 7px', cursor: 'pointer', color: 'var(--danger)', fontSize: '12px' }}>
                             <i className="ti ti-trash" aria-hidden="true"></i>
                           </button>
                         )}
@@ -409,8 +405,8 @@ export default function ConfigPage() {
             {/* Formulario inline para agregar docente */}
             {isAdmin && !addingTeacher && (
               <button onClick={() => setAddingTeacher(true)} style={{
-                background: 'none', border: '1px dashed #d1d5db', borderRadius: '8px',
-                padding: '8px 16px', cursor: 'pointer', color: '#6b7280', fontSize: '13px',
+                background: 'none', border: '1px dashed var(--input-border)', borderRadius: '8px',
+                padding: '8px 16px', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '13px',
                 display: 'flex', alignItems: 'center', gap: '6px', fontFamily: 'inherit',
               }}>
                 <i className="ti ti-user-plus" aria-hidden="true"></i> Agregar docente
@@ -418,8 +414,8 @@ export default function ConfigPage() {
             )}
 
             {isAdmin && addingTeacher && (
-              <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '10px', padding: '16px', marginTop: '8px' }}>
-                <p style={{ fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '12px' }}>Agregar docente al curso</p>
+              <div style={{ background: 'var(--hover-bg)', border: '1px solid var(--border)', borderRadius: '10px', padding: '16px', marginTop: '8px' }}>
+                <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '12px' }}>Agregar docente al curso</p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '12px' }}>
                   <div>
                     <label style={labelStyle}>Usuario</label>
@@ -431,7 +427,7 @@ export default function ConfigPage() {
                       ))}
                     </select>
                     {availableProfiles.length === 0 && (
-                      <p style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px' }}>
+                      <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
                         Todos los usuarios ya tienen permisos.
                       </p>
                     )}
@@ -454,14 +450,14 @@ export default function ConfigPage() {
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button onClick={handleAddTeacher} style={{
-                    padding: '7px 16px', background: '#6366f1', color: 'white',
+                    padding: '7px 16px', background: 'var(--accent)', color: 'white',
                     border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
                     cursor: 'pointer', fontFamily: 'inherit',
                   }}>
                     Agregar
                   </button>
                   <button onClick={() => { setAddingTeacher(false); setNewTeacherUserId(''); setNewTeacherCommId(''); setNewTeacherPerm('edit') }}
-                    style={{ padding: '7px 14px', background: 'transparent', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: '#6b7280' }}>
+                    style={{ padding: '7px 14px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)' }}>
                     Cancelar
                   </button>
                 </div>
