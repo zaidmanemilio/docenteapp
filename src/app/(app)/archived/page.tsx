@@ -128,7 +128,7 @@ export default function ArchivedPage() {
     router.refresh()
   }
 
-  if (loading) return <div style={{ padding: '24px', color: '#6b7280' }}>Cargando...</div>
+  if (loading) return <div style={{ padding: '24px', color: 'var(--text-muted)' }}>Cargando...</div>
 
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
@@ -136,13 +136,13 @@ export default function ArchivedPage() {
 
       <div style={{ marginBottom: '24px' }}>
         <h2 style={{ fontSize: '20px', fontWeight: 600 }}>Cursos archivados</h2>
-        <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
+        <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
           Los cursos archivados no aparecen en el menú principal. Podés restaurarlos o duplicarlos para un nuevo año.
         </p>
       </div>
 
       {courses.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '48px', color: '#6b7280' }}>
+        <div style={{ textAlign: 'center', padding: '48px', color: 'var(--text-muted)' }}>
           <i className="ti ti-archive" style={{ fontSize: '40px', opacity: 0.3, display: 'block', marginBottom: '12px' }} aria-hidden="true"></i>
           <p>No hay cursos archivados.</p>
         </div>
@@ -150,7 +150,7 @@ export default function ArchivedPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {courses.map(c => (
             <div key={c.id} style={{
-              background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px',
+              background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px',
               padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '16px',
             }}>
               <div style={{ flex: 1 }}>
@@ -159,7 +159,7 @@ export default function ArchivedPage() {
                   <span style={{ fontSize: '11px', color: '#9ca3af', background: '#f3f4f6', padding: '1px 7px', borderRadius: '99px' }}>
                     {c.year}
                   </span>
-                  <span style={{ fontSize: '11px', color: '#6b7280', background: '#f3f4f6', padding: '1px 7px', borderRadius: '99px' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: '#f3f4f6', padding: '1px 7px', borderRadius: '99px' }}>
                     Archivado
                   </span>
                 </div>
