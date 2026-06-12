@@ -198,7 +198,7 @@ export default function UnifiedCalendarPage() {
       id: s.id,
       date: s.date,
       title: s.title,
-      color: courseColorMap[s.course_id] || '#6b7280',
+      color: courseColorMap[s.course_id] || 'var(--text-muted)',
       time: s.start_time || undefined,
       muted: s.status === 'cancelada',
       flagPast: s.date < today && s.status === 'pendiente',
@@ -216,7 +216,7 @@ export default function UnifiedCalendarPage() {
     if (s) router.push(`/courses/${s.course_id}/calendar`)
   }
 
-  if (loading) return <div style={{ padding: '24px', color: '#6b7280' }}>Cargando...</div>
+  if (loading) return <div style={{ padding: '24px', color: 'var(--text-muted)' }}>Cargando...</div>
 
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
@@ -226,7 +226,7 @@ export default function UnifiedCalendarPage() {
       <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
         <div>
           <h2 style={{ fontSize: '20px', fontWeight: 600 }}>Calendario unificado</h2>
-          <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
             Todos tus cursos en una sola vista.
           </p>
         </div>
@@ -243,7 +243,7 @@ export default function UnifiedCalendarPage() {
           </div>
         ))}
         {filterCourse !== 'all' && (
-          <button onClick={() => setFilterCourse('all')} style={{ padding: '4px 10px', background: 'none', border: '1px dashed #d1d5db', borderRadius: '99px', fontSize: '12px', color: '#6b7280', cursor: 'pointer', fontFamily: 'inherit' }}>
+          <button onClick={() => setFilterCourse('all')} style={{ padding: '4px 10px', background: 'none', border: '1px dashed #d1d5db', borderRadius: '99px', fontSize: '12px', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'inherit' }}>
             Ver todos
           </button>
         )}
@@ -251,7 +251,7 @@ export default function UnifiedCalendarPage() {
 
       {/* Filtros */}
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '16px', alignItems: 'center' }}>
-        <span style={{ fontSize: '11px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Estado</span>
+        <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Estado</span>
         {[['all','Todas'],['pendiente','Pendiente'],['dada','Dada'],['reprogramada','Reprog.'],['cancelada','Cancelada']].map(([v, l]) => (
           <button key={v} className={`filter-pill${filterStatus===v?' active':''}`} onClick={() => setFilterStatus(v)}>{l}</button>
         ))}
@@ -302,7 +302,7 @@ export default function UnifiedCalendarPage() {
       {view !== 'month' && (() => {
         const listData = view === 'week' ? weekGrouped : grouped
         return Object.keys(listData).length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '48px', color: '#6b7280' }}>
+        <div style={{ textAlign: 'center', padding: '48px', color: 'var(--text-muted)' }}>
           <i className="ti ti-calendar-off" style={{ fontSize: '40px', opacity: 0.3, display: 'block', marginBottom: '12px' }} aria-hidden="true"></i>
           <p>{view === 'week' ? 'Sin encuentros esta semana.' : 'Sin encuentros para mostrar.'}</p>
         </div>
@@ -324,7 +324,7 @@ export default function UnifiedCalendarPage() {
                 const isOverlap = overlaps.has(s.id)
                 const isSameDay = sameDayCrossed.has(s.id) && !isOverlap
                 const dateInfo  = fmtDate(s.date)
-                const courseColor = courseColorMap[s.course_id] || '#6b7280'
+                const courseColor = courseColorMap[s.course_id] || 'var(--text-muted)'
 
                 return (
                   <div
@@ -343,10 +343,10 @@ export default function UnifiedCalendarPage() {
                   >
                     {/* Fecha */}
                     <div style={{ width: '56px', flexShrink: 0, textAlign: 'center' }}>
-                      <div style={{ fontSize: '11px', fontWeight: 600, color: isToday ? '#6366f1' : '#6b7280', textTransform: 'uppercase' }}>
+                      <div style={{ fontSize: '11px', fontWeight: 600, color: isToday ? 'var(--accent)' : 'var(--text-muted)', textTransform: 'uppercase' }}>
                         {dateInfo.dayName}
                       </div>
-                      <div style={{ fontSize: '22px', fontWeight: 700, color: isToday ? '#6366f1' : '#111827', lineHeight: 1.1 }}>
+                      <div style={{ fontSize: '22px', fontWeight: 700, color: isToday ? 'var(--accent)' : 'var(--text-primary)', lineHeight: 1.1 }}>
                         {dateInfo.day}
                       </div>
                       <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>/{dateInfo.month}</div>
@@ -359,21 +359,21 @@ export default function UnifiedCalendarPage() {
                         <span style={{ fontSize: '11px', fontWeight: 600, color: courseColor, background: courseColor + '15', padding: '1px 8px', borderRadius: '99px' }}>
                           {s.course.name}
                         </span>
-                        <span style={{ fontSize: '10px', fontWeight: 600, padding: '1px 7px', borderRadius: '99px', background: (TYPE_COLORS[s.type] || '#6b7280') + '20', color: TYPE_COLORS[s.type] || '#6b7280' }}>
+                        <span style={{ fontSize: '10px', fontWeight: 600, padding: '1px 7px', borderRadius: '99px', background: (TYPE_COLORS[s.type] || 'var(--text-muted)') + '20', color: TYPE_COLORS[s.type] || 'var(--text-muted)' }}>
                           {TYPE_LABELS[s.type] || s.type}
                         </span>
                       </div>
 
-                      <div style={{ fontSize: '14px', fontWeight: 600, color: '#111827', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {s.title}
                       </div>
 
-                      <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: '#6b7280', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
                         {s.class_number && <span>Clase {s.class_number}</span>}
                         {s.responsible  && <span><i className="ti ti-user" style={{ fontSize: '11px' }} aria-hidden="true"></i> {s.responsible}</span>}
                         {s.start_time   && <span><i className="ti ti-clock" style={{ fontSize: '11px' }} aria-hidden="true"></i> {s.start_time}{s.end_time ? `–${s.end_time}` : ''}</span>}
                         {s.location     && <span><i className="ti ti-map-pin" style={{ fontSize: '11px' }} aria-hidden="true"></i> {s.location}</span>}
-                        <span style={{ color: STATUS_COLORS[s.status] || '#6b7280', fontWeight: 500 }}>
+                        <span style={{ color: STATUS_COLORS[s.status] || 'var(--text-muted)', fontWeight: 500 }}>
                           {s.status.charAt(0).toUpperCase() + s.status.slice(1)}
                         </span>
                       </div>
