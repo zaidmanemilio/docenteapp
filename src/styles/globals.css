@@ -4,6 +4,7 @@
 @tailwind utilities;
 
 :root {
+  /* --- Tokens legacy (en uso por .filter-pill, .progress-fill y el Sidebar). NO TOCAR --- */
   --sidebar-w: 220px;
   --sidebar-bg: #1a1a2e;
   --sidebar-border: #2d2d4e;
@@ -12,14 +13,54 @@
   --accent: #6366f1;
   --accent-light: #818cf8;
   --accent-bg: #eef2ff;
+
+  /* --- Capa de tokens semánticos (tema claro). Valores = hex actuales de la app. --- */
+  /* Aún no se consumen desde las pantallas; se migrarán en pasos posteriores. */
+  --bg: #f8f9fb;
+  --sidebar: #1a1a2e;
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --border: #e5e7eb;
+  --text-primary: #111827;
+  --text-secondary: #374151;
+  --text-muted: #6b7280;
+  /* --accent ya definido arriba (#6366f1) */
+  --accent-hover: #4f46e5;
+  --success: #059669;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --input-bg: #ffffff;
+  --input-border: #e5e7eb;
+  --hover-bg: #f9fafb;
+}
+
+/* --- Tema oscuro "Academic Operating System". Preparado pero inactivo: --- */
+/* solo se aplica cuando <html data-theme="dark">. Hoy el layout fija "light". */
+[data-theme="dark"] {
+  --bg: #0f172a;
+  --sidebar: #111827;
+  --surface: #1e293b;
+  --surface-elevated: #273449;
+  --border: #334155;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --accent: #818cf8;
+  --accent-hover: #6366f1;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --input-bg: #1e293b;
+  --input-border: #334155;
+  --hover-bg: #273449;
 }
 
 * { box-sizing: border-box; }
 
 body {
   font-family: 'DM Sans', system-ui, sans-serif;
-  background: #f8f9fb;
-  color: #111827;
+  background: var(--bg);
+  color: var(--text-primary);
 }
 
 /* Scrollbar */
