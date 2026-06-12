@@ -225,14 +225,14 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
                 onMouseEnter={e => (e.currentTarget.style.borderColor = '#6366f1')}
                 onMouseLeave={e => (e.currentTarget.style.borderColor = '#e5e7eb')}
               >
-                <i className="ti ti-upload" style={{ fontSize: '36px', color: '#9ca3af', display: 'block', marginBottom: '8px' }} aria-hidden="true"></i>
+                <i className="ti ti-upload" style={{ fontSize: '36px', color: 'var(--text-muted)', display: 'block', marginBottom: '8px' }} aria-hidden="true"></i>
                 <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '4px' }}>Hacé clic para seleccionar archivo</p>
-                <p style={{ fontSize: '12px', color: '#9ca3af' }}>CSV o Excel (.xlsx) — máx. 5MB</p>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>CSV o Excel (.xlsx) — máx. 5MB</p>
               </div>
               <input id="file-input" type="file" accept=".csv,.xlsx,.xls" style={{ display: 'none' }} onChange={handleFile} />
 
               {fileName && (
-                <div style={{ marginTop: '12px', padding: '10px 14px', background: '#d1fae5', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#065f46' }}>
+                <div className="alert alert-success" style={{ marginTop: '12px', padding: '10px 14px', borderRadius: '8px', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
                   <i className="ti ti-file-check" aria-hidden="true"></i>
                   <strong>{fileName}</strong> — {rawData.length} filas detectadas
                 </div>
@@ -264,11 +264,11 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
               </div>
 
               {FIELD_DEFS.map(f => (
-                <div key={f.key} style={{ display: 'grid', gridTemplateColumns: '160px 24px 1fr', gap: '8px', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid #f3f4f6' }}>
+                <div key={f.key} style={{ display: 'grid', gridTemplateColumns: '160px 24px 1fr', gap: '8px', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid var(--border)' }}>
                   <span style={{ fontSize: '13px', fontWeight: 500 }}>
-                    {f.label}{f.required ? <span style={{ color: 'var(--danger)' }}> *</span> : <span style={{ fontSize: '11px', color: '#9ca3af' }}> (opc.)</span>}
+                    {f.label}{f.required ? <span style={{ color: 'var(--danger)' }}> *</span> : <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}> (opc.)</span>}
                   </span>
-                  <i className="ti ti-arrow-right" style={{ color: '#9ca3af', fontSize: '14px' }} aria-hidden="true"></i>
+                  <i className="ti ti-arrow-right" style={{ color: 'var(--text-muted)', fontSize: '14px' }} aria-hidden="true"></i>
                   <select
                     value={mapping[f.key] || ''}
                     onChange={e => setMapping({...mapping, [f.key]: e.target.value})}
@@ -296,12 +296,12 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
             <>
               <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '8px' }}>Previsualizar ({preview.length} filas)</h3>
               {hasErrors ? (
-                <div style={{ padding: '8px 12px', background: '#fef3c7', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#92400e', marginBottom: '12px' }}>
+                <div className="alert alert-warning" style={{ padding: '8px 12px', borderRadius: '8px', alignItems: 'center', gap: '8px', fontSize: '12px', marginBottom: '12px' }}>
                   <i className="ti ti-alert-triangle" aria-hidden="true"></i>
                   Hay filas con errores (marcadas en rojo). Se importarán solo las filas válidas.
                 </div>
               ) : (
-                <div style={{ padding: '8px 12px', background: '#d1fae5', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#065f46', marginBottom: '12px' }}>
+                <div className="alert alert-success" style={{ padding: '8px 12px', borderRadius: '8px', alignItems: 'center', gap: '8px', fontSize: '12px', marginBottom: '12px' }}>
                   <i className="ti ti-circle-check" aria-hidden="true"></i>
                   Sin errores detectados. Listo para importar.
                 </div>
@@ -317,7 +317,7 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
                   </thead>
                   <tbody>
                     {preview.map((r, i) => (
-                      <tr key={i} style={{ background: r._errors.length ? '#fee2e2' : 'var(--surface)' }}>
+                      <tr key={i} style={{ background: r._errors.length ? 'var(--badge-danger-bg)' : 'var(--surface)' }}>
                         <td style={{ padding: '5px 8px', border: '1px solid var(--border)' }}>{i+1}</td>
                         <td style={{ padding: '5px 8px', border: '1px solid var(--border)' }}>{r.date}</td>
                         <td style={{ padding: '5px 8px', border: '1px solid var(--border)' }}>{r.class_number}</td>
@@ -365,13 +365,13 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
         <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px', height: 'fit-content' }}>
           <p style={{ fontSize: '12px', fontWeight: 600, marginBottom: '8px' }}>Formato de ejemplo</p>
           <pre style={{ fontSize: '10px', color: 'var(--text-muted)', whiteSpace: 'pre-wrap', fontFamily: 'monospace', background: 'var(--hover-bg)', padding: '10px', borderRadius: '6px', overflowX: 'auto' }}>{SAMPLE_CSV}</pre>
-          <p style={{ fontSize: '11px', color: '#9ca3af', marginTop: '10px' }}>
+          <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '10px' }}>
             Podés copiar esto en un archivo .csv o armarlo en Excel y guardarlo como CSV.
           </p>
           <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '10px', fontWeight: 500 }}>Tipos válidos:</p>
-          <p style={{ fontSize: '10px', color: '#9ca3af', marginTop: '4px' }}>teorica, practica, taller, invitado, parcial, recuperatorio, exposicion, proyecto</p>
+          <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>teorica, practica, taller, invitado, parcial, recuperatorio, exposicion, proyecto</p>
           <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px', fontWeight: 500 }}>Estados válidos:</p>
-          <p style={{ fontSize: '10px', color: '#9ca3af', marginTop: '4px' }}>pendiente, dada, reprogramada, cancelada</p>
+          <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>pendiente, dada, reprogramada, cancelada</p>
         </div>
       </div>
     </div>
