@@ -120,11 +120,11 @@ export function MonthNav({
   label, onPrev, onNext, onToday,
 }: { label: string; onPrev: () => void; onNext: () => void; onToday: () => void }) {
   return (
-    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-      <button onClick={onPrev} aria-label="Anterior" className="nav-btn"><i className="ti ti-chevron-left" aria-hidden="true"></i></button>
-      <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', minWidth: '150px', textAlign: 'center' }}>{label}</div>
-      <button onClick={onNext} aria-label="Siguiente" className="nav-btn"><i className="ti ti-chevron-right" aria-hidden="true"></i></button>
-      <button onClick={onToday} className="filter-pill" style={{ marginLeft: '4px' }}>Hoy</button>
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
+      <button onClick={onPrev} aria-label="Mes anterior" className="nav-btn"><i className="ti ti-chevron-left" aria-hidden="true"></i></button>
+      <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', minWidth: '150px', textAlign: 'center' }}>{label}</div>
+      <button onClick={onToday} className="nav-today">Hoy</button>
+      <button onClick={onNext} aria-label="Mes siguiente" className="nav-btn"><i className="ti ti-chevron-right" aria-hidden="true"></i></button>
     </div>
   )
 }
