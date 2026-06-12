@@ -23,7 +23,7 @@ const TYPE_LABELS: Record<string, string> = {
   exposicion:'Exposición', proyecto:'Proyecto',
 }
 const STATUS_COLORS: Record<string, string> = {
-  dada:'#059669', pendiente:'#6b7280', reprogramada:'#d97706', cancelada:'#dc2626',
+  dada:'var(--success)', pendiente:'var(--text-muted)', reprogramada:'var(--warning)', cancelada:'var(--danger)',
 }
 
 function groupByMonth(sessions: ExtendedSession[]) {
@@ -206,8 +206,8 @@ export default function CalendarPage() {
       {zoomUrl && (
         <a href={zoomUrl} target="_blank" rel="noopener noreferrer" style={{
           display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '16px',
-          padding: '8px 16px', background: '#eef2ff', border: '1px solid #c7d2fe',
-          borderRadius: '8px', color: '#4338ca', fontSize: '13px', fontWeight: 500, textDecoration: 'none',
+          padding: '8px 16px', background: 'var(--chip-accent-bg)', border: '1px solid var(--chip-accent-bd)',
+          borderRadius: '8px', color: 'var(--chip-accent-fg)', fontSize: '13px', fontWeight: 500, textDecoration: 'none',
         }}>
           <i className="ti ti-video" aria-hidden="true"></i>
           Zoom del curso
@@ -216,7 +216,7 @@ export default function CalendarPage() {
       )}
 
       {overlaps.size > 0 && (
-        <div style={{ padding: '10px 14px', background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: '8px', marginBottom: '16px', fontSize: '13px', color: '#92400e', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ padding: '10px 14px', background: 'var(--badge-warning-bg)', border: '1px solid var(--badge-warning-bd)', borderRadius: '8px', marginBottom: '16px', fontSize: '13px', color: 'var(--badge-warning-fg)', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <i className="ti ti-alert-triangle" aria-hidden="true"></i>
           <span>Se detectaron posibles superposiciones de horarios. Las clases afectadas están marcadas.</span>
         </div>
@@ -256,8 +256,8 @@ export default function CalendarPage() {
         ) : (
           Object.entries(listData).map(([month, monthSessions]) => (
           <div key={month} style={{ marginBottom: '24px' }}>
-            <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#374151', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <i className="ti ti-calendar-month" style={{ color: '#6366f1' }} aria-hidden="true"></i>
+            <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <i className="ti ti-calendar-month" style={{ color: 'var(--accent)' }} aria-hidden="true"></i>
               {fmtMonth(month)}
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -273,8 +273,8 @@ export default function CalendarPage() {
                     key={s.id}
                     onClick={() => openEdit(s)}
                     style={{
-                      background: 'white',
-                      border: `1px solid ${isOverlap ? '#fcd34d' : isToday ? '#c7d2fe' : isPast ? '#fecaca' : '#e5e7eb'}`,
+                      background: 'var(--surface)',
+                      border: `1px solid ${isOverlap ? 'var(--warning)' : isToday ? 'var(--accent)' : isPast ? 'var(--danger)' : 'var(--border)'}`,
                       borderLeft: `4px solid ${TYPE_COLORS[s.type] || '#6b7280'}`,
                       borderRadius: '8px', padding: '12px 16px',
                       display: 'flex', alignItems: 'flex-start', gap: '14px',
@@ -315,19 +315,19 @@ export default function CalendarPage() {
                       {(isOverlap || isPast || showZoom) && (
                         <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
                           {isOverlap && (
-                            <span style={{ fontSize: '11px', padding: '2px 8px', background: '#fef3c7', color: '#92400e', borderRadius: '99px' }}>
+                            <span style={{ fontSize: '11px', padding: '2px 8px', background: 'var(--badge-warning-bg)', color: 'var(--badge-warning-fg)', borderRadius: '99px' }}>
                               ⚠ Posible superposición
                             </span>
                           )}
                           {isPast && (
-                            <span style={{ fontSize: '11px', padding: '2px 8px', background: '#fee2e2', color: '#dc2626', borderRadius: '99px' }}>
+                            <span style={{ fontSize: '11px', padding: '2px 8px', background: 'var(--badge-danger-bg)', color: 'var(--badge-danger-fg)', borderRadius: '99px' }}>
                               Fecha pasada
                             </span>
                           )}
                           {showZoom && (
                             <a href={zoomUrl} target="_blank" rel="noopener noreferrer"
                               onClick={e => e.stopPropagation()}
-                              style={{ fontSize: '11px', padding: '2px 8px', background: '#eef2ff', color: '#4338ca', borderRadius: '99px', textDecoration: 'none' }}>
+                              style={{ fontSize: '11px', padding: '2px 8px', background: 'var(--chip-accent-bg)', color: 'var(--chip-accent-fg)', borderRadius: '99px', textDecoration: 'none' }}>
                               📹 Zoom del curso
                             </a>
                           )}
