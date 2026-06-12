@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { key: 'presentation', label: 'Presentación',        icon: 'ti-id-badge'         },
   { key: 'schedule',     label: 'Cronograma',          icon: 'ti-calendar-event'   },
   { key: 'calendar',     label: 'Agenda',              icon: 'ti-calendar-month'   },
+  { key: 'month',        label: 'Mes',                 icon: 'ti-calendar'         },  
   { key: 'import',       label: 'Importar',            icon: 'ti-upload'           },
   { key: 'todos',        label: 'Tareas pendientes',   icon: 'ti-checks'           },
   { key: 'config',       label: 'Configuración',       icon: 'ti-settings'         },
