@@ -25,7 +25,7 @@ const TYPE_BADGE: Record<string, { bg: string; color: string }> = {
 
 const STATUS_BADGE: Record<string, { bg: string; color: string }> = {
   dada:         { bg: '#d1fae5', color: '#059669' },
-  pendiente:    { bg: '#f3f4f6', color: '#6b7280' },
+  pendiente:    { bg: '#f3f4f6', color: 'var(--text-muted)' },
   reprogramada: { bg: '#fef3c7', color: '#d97706' },
   cancelada:    { bg: '#fee2e2', color: '#dc2626' },
 }
@@ -284,7 +284,7 @@ export default function SchedulePage() {
     load()
   }
 
-  if (loading) return <div style={{ padding: '24px', color: '#6b7280' }}>Cargando...</div>
+  if (loading) return <div style={{ padding: '24px', color: 'var(--text-muted)' }}>Cargando...</div>
 
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
@@ -293,15 +293,15 @@ export default function SchedulePage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
         <div>
-          <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '2px' }}>{courseName}</p>
+          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '2px' }}>{courseName}</p>
           <h2 style={{ fontSize: '20px', fontWeight: 600 }}>Cronograma</h2>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           {canEdit && (
             <button onClick={() => { setBulkMode(!bulkMode); clearSelection() }} style={{
               padding: '7px 14px',
-              background: bulkMode ? '#eef2ff' : 'white',
-              border: `1px solid ${bulkMode ? '#6366f1' : '#e5e7eb'}`,
+              background: bulkMode ? '#eef2ff' : 'var(--surface)',
+              border: `1px solid ${bulkMode ? 'var(--accent)' : 'var(--border)'}`,
               color: bulkMode ? '#4338ca' : '#6b7280',
               borderRadius: '8px', fontSize: '13px',
               fontWeight: bulkMode ? 600 : 400,
@@ -314,7 +314,7 @@ export default function SchedulePage() {
           )}
           {canEdit && (
             <button onClick={openAdd} style={{
-              padding: '7px 16px', background: '#6366f1', color: 'white',
+              padding: '7px 16px', background: 'var(--accent)', color: 'white',
               border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
               cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
             }}>
@@ -369,7 +369,7 @@ export default function SchedulePage() {
       {/* Filtros dinámicos */}
       <div style={{ marginBottom: '16px' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px', alignItems: 'center' }}>
-          <span style={{ fontSize: '11px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Estado</span>
+          <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Estado</span>
           {[['all','Todas'],['pendiente','Pendiente'],['dada','Dada'],['reprogramada','Reprog.'],['cancelada','Cancelada']].map(([v, l]) => (
             <button key={v} className={`filter-pill${filterStatus===v?' active':''}`} onClick={() => setFilterStatus(v)}>{l}</button>
           ))}
@@ -377,7 +377,7 @@ export default function SchedulePage() {
 
         {existingTypes.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px', alignItems: 'center' }}>
-            <span style={{ fontSize: '11px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Tipo</span>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Tipo</span>
             <button className={`filter-pill${filterType==='all'?' active':''}`} onClick={() => setFilterType('all')}>Todos</button>
             {existingTypes.map(t => (
               <button key={t} className={`filter-pill${filterType===t?' active':''}`} onClick={() => setFilterType(t)}>
@@ -389,7 +389,7 @@ export default function SchedulePage() {
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
           {commissions.length > 1 && <>
-            <span style={{ fontSize: '11px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Comisión</span>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Comisión</span>
             <button className={`filter-pill${filterCom==='all'?' active':''}`} onClick={() => setFilterCom('all')}>Todas</button>
             {commissions.map(c => (
               <button key={c.id} className={`filter-pill${filterCom===c.id?' active':''}`} onClick={() => setFilterCom(c.id)}>{c.name}</button>
@@ -398,7 +398,7 @@ export default function SchedulePage() {
             <span style={{ width: '8px' }}></span>
           </>}
           {existingModalities.length > 1 && <>
-            <span style={{ fontSize: '11px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Modalidad</span>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Modalidad</span>
             <button className={`filter-pill${filterModal==='all'?' active':''}`} onClick={() => setFilterModal('all')}>Todas</button>
             {existingModalities.map(m => (
               <button key={m} className={`filter-pill${filterModal===m?' active':''}`} onClick={() => setFilterModal(m)}>
@@ -408,9 +408,9 @@ export default function SchedulePage() {
             <span style={{ width: '8px' }}></span>
           </>}
           {responsables.length > 0 && <>
-            <span style={{ fontSize: '11px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Responsable</span>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Responsable</span>
             <select value={filterResp} onChange={e => setFilterResp(e.target.value)}
-              style={{ padding: '4px 8px', borderRadius: '99px', fontSize: '12px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer' }}>
+              style={{ padding: '4px 8px', borderRadius: '99px', fontSize: '12px', border: '1px solid var(--input-border)', background: 'var(--surface)', cursor: 'pointer' }}>
               <option value="all">Todos</option>
               {responsables.map(r => <option key={r} value={r}>{r}</option>)}
             </select>
@@ -420,18 +420,18 @@ export default function SchedulePage() {
 
       {/* Tabla */}
       {filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '48px', color: '#6b7280' }}>
+        <div style={{ textAlign: 'center', padding: '48px', color: 'var(--text-muted)' }}>
           <i className="ti ti-calendar-off" style={{ fontSize: '40px', opacity: 0.4, display: 'block', marginBottom: '12px' }} aria-hidden="true"></i>
           <p>No hay encuentros con los filtros seleccionados.</p>
         </div>
       ) : (
-        <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', overflow: 'hidden' }}>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ background: '#f9fafb' }}>
-                {bulkMode && <th style={{ width: '36px', padding: '8px 12px', borderBottom: '1px solid #e5e7eb' }}></th>}
+              <tr style={{ background: 'var(--hover-bg)' }}>
+                {bulkMode && <th style={{ width: '36px', padding: '8px 12px', borderBottom: '1px solid var(--border)' }}></th>}
                 {['#','Fecha','Clase','Tipo','Responsable','Modalidad',...(commissions.length>1?['Comisión']:[]),'Estado','Links','Ver'].map((h, i) => (
-                  <th key={i} style={{ textAlign: 'left', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6b7280', padding: '8px 12px', borderBottom: '1px solid #e5e7eb' }}>{h}</th>
+                  <th key={i} style={{ textAlign: 'left', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', padding: '8px 12px', borderBottom: '1px solid var(--border)' }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -442,7 +442,7 @@ export default function SchedulePage() {
                 const showZoomLink = s.modality === 'virtual' && !s.canva_url && zoomUrl
 
                 return (
-                  <tr key={s.id} style={{ borderBottom: '1px solid #f3f4f6', background: selected.has(s.id as string) ? '#eef2ff' : 'white' }}>
+                  <tr key={s.id} style={{ borderBottom: '1px solid #f3f4f6', background: selected.has(s.id as string) ? '#eef2ff' : 'var(--surface)' }}>
                     {bulkMode && (
                       <td style={{ padding: '10px 12px' }}>
                         <input type="checkbox" checked={selected.has(s.id as string)}
@@ -450,14 +450,14 @@ export default function SchedulePage() {
                           style={{ width: '15px', height: '15px', cursor: 'pointer' }} />
                       </td>
                     )}
-                    <td style={{ padding: '10px 12px', fontSize: '12px', color: '#6b7280', fontFamily: 'monospace' }}>{s.class_number}</td>
-                    <td style={{ padding: '10px 12px', fontSize: '12px', color: '#6b7280', whiteSpace: 'nowrap' }}>{fmtDate(s.date)}</td>
+                    <td style={{ padding: '10px 12px', fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{s.class_number}</td>
+                    <td style={{ padding: '10px 12px', fontSize: '12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{fmtDate(s.date)}</td>
                     <td style={{ padding: '10px 12px' }}>
                       <div style={{ fontSize: '13px', fontWeight: 500 }}>{s.title}</div>
                       <div style={{ display: 'flex', gap: '4px', marginTop: '3px', flexWrap: 'wrap' }}>
-                        {s.shared_notes && <span style={{ fontSize: '10px', color: '#6b7280' }}>📝 notas</span>}
-                        {hasReview && <span style={{ fontSize: '10px', color: '#059669' }}>✅ review</span>}
-                        {s.status === 'dada' && !hasReview && <span style={{ fontSize: '10px', color: '#d97706' }}>⚠ sin review</span>}
+                        {s.shared_notes && <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>📝 notas</span>}
+                        {hasReview && <span style={{ fontSize: '10px', color: 'var(--success)' }}>✅ review</span>}
+                        {s.status === 'dada' && !hasReview && <span style={{ fontSize: '10px', color: 'var(--warning)' }}>⚠ sin review</span>}
                       </div>
                     </td>
                     <td style={{ padding: '10px 12px' }}><Badge text={SESSION_TYPE_LABELS[s.type] || s.type} style={TYPE_BADGE[s.type]} /></td>
@@ -486,7 +486,7 @@ export default function SchedulePage() {
     field === 'guest_bio_url' ? 'Bio del invitado' :
     field === 'workshop_brief_url' ? 'Brief / Consigna' : field
   }
-  style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#eef2ff', border: '1px solid #c7d2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1', fontSize: '13px', textDecoration: 'none' }}>
+  style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#eef2ff', border: '1px solid #c7d2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontSize: '13px', textDecoration: 'none' }}>
   <i className={`ti ${LINK_ICONS[field]}`} aria-hidden="true"></i>
 </a>                          ) : (
                             <span key={field} style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#f3f4f6', border: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d1d5db', fontSize: '13px' }}>
@@ -496,14 +496,14 @@ export default function SchedulePage() {
                         })}
                         {showZoomLink && (
                           <a href={zoomUrl} target="_blank" rel="noopener noreferrer" title="Zoom del curso"
-                            style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#eef2ff', border: '1px solid #c7d2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1', fontSize: '13px' }}>
+                            style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#eef2ff', border: '1px solid #c7d2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontSize: '13px' }}>
                             <i className="ti ti-video" aria-hidden="true"></i>
                           </a>
                         )}
 {(s.additional_links || []).map((link, idx) => (
   <a key={idx} href={link.url} target="_blank" rel="noopener noreferrer"
     title={link.label || `Link ${idx + 1}`}
-    style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#eef2ff', border: '1px solid #c7d2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1', fontSize: '13px', textDecoration: 'none' }}>
+    style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#eef2ff', border: '1px solid #c7d2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontSize: '13px', textDecoration: 'none' }}>
     <i className="ti ti-link" aria-hidden="true"></i>
   </a>
 ))}                      </div>
@@ -511,7 +511,7 @@ export default function SchedulePage() {
                     <td style={{ padding: '10px 12px' }}>
 <button onClick={() => openEdit(s)}
   title="Ver y editar clase"
-  style={{ background: '#6366f1', border: 'none', borderRadius: '6px', padding: '5px 10px', cursor: 'pointer', color: 'white', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+  style={{ background: 'var(--accent)', border: 'none', borderRadius: '6px', padding: '5px 10px', cursor: 'pointer', color: 'white', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
   <i className="ti ti-player-play-filled" aria-hidden="true"></i>
 </button>
                     </td>
