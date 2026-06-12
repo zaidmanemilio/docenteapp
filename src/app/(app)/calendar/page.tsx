@@ -236,10 +236,10 @@ export default function UnifiedCalendarPage() {
       {/* Leyenda de cursos */}
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '16px' }}>
         {courses.map(c => (
-          <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 10px', background: 'white', border: '1px solid #e5e7eb', borderRadius: '99px', fontSize: '12px', cursor: 'pointer', borderColor: filterCourse === c.id ? courseColorMap[c.id] : '#e5e7eb' }}
+          <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 10px', background: 'var(--surface)', border: '1px solid #e5e7eb', borderRadius: '99px', fontSize: '12px', cursor: 'pointer', borderColor: filterCourse === c.id ? courseColorMap[c.id] : '#e5e7eb' }}
             onClick={() => setFilterCourse(filterCourse === c.id ? 'all' : c.id)}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: courseColorMap[c.id], flexShrink: 0 }}></span>
-            <span style={{ color: filterCourse === c.id ? courseColorMap[c.id] : '#374151', fontWeight: filterCourse === c.id ? 600 : 400 }}>{c.name}</span>
+            <span style={{ color: filterCourse === c.id ? courseColorMap[c.id] : 'var(--text-secondary)', fontWeight: filterCourse === c.id ? 600 : 400 }}>{c.name}</span>
           </div>
         ))}
         {filterCourse !== 'all' && (
@@ -261,9 +261,9 @@ export default function UnifiedCalendarPage() {
           style={{
             padding: '4px 12px', borderRadius: '99px', fontSize: '12px', fontWeight: 500,
             cursor: 'pointer', fontFamily: 'inherit',
-            border: showOverlapsOnly ? '1px solid #d97706' : '1px solid #e5e7eb',
-            background: showOverlapsOnly ? '#fef3c7' : 'white',
-            color: showOverlapsOnly ? '#d97706' : '#6b7280',
+            border: showOverlapsOnly ? '1px solid var(--badge-warning-bd)' : '1px solid var(--border)',
+            background: showOverlapsOnly ? 'var(--badge-warning-bg)' : 'var(--surface)',
+            color: showOverlapsOnly ? 'var(--badge-warning-fg)' : 'var(--text-muted)',
           }}
         >
           ⚠ Solo superposiciones
@@ -272,7 +272,7 @@ export default function UnifiedCalendarPage() {
 
       {/* Alertas de superposición */}
       {overlaps.size > 0 && (
-        <div style={{ padding: '10px 14px', background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: '8px', marginBottom: '16px', fontSize: '13px', color: '#92400e', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ padding: '10px 14px', background: 'var(--badge-warning-bg)', border: '1px solid var(--badge-warning-bd)', borderRadius: '8px', marginBottom: '16px', fontSize: '13px', color: 'var(--badge-warning-fg)', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <i className="ti ti-alert-triangle" aria-hidden="true"></i>
           <span>
             Se detectaron <strong>{overlaps.size / 2} superposición{overlaps.size / 2 > 1 ? 'es' : ''}</strong> de horarios entre cursos distintos.
@@ -309,10 +309,10 @@ export default function UnifiedCalendarPage() {
       ) : (
         Object.entries(listData).map(([month, monthSessions]) => (
           <div key={month} style={{ marginBottom: '28px' }}>
-            <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#374151', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <i className="ti ti-calendar-month" style={{ color: '#6366f1' }} aria-hidden="true"></i>
+            <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <i className="ti ti-calendar-month" style={{ color: 'var(--accent)' }} aria-hidden="true"></i>
               {fmtMonth(month)}
-              <span style={{ fontSize: '12px', fontWeight: 400, color: '#9ca3af' }}>
+              <span style={{ fontSize: '12px', fontWeight: 400, color: 'var(--text-muted)' }}>
                 ({monthSessions.length} encuentro{monthSessions.length !== 1 ? 's' : ''})
               </span>
             </h3>
@@ -331,8 +331,8 @@ export default function UnifiedCalendarPage() {
                     key={s.id}
                     onClick={() => router.push(`/courses/${s.course_id}/calendar`)}
                     style={{
-                      background: 'white',
-                      border: `1px solid ${isOverlap ? '#fcd34d' : isToday ? '#c7d2fe' : isPast ? '#fecaca' : '#e5e7eb'}`,
+                      background: 'var(--surface)',
+                      border: `1px solid ${isOverlap ? 'var(--warning)' : isToday ? 'var(--accent)' : isPast ? 'var(--danger)' : 'var(--border)'}`,
                       borderLeft: `4px solid ${courseColor}`,
                       borderRadius: '8px', padding: '12px 16px',
                       display: 'flex', alignItems: 'flex-start', gap: '14px',
@@ -349,7 +349,7 @@ export default function UnifiedCalendarPage() {
                       <div style={{ fontSize: '22px', fontWeight: 700, color: isToday ? '#6366f1' : '#111827', lineHeight: 1.1 }}>
                         {dateInfo.day}
                       </div>
-                      <div style={{ fontSize: '11px', color: '#9ca3af' }}>/{dateInfo.month}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>/{dateInfo.month}</div>
                     </div>
 
                     {/* Contenido */}
@@ -381,22 +381,22 @@ export default function UnifiedCalendarPage() {
                       {/* Alertas inline */}
                       <div style={{ display: 'flex', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
                         {isOverlap && (
-                          <span style={{ fontSize: '11px', padding: '2px 8px', background: '#fef3c7', color: '#92400e', borderRadius: '99px' }}>
+                          <span style={{ fontSize: '11px', padding: '2px 8px', background: 'var(--badge-warning-bg)', color: 'var(--badge-warning-fg)', borderRadius: '99px' }}>
                             ⚠ Superposición de horario
                           </span>
                         )}
                         {isSameDay && (
-                          <span style={{ fontSize: '11px', padding: '2px 8px', background: '#fff7ed', color: '#c2410c', borderRadius: '99px' }}>
+                          <span style={{ fontSize: '11px', padding: '2px 8px', background: '#fff7ed', color: 'var(--badge-orange-fg)', borderRadius: '99px' }}>
                             📅 Mismo día que otro curso
                           </span>
                         )}
                         {isPast && (
-                          <span style={{ fontSize: '11px', padding: '2px 8px', background: '#fee2e2', color: '#dc2626', borderRadius: '99px' }}>
+                          <span style={{ fontSize: '11px', padding: '2px 8px', background: 'var(--badge-danger-bg)', color: 'var(--badge-danger-fg)', borderRadius: '99px' }}>
                             Fecha pasada
                           </span>
                         )}
                         {isToday && (
-                          <span style={{ fontSize: '11px', padding: '2px 8px', background: '#eef2ff', color: '#4338ca', borderRadius: '99px', fontWeight: 600 }}>
+                          <span style={{ fontSize: '11px', padding: '2px 8px', background: 'var(--chip-accent-bg)', color: 'var(--chip-accent-fg)', borderRadius: '99px', fontWeight: 600 }}>
                             Hoy
                           </span>
                         )}
