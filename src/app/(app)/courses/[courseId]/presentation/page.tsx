@@ -33,8 +33,8 @@ function LinkRow({ label, url, icon }: { label: string; url: string; icon: strin
     <a href={url} target="_blank" rel="noopener noreferrer" style={{
       display: 'flex', alignItems: 'center', gap: '8px',
       padding: '8px 12px', borderRadius: '8px',
-      background: '#eef2ff', border: '1px solid #c7d2fe',
-      color: '#4338ca', fontSize: '13px', textDecoration: 'none',
+      background: 'var(--chip-accent-bg)', border: '1px solid var(--chip-accent-bd)',
+      color: 'var(--chip-accent-fg)', fontSize: '13px', textDecoration: 'none',
       marginBottom: '8px', transition: 'background 0.15s',
     }}>
       <i className={`ti ${icon}`} style={{ fontSize: '16px', flexShrink: 0 }} aria-hidden="true"></i>
@@ -107,7 +107,7 @@ export default function PresentationPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
             <span style={{
               padding: '2px 10px', borderRadius: '99px', fontSize: '11px', fontWeight: 600,
-              background: course.status === 'active' ? '#d1fae5' : '#f3f4f6',
+              background: course.status === 'active' ? 'var(--badge-success-bg)' : 'var(--badge-neutral-bg)',
               color: course.status === 'active' ? 'var(--success)' : 'var(--text-muted)',
             }}>
               {STATUS_LABELS[course.status] || course.status}
@@ -179,8 +179,8 @@ export default function PresentationPage() {
                   <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{com ? com.name : 'Todas'}</span>
                   <span style={{
                     fontSize: '10px', fontWeight: 600, padding: '1px 7px', borderRadius: '99px',
-                    background: p.permission === 'full' ? '#ede9fe' : p.permission === 'edit' ? '#dbeafe' : '#f3f4f6',
-                    color: p.permission === 'full' ? '#7c3aed' : p.permission === 'edit' ? '#1d4ed8' : '#6b7280',
+                    background: p.permission === 'full' ? 'var(--badge-accent-bg)' : p.permission === 'edit' ? 'var(--badge-info-bg)' : 'var(--badge-neutral-bg)',
+                    color: p.permission === 'full' ? 'var(--badge-accent-fg)' : p.permission === 'edit' ? 'var(--badge-info-fg)' : 'var(--badge-neutral-fg)',
                   }}>
                     {permLabels[p.permission] || p.permission}
                   </span>
@@ -205,12 +205,12 @@ export default function PresentationPage() {
 
         {/* Notas internas */}
         {course.internal_notes && (
-          <div style={{ background: '#fefce8', border: '1px solid #fde68a', borderRadius: '12px', padding: '20px 24px' }}>
-            <h3 style={{ fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#92400e', marginBottom: '10px' }}>
+          <div style={{ background: 'var(--badge-warning-bg)', border: '1px solid var(--badge-warning-bd)', borderRadius: '12px', padding: '20px 24px' }}>
+            <h3 style={{ fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--badge-warning-fg)', marginBottom: '10px' }}>
               <i className="ti ti-lock" style={{ marginRight: '6px' }} aria-hidden="true"></i>
               Observaciones internas
             </h3>
-            <p style={{ fontSize: '13px', color: '#78350f', lineHeight: '1.6' }}>{course.internal_notes}</p>
+            <p style={{ fontSize: '13px', color: 'var(--badge-warning-fg)', lineHeight: '1.6' }}>{course.internal_notes}</p>
           </div>
         )}
       </div>
