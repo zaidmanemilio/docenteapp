@@ -188,7 +188,7 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
 
       <div style={{ marginBottom: '20px' }}>
         <h2 style={{ fontSize: '20px', fontWeight: 600 }}>Importar cronograma</h2>
-        <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>Cargá tu cronograma desde un archivo CSV o Excel.</p>
+        <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>Cargá tu cronograma desde un archivo CSV o Excel.</p>
       </div>
 
       {/* Step indicators */}
@@ -198,22 +198,22 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <div style={{
                 width: '28px', height: '28px', borderRadius: '50%',
-                background: step > i+1 ? '#059669' : step === i+1 ? '#6366f1' : '#e5e7eb',
-                color: step >= i+1 ? 'white' : '#6b7280',
+                background: step > i+1 ? 'var(--success)' : step === i+1 ? 'var(--accent)' : 'var(--border)',
+                color: step >= i+1 ? 'white' : 'var(--text-muted)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '13px', fontWeight: 600, flexShrink: 0,
               }}>
                 {step > i+1 ? <i className="ti ti-check" aria-hidden="true"></i> : i+1}
               </div>
-              <span style={{ fontSize: '12px', fontWeight: step === i+1 ? 600 : 400, color: step === i+1 ? '#111827' : '#6b7280' }}>{l}</span>
+              <span style={{ fontSize: '12px', fontWeight: step === i+1 ? 600 : 400, color: step === i+1 ? 'var(--text-primary)' : 'var(--text-muted)' }}>{l}</span>
             </div>
-            {i < 3 && <div style={{ width: '32px', height: '1px', background: '#e5e7eb', margin: '0 8px' }}></div>}
+            {i < 3 && <div style={{ width: '32px', height: '1px', background: 'var(--border)', margin: '0 8px' }}></div>}
           </div>
         ))}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '20px' }}>
-        <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px' }}>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '24px' }}>
 
           {/* Step 1: Upload */}
           {step === 1 && (
@@ -221,12 +221,12 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
               <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '16px' }}>Seleccioná el archivo</h3>
               <div
                 onClick={() => document.getElementById('file-input')?.click()}
-                style={{ border: '2px dashed #e5e7eb', borderRadius: '12px', padding: '40px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.15s' }}
+                style={{ border: '2px dashed var(--border)', borderRadius: '12px', padding: '40px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.15s' }}
                 onMouseEnter={e => (e.currentTarget.style.borderColor = '#6366f1')}
                 onMouseLeave={e => (e.currentTarget.style.borderColor = '#e5e7eb')}
               >
                 <i className="ti ti-upload" style={{ fontSize: '36px', color: '#9ca3af', display: 'block', marginBottom: '8px' }} aria-hidden="true"></i>
-                <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>Hacé clic para seleccionar archivo</p>
+                <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '4px' }}>Hacé clic para seleccionar archivo</p>
                 <p style={{ fontSize: '12px', color: '#9ca3af' }}>CSV o Excel (.xlsx) — máx. 5MB</p>
               </div>
               <input id="file-input" type="file" accept=".csv,.xlsx,.xls" style={{ display: 'none' }} onChange={handleFile} />
@@ -241,7 +241,7 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
               <div style={{ marginTop: '20px', textAlign: 'right' }}>
                 <button
                   onClick={() => rawData.length > 0 ? setStep(2) : alert('Primero subí un archivo.')}
-                  style={{ padding: '8px 20px', background: '#6366f1', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  style={{ padding: '8px 20px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 >
                   Siguiente <i className="ti ti-arrow-right" aria-hidden="true"></i>
                 </button>
@@ -253,11 +253,11 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
           {step === 2 && (
             <>
               <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '6px' }}>Mapeá las columnas</h3>
-              <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>Asigná cada campo del sistema a la columna de tu archivo.</p>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>Asigná cada campo del sistema a la columna de tu archivo.</p>
 
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '5px' }}>Comisión por defecto (si el archivo no la trae)</label>
-                <select value={commissionScope} onChange={e => setCommissionScope(e.target.value)} style={{ padding: '8px 10px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit' }}>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '5px' }}>Comisión por defecto (si el archivo no la trae)</label>
+                <select value={commissionScope} onChange={e => setCommissionScope(e.target.value)} style={{ padding: '8px 10px', border: '1px solid var(--input-border)', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit' }}>
                   <option value="all">Todas las comisiones</option>
                   <option value="first">Primera comisión del curso</option>
                 </select>
@@ -266,13 +266,13 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
               {FIELD_DEFS.map(f => (
                 <div key={f.key} style={{ display: 'grid', gridTemplateColumns: '160px 24px 1fr', gap: '8px', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid #f3f4f6' }}>
                   <span style={{ fontSize: '13px', fontWeight: 500 }}>
-                    {f.label}{f.required ? <span style={{ color: '#dc2626' }}> *</span> : <span style={{ fontSize: '11px', color: '#9ca3af' }}> (opc.)</span>}
+                    {f.label}{f.required ? <span style={{ color: 'var(--danger)' }}> *</span> : <span style={{ fontSize: '11px', color: '#9ca3af' }}> (opc.)</span>}
                   </span>
                   <i className="ti ti-arrow-right" style={{ color: '#9ca3af', fontSize: '14px' }} aria-hidden="true"></i>
                   <select
                     value={mapping[f.key] || ''}
                     onChange={e => setMapping({...mapping, [f.key]: e.target.value})}
-                    style={{ padding: '6px 8px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '12px', fontFamily: 'inherit' }}
+                    style={{ padding: '6px 8px', border: '1px solid var(--input-border)', borderRadius: '6px', fontSize: '12px', fontFamily: 'inherit' }}
                   >
                     <option value="">— No mapear —</option>
                     {columns.map(c => <option key={c} value={c}>{c}</option>)}
@@ -281,10 +281,10 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
               ))}
 
               <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between' }}>
-                <button onClick={() => setStep(1)} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: '#6b7280', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <button onClick={() => setStep(1)} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                   <i className="ti ti-arrow-left" aria-hidden="true"></i> Atrás
                 </button>
-                <button onClick={buildPreview} style={{ padding: '8px 20px', background: '#6366f1', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <button onClick={buildPreview} style={{ padding: '8px 20px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                   Previsualizar <i className="ti ti-arrow-right" aria-hidden="true"></i>
                 </button>
               </div>
@@ -311,31 +311,31 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
                   <thead>
                     <tr>
                       {['#','Fecha','Clase','Título','Tipo','Resp.','Estado','Error'].map(h => (
-                        <th key={h} style={{ textAlign: 'left', padding: '6px 8px', fontSize: '11px', fontWeight: 600, background: '#f9fafb', border: '1px solid #e5e7eb' }}>{h}</th>
+                        <th key={h} style={{ textAlign: 'left', padding: '6px 8px', fontSize: '11px', fontWeight: 600, background: 'var(--hover-bg)', border: '1px solid var(--border)' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {preview.map((r, i) => (
-                      <tr key={i} style={{ background: r._errors.length ? '#fee2e2' : 'white' }}>
-                        <td style={{ padding: '5px 8px', border: '1px solid #e5e7eb' }}>{i+1}</td>
-                        <td style={{ padding: '5px 8px', border: '1px solid #e5e7eb' }}>{r.date}</td>
-                        <td style={{ padding: '5px 8px', border: '1px solid #e5e7eb' }}>{r.class_number}</td>
-                        <td style={{ padding: '5px 8px', border: '1px solid #e5e7eb', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</td>
-                        <td style={{ padding: '5px 8px', border: '1px solid #e5e7eb' }}>{r.type}</td>
-                        <td style={{ padding: '5px 8px', border: '1px solid #e5e7eb' }}>{r.responsible}</td>
-                        <td style={{ padding: '5px 8px', border: '1px solid #e5e7eb' }}>{r.status}</td>
-                        <td style={{ padding: '5px 8px', border: '1px solid #e5e7eb', color: '#dc2626', fontSize: '11px' }}>{r._errors.join(', ')}</td>
+                      <tr key={i} style={{ background: r._errors.length ? '#fee2e2' : 'var(--surface)' }}>
+                        <td style={{ padding: '5px 8px', border: '1px solid var(--border)' }}>{i+1}</td>
+                        <td style={{ padding: '5px 8px', border: '1px solid var(--border)' }}>{r.date}</td>
+                        <td style={{ padding: '5px 8px', border: '1px solid var(--border)' }}>{r.class_number}</td>
+                        <td style={{ padding: '5px 8px', border: '1px solid var(--border)', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</td>
+                        <td style={{ padding: '5px 8px', border: '1px solid var(--border)' }}>{r.type}</td>
+                        <td style={{ padding: '5px 8px', border: '1px solid var(--border)' }}>{r.responsible}</td>
+                        <td style={{ padding: '5px 8px', border: '1px solid var(--border)' }}>{r.status}</td>
+                        <td style={{ padding: '5px 8px', border: '1px solid var(--border)', color: 'var(--danger)', fontSize: '11px' }}>{r._errors.join(', ')}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
               <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between' }}>
-                <button onClick={() => setStep(2)} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: '#6b7280', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <button onClick={() => setStep(2)} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                   <i className="ti ti-arrow-left" aria-hidden="true"></i> Atrás
                 </button>
-                <button onClick={confirmImport} disabled={importing} style={{ padding: '8px 20px', background: '#6366f1', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: importing ? 'wait' : 'pointer', opacity: importing ? 0.7 : 1, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <button onClick={confirmImport} disabled={importing} style={{ padding: '8px 20px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: importing ? 'wait' : 'pointer', opacity: importing ? 0.7 : 1, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                   {importing ? 'Importando...' : `Importar ${preview.filter(r=>!r._errors.length).length} encuentros`}
                   <i className="ti ti-check" aria-hidden="true"></i>
                 </button>
@@ -346,14 +346,14 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
           {/* Step 4: Success */}
           {step === 4 && (
             <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-              <i className="ti ti-circle-check" style={{ fontSize: '56px', color: '#059669', display: 'block', marginBottom: '16px' }} aria-hidden="true"></i>
+              <i className="ti ti-circle-check" style={{ fontSize: '56px', color: 'var(--success)', display: 'block', marginBottom: '16px' }} aria-hidden="true"></i>
               <h3 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>¡Importación exitosa!</h3>
-              <p style={{ color: '#6b7280', marginBottom: '24px' }}>Se importaron <strong>{importedCount}</strong> encuentros al cronograma.</p>
+              <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Se importaron <strong>{importedCount}</strong> encuentros al cronograma.</p>
               <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                <a href={`/courses/${courseId}/schedule`} style={{ padding: '10px 20px', background: '#6366f1', color: 'white', textDecoration: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <a href={`/courses/${courseId}/schedule`} style={{ padding: '10px 20px', background: 'var(--accent)', color: 'white', textDecoration: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                   <i className="ti ti-calendar-event" aria-hidden="true"></i> Ver cronograma
                 </a>
-                <button onClick={() => { setStep(1); setRawData([]); setFileName(''); setPreview([]) }} style={{ padding: '10px 16px', background: 'transparent', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: '#6b7280' }}>
+                <button onClick={() => { setStep(1); setRawData([]); setFileName(''); setPreview([]) }} style={{ padding: '10px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)' }}>
                   Importar otro
                 </button>
               </div>
@@ -362,15 +362,15 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
         </div>
 
         {/* Sidebar: sample CSV */}
-        <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '16px', height: 'fit-content' }}>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px', height: 'fit-content' }}>
           <p style={{ fontSize: '12px', fontWeight: 600, marginBottom: '8px' }}>Formato de ejemplo</p>
-          <pre style={{ fontSize: '10px', color: '#6b7280', whiteSpace: 'pre-wrap', fontFamily: 'monospace', background: '#f9fafb', padding: '10px', borderRadius: '6px', overflowX: 'auto' }}>{SAMPLE_CSV}</pre>
+          <pre style={{ fontSize: '10px', color: 'var(--text-muted)', whiteSpace: 'pre-wrap', fontFamily: 'monospace', background: 'var(--hover-bg)', padding: '10px', borderRadius: '6px', overflowX: 'auto' }}>{SAMPLE_CSV}</pre>
           <p style={{ fontSize: '11px', color: '#9ca3af', marginTop: '10px' }}>
             Podés copiar esto en un archivo .csv o armarlo en Excel y guardarlo como CSV.
           </p>
-          <p style={{ fontSize: '11px', color: '#6b7280', marginTop: '10px', fontWeight: 500 }}>Tipos válidos:</p>
+          <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '10px', fontWeight: 500 }}>Tipos válidos:</p>
           <p style={{ fontSize: '10px', color: '#9ca3af', marginTop: '4px' }}>teorica, practica, taller, invitado, parcial, recuperatorio, exposicion, proyecto</p>
-          <p style={{ fontSize: '11px', color: '#6b7280', marginTop: '8px', fontWeight: 500 }}>Estados válidos:</p>
+          <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px', fontWeight: 500 }}>Estados válidos:</p>
           <p style={{ fontSize: '10px', color: '#9ca3af', marginTop: '4px' }}>pendiente, dada, reprogramada, cancelada</p>
         </div>
       </div>
