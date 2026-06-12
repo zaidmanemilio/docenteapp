@@ -165,16 +165,40 @@ body {
 /* Chip violeta (dar acceso) */
 .chip-accent { background: var(--chip-accent-bg); color: var(--chip-accent-fg); border: 1px solid var(--chip-accent-bd); }
 
-/* Botón de navegación de mes/semana (CalendarViews) */
+/* Botones de navegación de mes/semana (CalendarViews), estilo calendario Mac:
+   redondos, fondo translúcido que destaca sobre cualquier superficie, hover claro. */
 .nav-btn {
-  width: 32px; height: 32px;
+  width: 34px; height: 34px;
   display: inline-flex; align-items: center; justify-content: center;
-  border: 1px solid var(--border); background: var(--surface);
-  border-radius: 8px; cursor: pointer;
-  color: var(--text-secondary); font-size: 15px;
-  transition: all 0.12s;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--text-primary) 8%, transparent);
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 17px;
+  transition: background 0.12s, border-color 0.12s, transform 0.08s;
 }
-.nav-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--hover-bg); }
+.nav-btn:hover {
+  background: color-mix(in srgb, var(--text-primary) 16%, transparent);
+  border-color: var(--text-muted);
+}
+.nav-btn:active { transform: scale(0.92); }
+
+.nav-today {
+  height: 34px; padding: 0 16px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--text-primary) 8%, transparent);
+  border-radius: 99px;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 13px; font-weight: 600; font-family: inherit;
+  transition: background 0.12s, border-color 0.12s;
+}
+.nav-today:hover {
+  background: color-mix(in srgb, var(--text-primary) 16%, transparent);
+  border-color: var(--text-muted);
+}
 
 /* ── Campos de formulario: fondo y texto del tema en todos los inputs ── */
 /* Arregla el caso dark donde el campo quedaba con fondo blanco por defecto
