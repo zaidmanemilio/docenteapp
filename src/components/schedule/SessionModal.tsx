@@ -61,7 +61,7 @@ export interface SessionModalProps {
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '8px 10px',
-  border: '1px solid #e5e7eb',
+  border: '1px solid var(--input-border)',
   borderRadius: '8px',
   fontSize: '13px',
   fontFamily: 'inherit',
@@ -71,7 +71,7 @@ const labelStyle: React.CSSProperties = {
   display: 'block',
   fontSize: '11px',
   fontWeight: 600,
-  color: '#6b7280',
+  color: 'var(--text-muted)',
   textTransform: 'uppercase',
   letterSpacing: '0.04em',
   marginBottom: '5px',
@@ -108,8 +108,8 @@ export default function SessionModal({
       fontSize: '12px',
       fontWeight: 500,
       cursor: 'pointer',
-      color: modalTab === t ? '#6366f1' : '#6b7280',
-      borderBottom: modalTab === t ? '2px solid #6366f1' : '2px solid transparent',
+      color: modalTab === t ? 'var(--accent)' : 'var(--text-muted)',
+      borderBottom: modalTab === t ? '2px solid var(--accent)' : '2px solid transparent',
       marginBottom: '-1px',
       background: 'none',
       border: 'none',
@@ -129,14 +129,14 @@ export default function SessionModal({
     >
       <div
         style={{
-          background: 'white', borderRadius: '12px',
+          background: 'var(--surface)', borderRadius: '12px',
           width: '680px', maxWidth: '100%',
           maxHeight: '92vh', overflowY: 'auto',
           boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
         }}
       >
         {/* ── Header + tabs ── */}
-        <div style={{ padding: '16px 22px 0', borderBottom: '1px solid #e5e7eb' }}>
+        <div style={{ padding: '16px 22px 0', borderBottom: '1px solid var(--border)' }}>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
             <h3 style={{ fontSize: '16px', fontWeight: 600, flex: 1 }}>
               {isNew ? 'Nueva clase' : 'Editar clase'}
@@ -153,7 +153,7 @@ export default function SessionModal({
             <button
               onClick={onClose}
               style={{
-                background: 'none', border: '1px solid #e5e7eb',
+                background: 'none', border: '1px solid var(--border)',
                 borderRadius: '6px', padding: '4px 8px', cursor: 'pointer',
               }}
             >
@@ -169,7 +169,7 @@ export default function SessionModal({
             <button style={tabStyle('review')} onClick={() => setModalTab('review')}>
               Review post-clase{' '}
               {session.status === 'dada' && !hasReview && (
-                <span style={{ color: '#d97706' }}>⚠</span>
+                <span style={{ color: 'var(--warning)' }}>⚠</span>
               )}
             </button>
             <button style={tabStyle('schedule')} onClick={() => setModalTab('schedule')}>Horario</button>
@@ -342,7 +342,7 @@ export default function SessionModal({
                         onAddLinksChange(n)
                       }}
                       placeholder="Etiqueta"
-                      style={{ width: '110px', padding: '7px 10px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit' }}
+                      style={{ width: '110px', padding: '7px 10px', border: '1px solid var(--input-border)', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit' }}
                     />
                     <input
                       value={l.url}
@@ -352,11 +352,11 @@ export default function SessionModal({
                         onAddLinksChange(n)
                       }}
                       placeholder="URL"
-                      style={{ flex: 1, padding: '7px 10px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit' }}
+                      style={{ flex: 1, padding: '7px 10px', border: '1px solid var(--input-border)', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit' }}
                     />
                     <button
                       onClick={() => onAddLinksChange(addLinks.filter((_, j) => j !== i))}
-                      style={{ background: 'none', border: '1px solid #e5e7eb', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', color: '#6b7280' }}
+                      style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', color: 'var(--text-muted)' }}
                     >
                       <i className="ti ti-trash" aria-hidden="true"></i>
                     </button>
@@ -364,7 +364,7 @@ export default function SessionModal({
                 ))}
                 <button
                   onClick={() => onAddLinksChange([...addLinks, { label: '', url: '' }])}
-                  style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: '12px', cursor: 'pointer', padding: '4px 0', display: 'flex', alignItems: 'center', gap: '4px', fontFamily: 'inherit' }}
+                  style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '12px', cursor: 'pointer', padding: '4px 0', display: 'flex', alignItems: 'center', gap: '4px', fontFamily: 'inherit' }}
                 >
                   <i className="ti ti-plus" aria-hidden="true"></i> Agregar link
                 </button>
@@ -462,7 +462,7 @@ export default function SessionModal({
           {/* TAB: Horario */}
           {modalTab === 'schedule' && (
             <>
-              <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
                 Horario y aula del encuentro. Se usa para la vista de Agenda y detección de superposiciones.
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
@@ -519,16 +519,16 @@ export default function SessionModal({
         {/* ── Footer ── */}
         <div style={{
           padding: '14px 22px',
-          borderTop: '1px solid #e5e7eb',
+          borderTop: '1px solid var(--border)',
           display: 'flex', justifyContent: 'flex-end', gap: '8px',
         }}>
           <button
             onClick={onClose}
             style={{
               padding: '8px 16px', background: 'transparent',
-              border: '1px solid #e5e7eb', borderRadius: '8px',
+              border: '1px solid var(--border)', borderRadius: '8px',
               fontSize: '13px', cursor: 'pointer',
-              fontFamily: 'inherit', color: '#6b7280',
+              fontFamily: 'inherit', color: 'var(--text-muted)',
             }}
           >
             Cancelar
@@ -538,7 +538,7 @@ export default function SessionModal({
               onClick={onSave}
               disabled={saving}
               style={{
-                padding: '8px 16px', background: '#6366f1', color: 'white',
+                padding: '8px 16px', background: 'var(--accent)', color: 'white',
                 border: 'none', borderRadius: '8px', fontSize: '13px',
                 fontWeight: 500, cursor: saving ? 'wait' : 'pointer',
                 opacity: saving ? 0.7 : 1, fontFamily: 'inherit',
