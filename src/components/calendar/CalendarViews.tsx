@@ -10,7 +10,6 @@
 //   - MonthGrid: grilla mensual genérica
 //   - filterWeek / weekRangeLabel: helpers para la vista Semana (lista de la semana)
 
-import type { CSSProperties } from 'react'
 
 export type CalendarView = 'list' | 'week' | 'month'
 
@@ -87,7 +86,7 @@ const VIEW_LABELS: Record<CalendarView, { label: string; icon: string }> = {
 
 export function ViewSwitch({ value, onChange }: { value: CalendarView; onChange: (v: CalendarView) => void }) {
   return (
-    <div style={{ display: 'inline-flex', background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '2px', gap: '2px' }}>
+    <div style={{ display: 'inline-flex', background: 'var(--hover-bg)', border: '1px solid var(--border)', borderRadius: '8px', padding: '2px', gap: '2px' }}>
       {(Object.keys(VIEW_LABELS) as CalendarView[]).map(v => {
         const active = value === v
         return (
@@ -98,8 +97,8 @@ export function ViewSwitch({ value, onChange }: { value: CalendarView; onChange:
               display: 'inline-flex', alignItems: 'center', gap: '6px',
               padding: '5px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 600,
               cursor: 'pointer', fontFamily: 'inherit', border: 'none',
-              background: active ? 'white' : 'transparent',
-              color: active ? '#4338ca' : '#6b7280',
+              background: active ? 'var(--surface)' : 'transparent',
+              color: active ? 'var(--accent)' : 'var(--text-muted)',
               boxShadow: active ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
               transition: 'all 0.12s',
             }}
@@ -117,20 +116,14 @@ export function ViewSwitch({ value, onChange }: { value: CalendarView; onChange:
 /* MonthNav — ‹  Mes Año  ›   [Hoy]                                   */
 /* ------------------------------------------------------------------ */
 
-const navBtn: CSSProperties = {
-  width: '30px', height: '30px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-  border: '1px solid #e5e7eb', background: 'white', borderRadius: '7px', cursor: 'pointer',
-  color: '#374151', fontSize: '15px',
-}
-
 export function MonthNav({
   label, onPrev, onNext, onToday,
 }: { label: string; onPrev: () => void; onNext: () => void; onToday: () => void }) {
   return (
     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-      <button onClick={onPrev} aria-label="Anterior" style={navBtn}><i className="ti ti-chevron-left" aria-hidden="true"></i></button>
-      <div style={{ fontSize: '14px', fontWeight: 700, color: '#111827', minWidth: '150px', textAlign: 'center' }}>{label}</div>
-      <button onClick={onNext} aria-label="Siguiente" style={navBtn}><i className="ti ti-chevron-right" aria-hidden="true"></i></button>
+      <button onClick={onPrev} aria-label="Anterior" className="nav-btn"><i className="ti ti-chevron-left" aria-hidden="true"></i></button>
+      <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', minWidth: '150px', textAlign: 'center' }}>{label}</div>
+      <button onClick={onNext} aria-label="Siguiente" className="nav-btn"><i className="ti ti-chevron-right" aria-hidden="true"></i></button>
       <button onClick={onToday} className="filter-pill" style={{ marginLeft: '4px' }}>Hoy</button>
     </div>
   )
@@ -172,7 +165,7 @@ export function MonthGrid({
       {/* Encabezado de días */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px', marginBottom: '6px' }}>
         {WEEKDAYS.map(d => (
-          <div key={d} style={{ fontSize: '11px', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', textAlign: 'center', padding: '4px 0' }}>{d}</div>
+          <div key={d} style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', textAlign: 'center', padding: '4px 0' }}>{d}</div>
         ))}
       </div>
 
@@ -180,18 +173,18 @@ export function MonthGrid({
         {weeks.map((week, wi) => (
           <div key={wi} style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px' }}>
             {week.map((dateStr, di) => {
-              if (!dateStr) return <div key={di} style={{ minHeight: '94px', background: '#fafafa', borderRadius: '8px' }} />
+              if (!dateStr) return <div key={di} style={{ minHeight: '94px', background: 'var(--hover-bg)', borderRadius: '8px' }} />
               const dayNum  = parseInt(dateStr.slice(8, 10))
               const isToday = dateStr === today
               const dayEv   = byDate[dateStr] || []
               return (
                 <div key={di} style={{
-                  minHeight: '94px', background: 'white',
-                  border: `1px solid ${isToday ? '#c7d2fe' : '#e5e7eb'}`,
+                  minHeight: '94px', background: 'var(--surface)',
+                  border: `1px solid ${isToday ? 'var(--accent)' : 'var(--border)'}`,
                   borderRadius: '8px', padding: '6px',
                   display: 'flex', flexDirection: 'column', gap: '4px',
                 }}>
-                  <div style={{ fontSize: '12px', fontWeight: isToday ? 700 : 600, color: isToday ? '#6366f1' : '#374151', textAlign: 'right', lineHeight: 1 }}>{dayNum}</div>
+                  <div style={{ fontSize: '12px', fontWeight: isToday ? 700 : 600, color: isToday ? 'var(--accent)' : 'var(--text-secondary)', textAlign: 'right', lineHeight: 1 }}>{dayNum}</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', overflow: 'hidden' }}>
                     {dayEv.map(e => (
                       <button
@@ -201,15 +194,15 @@ export function MonthGrid({
                         style={{
                           textAlign: 'left', border: 'none', borderLeft: `3px solid ${e.color}`,
                           background: e.color + '14',
-                          color: e.muted ? '#9ca3af' : '#111827',
+                          color: e.muted ? 'var(--text-muted)' : 'var(--text-primary)',
                           textDecoration: e.muted ? 'line-through' : 'none',
                           borderRadius: '4px', padding: '3px 5px', fontSize: '11px', lineHeight: 1.2,
                           cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                           opacity: e.muted ? 0.7 : 1,
                         }}
                       >
-                        {e.time && <span style={{ color: '#6b7280', marginRight: '4px' }}>{e.time.slice(0, 5)}</span>}
-                        {e.flagPast && <span style={{ color: '#dc2626', marginRight: '3px' }}>●</span>}
+                        {e.time && <span style={{ color: 'var(--text-muted)', marginRight: '4px' }}>{e.time.slice(0, 5)}</span>}
+                        {e.flagPast && <span style={{ color: 'var(--danger)', marginRight: '3px' }}>●</span>}
                         {e.title}
                       </button>
                     ))}
