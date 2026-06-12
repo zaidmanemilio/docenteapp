@@ -12,22 +12,22 @@ import SessionModal, { type ExtendedSession } from '@/components/schedule/Sessio
 
 // ─── Tipos y constantes ───────────────────────────────────────────────────────
 
-const TYPE_BADGE: Record<string, { bg: string; color: string }> = {
-  teorica:      { bg: '#dbeafe', color: '#1d4ed8' },
-  practica:     { bg: '#ccfbf1', color: '#0d9488' },
-  taller:       { bg: '#fef3c7', color: '#d97706' },
-  invitado:     { bg: '#fce7f3', color: '#be185d' },
-  parcial:      { bg: '#fee2e2', color: '#dc2626' },
-  recuperatorio:{ bg: '#ffedd5', color: '#c2410c' },
-  exposicion:   { bg: '#ede9fe', color: '#7c3aed' },
-  proyecto:     { bg: '#d1fae5', color: '#059669' },
+const TYPE_BADGE: Record<string, string> = {
+  teorica:      'badge-info',
+  practica:     'badge-teal',
+  taller:       'badge-warning',
+  invitado:     'badge-pink',
+  parcial:      'badge-danger',
+  recuperatorio:'badge-orange',
+  exposicion:   'badge-accent',
+  proyecto:     'badge-success',
 }
 
-const STATUS_BADGE: Record<string, { bg: string; color: string }> = {
-  dada:         { bg: '#d1fae5', color: '#059669' },
-  pendiente:    { bg: '#f3f4f6', color: 'var(--text-muted)' },
-  reprogramada: { bg: '#fef3c7', color: '#d97706' },
-  cancelada:    { bg: '#fee2e2', color: '#dc2626' },
+const STATUS_BADGE: Record<string, string> = {
+  dada:         'badge-success',
+  pendiente:    'badge-neutral',
+  reprogramada: 'badge-warning',
+  cancelada:    'badge-danger',
 }
 
 const LINK_FIELDS = ['canva_url', 'partial_file_url', 'guest_bio_url', 'workshop_brief_url']
@@ -45,16 +45,8 @@ const EMPTY_SESSION: Omit<ExtendedSession, 'id' | 'created_at' | 'updated_at'> =
   guest_bio_url: '', workshop_brief_url: '', shared_notes: '', private_notes: '',
 }
 
-function Badge({ text, style }: { text: string; style?: { bg: string; color: string } }) {
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center',
-      padding: '2px 8px', borderRadius: '99px',
-      fontSize: '11px', fontWeight: 500,
-      background: style?.bg || '#f3f4f6',
-      color: style?.color || '#6b7280',
-    }}>{text}</span>
-  )
+function Badge({ text, cls }: { text: string; cls?: string }) {
+  return <span className={`badge ${cls || 'badge-neutral'}`}>{text}</span>
 }
 
 function fmtDate(d: string) {
@@ -300,7 +292,7 @@ export default function SchedulePage() {
           {canEdit && (
             <button onClick={() => { setBulkMode(!bulkMode); clearSelection() }} style={{
               padding: '7px 14px',
-              background: bulkMode ? '#eef2ff' : 'var(--surface)',
+              background: bulkMode ? 'var(--chip-accent-bg)' : 'var(--surface)',
               border: `1px solid ${bulkMode ? 'var(--accent)' : 'var(--border)'}`,
               color: bulkMode ? '#4338ca' : '#6b7280',
               borderRadius: '8px', fontSize: '13px',
@@ -442,7 +434,7 @@ export default function SchedulePage() {
                 const showZoomLink = s.modality === 'virtual' && !s.canva_url && zoomUrl
 
                 return (
-                  <tr key={s.id} style={{ borderBottom: '1px solid #f3f4f6', background: selected.has(s.id as string) ? '#eef2ff' : 'var(--surface)' }}>
+                  <tr key={s.id} style={{ borderBottom: '1px solid var(--border)', background: selected.has(s.id as string) ? 'var(--chip-accent-bg)' : 'var(--surface)' }}>
                     {bulkMode && (
                       <td style={{ padding: '10px 12px' }}>
                         <input type="checkbox" checked={selected.has(s.id as string)}
@@ -460,17 +452,17 @@ export default function SchedulePage() {
                         {s.status === 'dada' && !hasReview && <span style={{ fontSize: '10px', color: 'var(--warning)' }}>⚠ sin review</span>}
                       </div>
                     </td>
-                    <td style={{ padding: '10px 12px' }}><Badge text={SESSION_TYPE_LABELS[s.type] || s.type} style={TYPE_BADGE[s.type]} /></td>
+                    <td style={{ padding: '10px 12px' }}><Badge text={SESSION_TYPE_LABELS[s.type] || s.type} cls={TYPE_BADGE[s.type]} /></td>
                     <td style={{ padding: '10px 12px', fontSize: '12px' }}>{s.responsible}</td>
                     <td style={{ padding: '10px 12px' }}><Badge text={s.modality === 'presencial' ? '🏫 Pres.' : '💻 Virt.'} /></td>
                     {commissions.length > 1 && (
                       <td style={{ padding: '10px 12px' }}>
                         {s.commission_scope === 'all'
-                          ? <Badge text="Todas" style={{ bg: '#e0e7ff', color: '#4338ca' }} />
-                          : <Badge text={com?.name || s.commission_scope} style={{ bg: '#f0fdf4', color: '#166534' }} />}
+                          ? <Badge text="Todas" cls="badge-info" />
+                          : <Badge text={com?.name || s.commission_scope} cls="badge-success" />}
                       </td>
                     )}
-                    <td style={{ padding: '10px 12px' }}><Badge text={SESSION_STATUS_LABELS[s.status] || s.status} style={STATUS_BADGE[s.status]} /></td>
+                    <td style={{ padding: '10px 12px' }}><Badge text={SESSION_STATUS_LABELS[s.status] || s.status} cls={STATUS_BADGE[s.status]} /></td>
                     <td style={{ padding: '10px 12px' }}>
                       <div style={{ display: 'flex', gap: '4px' }}>
                         {LINK_FIELDS.map(field => {
@@ -486,24 +478,24 @@ export default function SchedulePage() {
     field === 'guest_bio_url' ? 'Bio del invitado' :
     field === 'workshop_brief_url' ? 'Brief / Consigna' : field
   }
-  style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#eef2ff', border: '1px solid #c7d2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontSize: '13px', textDecoration: 'none' }}>
+  style={{ width: '24px', height: '24px', borderRadius: '4px', background: 'var(--chip-accent-bg)', border: '1px solid var(--chip-accent-bd)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontSize: '13px', textDecoration: 'none' }}>
   <i className={`ti ${LINK_ICONS[field]}`} aria-hidden="true"></i>
 </a>                          ) : (
-                            <span key={field} style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#f3f4f6', border: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d1d5db', fontSize: '13px' }}>
+                            <span key={field} style={{ width: '24px', height: '24px', borderRadius: '4px', background: 'var(--hover-bg)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
                               <i className={`ti ${LINK_ICONS[field]}`} aria-hidden="true"></i>
                             </span>
                           )
                         })}
                         {showZoomLink && (
                           <a href={zoomUrl} target="_blank" rel="noopener noreferrer" title="Zoom del curso"
-                            style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#eef2ff', border: '1px solid #c7d2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontSize: '13px' }}>
+                            style={{ width: '24px', height: '24px', borderRadius: '4px', background: 'var(--chip-accent-bg)', border: '1px solid var(--chip-accent-bd)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontSize: '13px' }}>
                             <i className="ti ti-video" aria-hidden="true"></i>
                           </a>
                         )}
 {(s.additional_links || []).map((link, idx) => (
   <a key={idx} href={link.url} target="_blank" rel="noopener noreferrer"
     title={link.label || `Link ${idx + 1}`}
-    style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#eef2ff', border: '1px solid #c7d2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontSize: '13px', textDecoration: 'none' }}>
+    style={{ width: '24px', height: '24px', borderRadius: '4px', background: 'var(--chip-accent-bg)', border: '1px solid var(--chip-accent-bd)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontSize: '13px', textDecoration: 'none' }}>
     <i className="ti ti-link" aria-hidden="true"></i>
   </a>
 ))}                      </div>
