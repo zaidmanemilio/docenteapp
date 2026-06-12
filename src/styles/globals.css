@@ -4,7 +4,7 @@
 @tailwind utilities;
 
 :root {
-  /* --- Tokens legacy (en uso por .filter-pill, .progress-fill y el Sidebar). NO TOCAR --- */
+  /* --- Tokens legacy (en uso por el Sidebar). --- */
   --sidebar-w: 220px;
   --sidebar-bg: #1a1a2e;
   --sidebar-border: #2d2d4e;
@@ -14,8 +14,7 @@
   --accent-light: #818cf8;
   --accent-bg: #eef2ff;
 
-  /* --- Capa de tokens semánticos (tema claro). Valores = hex actuales de la app. --- */
-  /* Aún no se consumen desde las pantallas; se migrarán en pasos posteriores. */
+  /* --- Tokens semánticos (tema claro). --- */
   --bg: #f8f9fb;
   --sidebar: #1a1a2e;
   --surface: #ffffff;
@@ -24,7 +23,6 @@
   --text-primary: #111827;
   --text-secondary: #374151;
   --text-muted: #6b7280;
-  /* --accent ya definido arriba (#6366f1) */
   --accent-hover: #4f46e5;
   --success: #059669;
   --warning: #d97706;
@@ -32,27 +30,73 @@
   --input-bg: #ffffff;
   --input-border: #e5e7eb;
   --hover-bg: #f9fafb;
+
+  /* Componentes utilitarios (filter-pill, scrollbar, progress) */
+  --pill-bg: #ffffff;
+  --pill-border: #e5e7eb;
+  --pill-text: #6b7280;
+  --track: #e5e7eb;
+
+  /* --- Pares de badge/estado (tema claro = pastel actuales). --- */
+  /* Cada familia: fondo tintado + texto del color + borde. En light el borde
+     es transparente para no alterar el look pastel previo. */
+  --badge-success-bg: #d1fae5; --badge-success-fg: #059669; --badge-success-bd: transparent;
+  --badge-warning-bg: #fef3c7; --badge-warning-fg: #92400e; --badge-warning-bd: transparent;
+  --badge-danger-bg:  #fee2e2; --badge-danger-fg:  #dc2626; --badge-danger-bd:  transparent;
+  --badge-info-bg:    #dbeafe; --badge-info-fg:    #1d4ed8; --badge-info-bd:    transparent;
+  --badge-accent-bg:  #ede9fe; --badge-accent-fg:  #7c3aed; --badge-accent-bd:  transparent;
+  --badge-teal-bg:    #ccfbf1; --badge-teal-fg:    #0d9488; --badge-teal-bd:    transparent;
+  --badge-pink-bg:    #fce7f3; --badge-pink-fg:    #be185d; --badge-pink-bd:    transparent;
+  --badge-orange-bg:  #ffedd5; --badge-orange-fg:  #c2410c; --badge-orange-bd:  transparent;
+  --badge-neutral-bg: #f3f4f6; --badge-neutral-fg: #6b7280; --badge-neutral-bd: transparent;
+
+  /* Botón "dar acceso" / chip violeta claro usado en users/calendar */
+  --chip-accent-bg: #eef2ff; --chip-accent-fg: #4338ca; --chip-accent-bd: #c7d2fe;
 }
 
-/* --- Tema oscuro "Academic Operating System". Preparado pero inactivo: --- */
-/* solo se aplica cuando <html data-theme="dark">. Hoy el layout fija "light". */
+/* --- Tema oscuro "Academic Operating System". --- */
 [data-theme="dark"] {
   --bg: #0f172a;
-  --sidebar: #111827;
+  --sidebar: #0b1220;            /* sidebar más profundo que el fondo */
   --surface: #1e293b;
   --surface-elevated: #273449;
   --border: #334155;
-  --text-primary: #f8fafc;
+  --text-primary: #f1f5f9;
   --text-secondary: #cbd5e1;
   --text-muted: #94a3b8;
   --accent: #818cf8;
-  --accent-hover: #6366f1;
+  --accent-hover: #a5b4fc;
   --success: #34d399;
   --warning: #fbbf24;
   --danger: #f87171;
   --input-bg: #1e293b;
-  --input-border: #334155;
+  --input-border: #3b4a61;
   --hover-bg: #273449;
+
+  --pill-bg: #1e293b;
+  --pill-border: #334155;
+  --pill-text: #94a3b8;
+  --track: #334155;
+
+  /* Sidebar en dark: profundo, coherente con la jerarquía */
+  --sidebar-bg: #0b1220;
+  --sidebar-border: #1e293b;
+  --sidebar-text: #94a3b8;
+  --sidebar-active: #f1f5f9;
+
+  /* Badges soft-dark: fondo oscuro tintado + texto claro + borde sutil del color.
+     Fondos con baja luminancia, sin pastel. */
+  --badge-success-bg: #064e3b66; --badge-success-fg: #6ee7b7; --badge-success-bd: #065f4699;
+  --badge-warning-bg: #78350f66; --badge-warning-fg: #fcd34d; --badge-warning-bd: #92400e99;
+  --badge-danger-bg:  #7f1d1d66; --badge-danger-fg:  #fca5a5; --badge-danger-bd:  #991b1b99;
+  --badge-info-bg:    #1e3a8a66; --badge-info-fg:    #93c5fd; --badge-info-bd:    #1d4ed899;
+  --badge-accent-bg:  #4c1d9566; --badge-accent-fg:  #c4b5fd; --badge-accent-bd:  #6d28d999;
+  --badge-teal-bg:    #134e4a66; --badge-teal-fg:    #5eead4; --badge-teal-bd:    #0f766e99;
+  --badge-pink-bg:    #83184366; --badge-pink-fg:    #f9a8d4; --badge-pink-bd:    #9d174d99;
+  --badge-orange-bg:  #7c2d1266; --badge-orange-fg:  #fdba74; --badge-orange-bd:  #9a341299;
+  --badge-neutral-bg: #33415566; --badge-neutral-fg: #cbd5e1; --badge-neutral-bd: #47556999;
+
+  --chip-accent-bg: #312e8166; --chip-accent-fg: #c7d2fe; --chip-accent-bd: #4338ca99;
 }
 
 * { box-sizing: border-box; }
@@ -66,7 +110,7 @@ body {
 /* Scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 99px; }
+::-webkit-scrollbar-thumb { background: var(--track); border-radius: 99px; }
 
 /* Filter pills */
 .filter-pill {
@@ -75,9 +119,9 @@ body {
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  border: 1px solid #e5e7eb;
-  background: white;
-  color: #6b7280;
+  border: 1px solid var(--pill-border);
+  background: var(--pill-bg);
+  color: var(--pill-text);
   transition: all 0.15s;
   font-family: inherit;
   white-space: nowrap;
@@ -86,5 +130,48 @@ body {
 .filter-pill.active { background: var(--accent); color: white; border-color: var(--accent); }
 
 /* Progress bar */
-.progress-bar { height: 6px; background: #e5e7eb; border-radius: 99px; overflow: hidden; }
+.progress-bar { height: 6px; background: var(--track); border-radius: 99px; overflow: hidden; }
 .progress-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.4s ease; }
+
+/* ── Badges semánticos (pill). Light = pastel; dark = soft-dark tintado. ── */
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 2px 8px; border-radius: 99px;
+  font-size: 11px; font-weight: 500;
+  border: 1px solid transparent;
+}
+.badge-success { background: var(--badge-success-bg); color: var(--badge-success-fg); border-color: var(--badge-success-bd); }
+.badge-warning { background: var(--badge-warning-bg); color: var(--badge-warning-fg); border-color: var(--badge-warning-bd); }
+.badge-danger  { background: var(--badge-danger-bg);  color: var(--badge-danger-fg);  border-color: var(--badge-danger-bd); }
+.badge-info    { background: var(--badge-info-bg);    color: var(--badge-info-fg);    border-color: var(--badge-info-bd); }
+.badge-accent  { background: var(--badge-accent-bg);  color: var(--badge-accent-fg);  border-color: var(--badge-accent-bd); }
+.badge-teal    { background: var(--badge-teal-bg);    color: var(--badge-teal-fg);    border-color: var(--badge-teal-bd); }
+.badge-pink    { background: var(--badge-pink-bg);    color: var(--badge-pink-fg);    border-color: var(--badge-pink-bd); }
+.badge-orange  { background: var(--badge-orange-bg);  color: var(--badge-orange-fg);  border-color: var(--badge-orange-bd); }
+.badge-neutral { background: var(--badge-neutral-bg); color: var(--badge-neutral-fg); border-color: var(--badge-neutral-bd); }
+
+/* ── Alertas / bloques de estado. Borde lateral para reforzar. ── */
+.alert {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 8px 12px; border-radius: 8px;
+  font-size: 12px; border: 1px solid transparent;
+  border-left-width: 3px;
+}
+.alert-success { background: var(--badge-success-bg); color: var(--badge-success-fg); border-color: var(--badge-success-bd); border-left-color: var(--badge-success-fg); }
+.alert-warning { background: var(--badge-warning-bg); color: var(--badge-warning-fg); border-color: var(--badge-warning-bd); border-left-color: var(--badge-warning-fg); }
+.alert-danger  { background: var(--badge-danger-bg);  color: var(--badge-danger-fg);  border-color: var(--badge-danger-bd);  border-left-color: var(--badge-danger-fg); }
+.alert-info    { background: var(--badge-info-bg);    color: var(--badge-info-fg);    border-color: var(--badge-info-bd);    border-left-color: var(--badge-info-fg); }
+
+/* Chip violeta (dar acceso) */
+.chip-accent { background: var(--chip-accent-bg); color: var(--chip-accent-fg); border: 1px solid var(--chip-accent-bd); }
+
+/* Botón de navegación de mes/semana (CalendarViews) */
+.nav-btn {
+  width: 32px; height: 32px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border); background: var(--surface);
+  border-radius: 8px; cursor: pointer;
+  color: var(--text-secondary); font-size: 15px;
+  transition: all 0.12s;
+}
+.nav-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--hover-bg); }
