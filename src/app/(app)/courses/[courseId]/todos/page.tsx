@@ -7,10 +7,10 @@ import { createClient } from '@/lib/supabase/client'
 import type { Todo, Profile } from '@/types'
 import { TODO_PRIORITY_LABELS } from '@/types'
 
-const PRIO_STYLE: Record<string, { bg: string; color: string }> = {
-  high:   { bg: '#fee2e2', color: '#dc2626' },
-  medium: { bg: '#fef3c7', color: '#d97706' },
-  low:    { bg: '#f3f4f6', color: 'var(--text-muted)' },
+const PRIO_CLS: Record<string, string> = {
+  high:   'badge-danger',
+  medium: 'badge-warning',
+  low:    'badge-neutral',
 }
 
 function fmtDate(d: string) {
@@ -133,7 +133,7 @@ export default function TodosPage() {
 
       {/* KPI rápido */}
       {openCount > 0 && (
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: '8px', fontSize: '12px', color: '#92400e', marginBottom: '16px' }}>
+        <div className="badge-warning" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', border: '1px solid var(--badge-warning-bd)', borderRadius: '8px', fontSize: '12px', marginBottom: '16px' }}>
           <i className="ti ti-clock-exclamation" aria-hidden="true"></i>
           <strong>{openCount}</strong> tarea{openCount !== 1 ? 's' : ''} abierta{openCount !== 1 ? 's' : ''}
         </div>
@@ -156,10 +156,10 @@ export default function TodosPage() {
           {filtered.map(t => {
             const session = t.session_id ? sessions.find(s => s.id === t.session_id) : null
             return (
-              <div key={t.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '12px 0', borderBottom: '1px solid #f3f4f6' }}>
+              <div key={t.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
                 <div onClick={() => canEdit && toggleTodo(t)} style={{
                   width: '20px', height: '20px', borderRadius: '4px',
-                  border: t.status === 'closed' ? 'none' : '2px solid #d1d5db',
+                  border: t.status === 'closed' ? 'none' : '2px solid var(--input-border)',
                   background: t.status === 'closed' ? 'var(--success)' : 'transparent',
                   color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '12px', cursor: canEdit ? 'pointer' : 'default', flexShrink: 0, marginTop: '2px',
@@ -167,26 +167,26 @@ export default function TodosPage() {
                   {t.status === 'closed' && <i className="ti ti-check" aria-hidden="true"></i>}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '13px', fontWeight: 500, textDecoration: t.status === 'closed' ? 'line-through' : 'none', color: t.status === 'closed' ? '#9ca3af' : 'var(--text-primary)' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 500, textDecoration: t.status === 'closed' ? 'line-through' : 'none', color: t.status === 'closed' ? 'var(--text-muted)' : 'var(--text-primary)' }}>
                     {t.title}
                   </div>
                   {t.description && <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '3px' }}>{t.description}</div>}
                   <div style={{ display: 'flex', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: '99px', fontSize: '11px', fontWeight: 500, background: PRIO_STYLE[t.priority]?.bg, color: PRIO_STYLE[t.priority]?.color }}>
+                    <span className={`badge ${PRIO_CLS[t.priority] || 'badge-neutral'}`}>
                       {TODO_PRIORITY_LABELS[t.priority]}
                     </span>
                     {t.responsible && (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 8px', borderRadius: '99px', fontSize: '11px', background: '#f3f4f6', color: 'var(--text-muted)' }}>
+                      <span className="badge badge-neutral" style={{ gap: '4px' }}>
                         <i className="ti ti-user" style={{ fontSize: '11px' }} aria-hidden="true"></i>{t.responsible}
                       </span>
                     )}
                     {t.due_date && (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 8px', borderRadius: '99px', fontSize: '11px', background: '#f3f4f6', color: 'var(--text-muted)' }}>
+                      <span className="badge badge-neutral" style={{ gap: '4px' }}>
                         <i className="ti ti-calendar" style={{ fontSize: '11px' }} aria-hidden="true"></i>{fmtDate(t.due_date)}
                       </span>
                     )}
                     {session && (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 8px', borderRadius: '99px', fontSize: '11px', background: '#dbeafe', color: '#1d4ed8' }}>
+                      <span className="badge badge-info" style={{ gap: '4px' }}>
                         <i className="ti ti-link" style={{ fontSize: '11px' }} aria-hidden="true"></i>
                         Clase {session.class_number}: {(session.title || '').slice(0, 28)}
                       </span>
@@ -254,7 +254,7 @@ export default function TodosPage() {
             </div>
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               {!isNew ? (
-                <button onClick={deleteTodo} style={{ background: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', borderRadius: '6px', padding: '6px 12px', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit' }}>
+                <button onClick={deleteTodo} className="badge-danger" style={{ border: '1px solid var(--badge-danger-bd)', borderRadius: '6px', padding: '6px 12px', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit' }}>
                   Eliminar
                 </button>
               ) : <div></div>}
