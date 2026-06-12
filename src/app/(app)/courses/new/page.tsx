@@ -89,7 +89,7 @@ export default function NewCoursePage() {
   }
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '8px 10px', border: '1px solid #e5e7eb',
-    borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit', color: '#111827',
+    borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit', color: 'var(--text-primary)',
   }
 
   return (
@@ -98,7 +98,7 @@ export default function NewCoursePage() {
 
       <div style={{ maxWidth: '620px' }}>
         <div style={{ marginBottom: '24px' }}>
-          <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#111827' }}>Nuevo curso</h2>
+          <h2 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-primary)' }}>Nuevo curso</h2>
           <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
             Una vez creado, vas a poder importar el cronograma desde un archivo CSV o Excel.
           </p>
