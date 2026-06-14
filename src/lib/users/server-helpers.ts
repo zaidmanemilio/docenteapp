@@ -71,9 +71,12 @@ export async function createUserWithProfile(
     return { ok: false, error: `Auth: ${authErr?.message || 'no se pudo crear el usuario'}` }
   }
 
-  // 3) Crear perfil interno. El id del profile = id del auth user (patrón actual).
-  const { error: profErr } = await admin.from('profiles').insert({
-    id: created.user.id,
+  // 3) El trigger `on_auth_user_created` (handle_new_user) ya creó el perfil
+  //    automáticamente con el id del nuevo usuario. En vez de insertar (lo que
+  //    chocaría con la PK), ACTUALIZAMOS ese perfil con los datos completos.
+  //    Reintentamos por si el perfil tarda un instante en materializarse.
+  const userId = created.user.id
+  const patch = {
     full_name: fullName,
     first_name: u.first_name.trim(),
     last_name: u.last_name.trim(),
@@ -81,15 +84,30 @@ export async function createUserWithProfile(
     dni,
     status: u.status || 'activo',
     global_role: u.global_role || 'teacher',
-    auth_user_id: created.user.id,
-  })
-  if (profErr) {
-    // Rollback: si el perfil falla, borrar el auth user para no dejar huérfanos.
-    await admin.auth.admin.deleteUser(created.user.id)
-    return { ok: false, error: `Perfil: ${profErr.message}` }
+    auth_user_id: userId,
   }
 
-  return { ok: true, userId: created.user.id }
+  let profErr: { message: string } | null = null
+  let updated = false
+  for (let attempt = 0; attempt < 3 && !updated; attempt++) {
+    if (attempt > 0) await new Promise(r => setTimeout(r, 250)) // esperar al trigger
+    const { data, error } = await admin
+      .from('profiles')
+      .update(patch)
+      .eq('id', userId)
+      .select('id')
+    profErr = error ? { message: error.message } : null
+    if (!error && data && data.length > 0) updated = true
+  }
+
+  if (!updated) {
+    // Rollback: si no se pudo completar el perfil, borrar el auth user para
+    // no dejar un usuario sin perfil utilizable.
+    await admin.auth.admin.deleteUser(userId)
+    return { ok: false, error: `Perfil: ${profErr?.message || 'no se pudo completar el perfil tras crear el usuario'}` }
+  }
+
+  return { ok: true, userId }
 }
 
 // Verifica que el usuario de la sesión sea admin global.
