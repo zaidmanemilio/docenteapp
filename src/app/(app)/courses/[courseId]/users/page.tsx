@@ -56,6 +56,16 @@ export default function UsersPage() {
   const [tab,          setTab]          = useState<'by-course'|'by-user'>('by-course')
   const [syncMsg,      setSyncMsg]      = useState('')
   const [userSearch,   setUserSearch]   = useState('')
+  // Sub-paso C: alta manual e importación CSV de usuarios.
+  const [showNewUser,  setShowNewUser]  = useState(false)
+  const [newUser,      setNewUser]      = useState({ first_name: '', last_name: '', email: '', dni: '', password: '', status: 'activo', global_role: 'teacher' })
+  const [creating,     setCreating]     = useState(false)
+  const [createError,  setCreateError]  = useState('')
+  const [showImport,   setShowImport]   = useState(false)
+  const [importRows,   setImportRows]   = useState<Record<string, string>[]>([])
+  const [importPreview, setImportPreview] = useState<{ row: number; errors: string[] }[] | null>(null)
+  const [importing,    setImporting]    = useState(false)
+  const [importMsg,    setImportMsg]    = useState('')
 
   const load = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -152,6 +162,77 @@ export default function UsersPage() {
     URL.revokeObjectURL(url)
   }
 
+  // --- Alta manual: llama a la API de servidor (no expone service_role) ---
+  async function submitNewUser() {
+    setCreating(true)
+    setCreateError('')
+    try {
+      const res = await fetch('/api/users/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newUser),
+      })
+      const data = await res.json()
+      if (!res.ok) { setCreateError(data.error || 'No se pudo crear el usuario.'); setCreating(false); return }
+      setShowNewUser(false)
+      setNewUser({ first_name: '', last_name: '', email: '', dni: '', password: '', status: 'activo', global_role: 'teacher' })
+      load()
+    } catch {
+      setCreateError('Error de red al crear el usuario.')
+    }
+    setCreating(false)
+  }
+
+  // --- Import CSV: parseo en cliente, validación y creación en servidor ---
+  function parseUsersCSV(text: string): Record<string, string>[] {
+    const lines = text.trim().split(/\r?\n/).filter(l => l.trim())
+    if (lines.length < 2) return []
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase())
+    return lines.slice(1).map((line, i) => {
+      const cells = line.split(',')
+      const row: Record<string, string> = { _row: String(i + 2) }
+      headers.forEach((h, j) => { row[h] = (cells[j] || '').trim() })
+      return row
+    })
+  }
+
+  function handleCSVFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = async () => {
+      const rows = parseUsersCSV(String(reader.result))
+      setImportRows(rows)
+      setImportMsg('')
+      // Previsualizar (commit:false) para ver errores antes de crear.
+      const res = await fetch('/api/users/import', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows, commit: false }),
+      })
+      const data = await res.json()
+      setImportPreview(data.errors || [])
+    }
+    reader.readAsText(file)
+  }
+
+  async function commitImport() {
+    setImporting(true)
+    setImportMsg('')
+    const res = await fetch('/api/users/import', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rows: importRows, commit: true }),
+    })
+    const data = await res.json()
+    if (data.created != null) {
+      setImportMsg(`${data.created} usuario(s) creado(s).${data.failed?.length ? ` ${data.failed.length} fallaron.` : ''}`)
+      if (!data.failed?.length) { setShowImport(false); setImportRows([]); setImportPreview(null) }
+    } else {
+      setImportMsg(data.error || 'No se pudo importar.')
+    }
+    setImporting(false)
+    load()
+  }
+
   if (loading) return <div style={{ padding: '24px', color: 'var(--text-muted)' }}>Cargando...</div>
 
   if (!isAdmin) return (
@@ -178,6 +259,22 @@ export default function UsersPage() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
         <h2 style={{ fontSize: '20px', fontWeight: 600 }}>Usuarios y permisos</h2>
         <div style={{ display: 'flex', gap: '8px' }}>
+          <button onClick={() => { setShowNewUser(true); setCreateError('') }} style={{
+            padding: '7px 14px', background: 'var(--accent)', border: 'none',
+            borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit',
+            color: 'white', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px',
+          }}>
+            <i className="ti ti-user-plus" aria-hidden="true"></i>
+            Nuevo usuario
+          </button>
+          <button onClick={() => { setShowImport(true); setImportRows([]); setImportPreview(null); setImportMsg('') }} style={{
+            padding: '7px 14px', background: 'var(--surface)', border: '1px solid var(--border)',
+            borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit',
+            color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px',
+          }}>
+            <i className="ti ti-upload" aria-hidden="true"></i>
+            Importar CSV
+          </button>
           <button onClick={exportUsersCSV} style={{
             padding: '7px 14px', background: 'var(--surface)', border: '1px solid var(--border)',
             borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit',
@@ -342,6 +439,115 @@ export default function UsersPage() {
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* Modal: Nuevo usuario (alta manual) */}
+      {showNewUser && (
+        <div onClick={() => !creating && setShowNewUser(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '20px' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: '12px', width: '440px', maxWidth: '100%', maxHeight: '90vh', overflow: 'auto' }}>
+            <div style={{ padding: '18px 22px 14px', borderBottom: '1px solid var(--border)' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 600 }}>Nuevo usuario</h3>
+            </div>
+            <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {createError && (
+                <div className="alert alert-danger" style={{ padding: '8px 12px', borderRadius: '8px', fontSize: '12px' }}>{createError}</div>
+              )}
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <label style={{ flex: 1, fontSize: '12px', color: 'var(--text-muted)' }}>Nombre *
+                  <input value={newUser.first_name} onChange={e => setNewUser({ ...newUser, first_name: e.target.value })}
+                    style={{ width: '100%', marginTop: '4px', padding: '8px 10px', border: '1px solid var(--input-border)', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit' }} />
+                </label>
+                <label style={{ flex: 1, fontSize: '12px', color: 'var(--text-muted)' }}>Apellido *
+                  <input value={newUser.last_name} onChange={e => setNewUser({ ...newUser, last_name: e.target.value })}
+                    style={{ width: '100%', marginTop: '4px', padding: '8px 10px', border: '1px solid var(--input-border)', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit' }} />
+                </label>
+              </div>
+              <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Email *
+                <input type="email" value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })}
+                  style={{ width: '100%', marginTop: '4px', padding: '8px 10px', border: '1px solid var(--input-border)', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit' }} />
+              </label>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <label style={{ flex: 1, fontSize: '12px', color: 'var(--text-muted)' }}>DNI *
+                  <input value={newUser.dni} onChange={e => setNewUser({ ...newUser, dni: e.target.value })}
+                    style={{ width: '100%', marginTop: '4px', padding: '8px 10px', border: '1px solid var(--input-border)', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit' }} />
+                </label>
+                <label style={{ flex: 1, fontSize: '12px', color: 'var(--text-muted)' }}>Contraseña * (mín. 8)
+                  <input type="password" value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })}
+                    style={{ width: '100%', marginTop: '4px', padding: '8px 10px', border: '1px solid var(--input-border)', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit' }} />
+                </label>
+              </div>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <label style={{ flex: 1, fontSize: '12px', color: 'var(--text-muted)' }}>Estado
+                  <select value={newUser.status} onChange={e => setNewUser({ ...newUser, status: e.target.value })}
+                    style={{ width: '100%', marginTop: '4px', padding: '8px 10px', border: '1px solid var(--input-border)', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit' }}>
+                    <option value="activo">Activo</option>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="inactivo">Inactivo</option>
+                  </select>
+                </label>
+                <label style={{ flex: 1, fontSize: '12px', color: 'var(--text-muted)' }}>Rol global
+                  <select value={newUser.global_role} onChange={e => setNewUser({ ...newUser, global_role: e.target.value })}
+                    style={{ width: '100%', marginTop: '4px', padding: '8px 10px', border: '1px solid var(--input-border)', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit' }}>
+                    <option value="teacher">Sin rol global</option>
+                    <option value="guest">Lectura global</option>
+                    <option value="admin">Administrador</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+            <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <button onClick={() => setShowNewUser(false)} disabled={creating} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)' }}>Cancelar</button>
+              <button onClick={submitNewUser} disabled={creating} style={{ padding: '8px 16px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', opacity: creating ? 0.6 : 1 }}>{creating ? 'Creando...' : 'Crear usuario'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Importar CSV */}
+      {showImport && (
+        <div onClick={() => !importing && setShowImport(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '20px' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: '12px', width: '560px', maxWidth: '100%', maxHeight: '90vh', overflow: 'auto' }}>
+            <div style={{ padding: '18px 22px 14px', borderBottom: '1px solid var(--border)' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 600 }}>Importar usuarios desde CSV</h3>
+            </div>
+            <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                El archivo debe tener los encabezados: <code style={{ background: 'var(--hover-bg)', padding: '2px 6px', borderRadius: '4px' }}>nombre,apellido,email,dni,password</code>
+              </div>
+              <input type="file" accept=".csv,text/csv" onChange={handleCSVFile}
+                style={{ fontSize: '13px', fontFamily: 'inherit' }} />
+
+              {importRows.length > 0 && (
+                <div style={{ fontSize: '13px' }}>
+                  {importRows.length} fila(s) leída(s).
+                  {importPreview && importPreview.length === 0 && (
+                    <span className="badge badge-success" style={{ marginLeft: '8px' }}>Sin errores, listo para importar</span>
+                  )}
+                </div>
+              )}
+
+              {importPreview && importPreview.length > 0 && (
+                <div className="alert alert-danger" style={{ flexDirection: 'column', padding: '10px 12px', borderRadius: '8px', fontSize: '12px', gap: '4px' }}>
+                  <strong>Errores que impiden importar:</strong>
+                  {importPreview.map(e => (
+                    <div key={e.row}>Fila {e.row}: {e.errors.join(' ')}</div>
+                  ))}
+                </div>
+              )}
+
+              {importMsg && (
+                <div className="alert alert-info" style={{ padding: '10px 12px', borderRadius: '8px', fontSize: '12px' }}>{importMsg}</div>
+              )}
+            </div>
+            <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <button onClick={() => setShowImport(false)} disabled={importing} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)' }}>Cerrar</button>
+              <button onClick={commitImport} disabled={importing || importRows.length === 0 || (importPreview != null && importPreview.length > 0)}
+                style={{ padding: '8px 16px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', opacity: (importing || importRows.length === 0 || (importPreview != null && importPreview.length > 0)) ? 0.5 : 1 }}>
+                {importing ? 'Importando...' : 'Importar'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
