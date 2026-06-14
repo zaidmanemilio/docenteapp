@@ -68,7 +68,7 @@ export default function UsersPage() {
   const [importing,    setImporting]    = useState(false)
   const [importMsg,    setImportMsg]    = useState('')
   // Edición de usuario.
-  const [editUser,     setEditUser]     = useState<null | { id: string; first_name: string; last_name: string; email: string; dni: string; password: string }>(null)
+  const [editUser,     setEditUser]     = useState<null | { id: string; first_name: string; last_name: string; email: string; dni: string; password: string; global_role: string }>(null)
   const [savingUser,   setSavingUser]   = useState(false)
   const [editError,    setEditError]    = useState('')
   // Asignación masiva de permisos.
@@ -298,6 +298,7 @@ export default function UsersPage() {
       email: u.email || '',
       dni: u.dni || '',
       password: '', // vacío = no cambiar
+      global_role: u.global_role || 'teacher',
     })
     setEditError('')
   }
@@ -711,6 +712,14 @@ export default function UsersPage() {
               <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Nueva contraseña (dejar vacío para no cambiar)
                 <input type="password" value={editUser.password} onChange={e => setEditUser({ ...editUser, password: e.target.value })} placeholder="mín. 8 caracteres"
                   style={{ width: '100%', marginTop: '4px', padding: '8px 10px', border: '1px solid var(--input-border)', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit' }} />
+              </label>
+              <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Rol global
+                <select value={editUser.global_role} onChange={e => setEditUser({ ...editUser, global_role: e.target.value })}
+                  style={{ width: '100%', marginTop: '4px', padding: '8px 10px', border: '1px solid var(--input-border)', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit' }}>
+                  <option value="teacher">Docente (sin acceso global, solo cursos asignados)</option>
+                  <option value="guest">Invitado / Lectura global (ve todos los cursos, solo lee)</option>
+                  <option value="admin">Administrador (control total)</option>
+                </select>
               </label>
             </div>
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
