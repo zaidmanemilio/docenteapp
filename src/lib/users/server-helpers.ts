@@ -132,6 +132,7 @@ export interface UpdateUserInput {
   email: string
   dni: string
   password?: string // opcional: solo si se quiere cambiar
+  global_role?: string // 'admin' | 'teacher' | 'guest'
 }
 
 // Edita un usuario: datos administrativos en profiles + email/password en Auth.
@@ -176,13 +177,18 @@ export async function updateUserWithProfile(
   }
 
   // 3) Actualizar el perfil administrativo.
-  const { error: profErr } = await admin.from('profiles').update({
+  const profilePatch: Record<string, string> = {
     full_name: fullName,
     first_name: u.first_name.trim(),
     last_name: u.last_name.trim(),
     email,
     dni,
-  }).eq('id', u.id)
+  }
+  // Solo cambiar el rol global si vino uno válido.
+  if (u.global_role && ['admin', 'teacher', 'guest'].includes(u.global_role)) {
+    profilePatch.global_role = u.global_role
+  }
+  const { error: profErr } = await admin.from('profiles').update(profilePatch).eq('id', u.id)
   if (profErr) {
     return { ok: false, error: `Perfil: ${profErr.message}` }
   }
