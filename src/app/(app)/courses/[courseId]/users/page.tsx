@@ -71,6 +71,12 @@ export default function UsersPage() {
   const [editUser,     setEditUser]     = useState<null | { id: string; first_name: string; last_name: string; email: string; dni: string; password: string }>(null)
   const [savingUser,   setSavingUser]   = useState(false)
   const [editError,    setEditError]    = useState('')
+  // Asignación masiva de permisos.
+  const [bulkMode,     setBulkMode]     = useState(false)
+  const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set())
+  const [bulkPerm,     setBulkPerm]     = useState<'read'|'edit'>('read')
+  const [bulkBusy,     setBulkBusy]     = useState(false)
+  const [bulkMsg,      setBulkMsg]      = useState('')
 
   const load = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -111,11 +117,39 @@ export default function UsersPage() {
   }
 
   async function addPermission(userId: string) {
-    const perm = prompt('Permiso para este usuario en el curso (full / edit / read):')
-    if (!['full','edit','read'].includes(perm || '')) { alert('Permiso inválido.'); return }
+    const perm = prompt('Permiso para este usuario en el curso (edit / read):', 'read')
+    if (!['edit','read'].includes(perm || '')) { alert('Permiso inválido. Usá "edit" o "read".'); return }
     await supabase.from('user_course_permissions').upsert({
       user_id: userId, course_id: courseId, commission_id: null, permission: perm
     }, { onConflict: 'user_id,course_id,commission_id' })
+    load()
+  }
+
+  function toggleBulk(userId: string) {
+    setBulkSelected(prev => {
+      const next = new Set(prev)
+      if (next.has(userId)) next.delete(userId); else next.add(userId)
+      return next
+    })
+  }
+
+  // Asignación masiva: aplica el permiso elegido a todos los usuarios
+  // seleccionados, en el curso actual. Upsert => crea o actualiza sin duplicar.
+  async function applyBulk() {
+    if (bulkSelected.size === 0) { setBulkMsg('Seleccioná al menos un usuario.'); return }
+    if (!isAdmin) { setBulkMsg('Solo un administrador puede asignar permisos.'); return }
+    setBulkBusy(true)
+    setBulkMsg('')
+    const rows = [...bulkSelected].map(uid => ({
+      user_id: uid, course_id: courseId, commission_id: null, permission: bulkPerm,
+    }))
+    const { error } = await supabase
+      .from('user_course_permissions')
+      .upsert(rows, { onConflict: 'user_id,course_id,commission_id' })
+    setBulkBusy(false)
+    if (error) { setBulkMsg(`Error: ${error.message}`); return }
+    setBulkMsg(`Permiso "${bulkPerm}" aplicado a ${rows.length} usuario(s) en este curso.`)
+    setBulkSelected(new Set())
     load()
   }
 
@@ -450,6 +484,35 @@ export default function UsersPage() {
               />
             </div>
           </div>
+
+          {/* Barra de asignación masiva de permisos (solo admin) */}
+          {isAdmin && (
+            <div style={{ padding: '10px 0', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <button onClick={() => { setBulkMode(!bulkMode); setBulkSelected(new Set()); setBulkMsg('') }}
+                style={{ padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                  border: `1px solid ${bulkMode ? 'var(--accent)' : 'var(--border)'}`,
+                  background: bulkMode ? 'var(--chip-accent-bg)' : 'var(--surface)',
+                  color: bulkMode ? 'var(--chip-accent-fg)' : 'var(--text-muted)' }}>
+                <i className="ti ti-checkbox" aria-hidden="true" style={{ marginRight: '6px' }}></i>
+                {bulkMode ? 'Cancelar selección' : 'Asignar permisos en masa'}
+              </button>
+              {bulkMode && (
+                <>
+                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{bulkSelected.size} seleccionado(s) · permiso en <strong>este curso</strong>:</span>
+                  <select value={bulkPerm} onChange={e => setBulkPerm(e.target.value as 'read'|'edit')}
+                    style={{ padding: '6px 10px', border: '1px solid var(--input-border)', borderRadius: '8px', fontSize: '12px', fontFamily: 'inherit' }}>
+                    <option value="read">Lectura (read)</option>
+                    <option value="edit">Edición (edit)</option>
+                  </select>
+                  <button onClick={applyBulk} disabled={bulkBusy || bulkSelected.size === 0}
+                    style={{ padding: '6px 14px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: (bulkBusy || bulkSelected.size === 0) ? 0.5 : 1 }}>
+                    {bulkBusy ? 'Aplicando...' : 'Aplicar'}
+                  </button>
+                </>
+              )}
+              {bulkMsg && <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{bulkMsg}</span>}
+            </div>
+          )}
           {allProfiles.length === 0 ? (
             <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>
               No hay usuarios en el sistema. Sincronizá para traerlos.
@@ -463,6 +526,10 @@ export default function UsersPage() {
             const permCls: Record<string, string> = { full: 'badge-accent', edit: 'badge-info', read: 'badge-neutral' }
             return (
               <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+                {bulkMode && (
+                  <input type="checkbox" checked={bulkSelected.has(u.id)} onChange={() => toggleBulk(u.id)}
+                    style={{ width: '16px', height: '16px', cursor: 'pointer', flexShrink: 0 }} />
+                )}
                 <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: getColor(u.id), color: 'white', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   {getInitials(u.full_name)}
                 </div>
