@@ -10,6 +10,22 @@ import {
   normalizeEmail, normalizeDni, type NewUserInput,
 } from '@/lib/users/server-helpers'
 
+// Fila cruda del CSV: claves en español tal como vienen del archivo.
+type RawRow = Record<string, string> & { _row?: number | string }
+
+// Mapea una fila del CSV (nombre/apellido/email/dni/password) a la estructura
+// interna que esperan validateNewUser y createUserWithProfile.
+function mapCsvRow(r: RawRow): ImportRow {
+  return {
+    _row: typeof r._row === 'string' ? parseInt(r._row, 10) : r._row,
+    first_name: (r.nombre ?? r.first_name ?? '').trim(),
+    last_name: (r.apellido ?? r.last_name ?? '').trim(),
+    email: (r.email ?? '').trim(),
+    dni: (r.dni ?? '').trim(),
+    password: r.password ?? '',
+  }
+}
+
 interface ImportRow extends Partial<NewUserInput> { _row?: number }
 
 export async function POST(request: Request) {
@@ -17,14 +33,16 @@ export async function POST(request: Request) {
   const auth = await assertIsAdmin(supabase)
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: 403 })
 
-  let body: { rows?: ImportRow[]; commit?: boolean }
+  let body: { rows?: RawRow[]; commit?: boolean }
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: 'Body inválido.' }, { status: 400 })
   }
-  const rows = body.rows || []
-  if (rows.length === 0) return NextResponse.json({ error: 'CSV vacío.' }, { status: 400 })
+  const rawRows = body.rows || []
+  if (rawRows.length === 0) return NextResponse.json({ error: 'CSV vacío.' }, { status: 400 })
+  // Normaliza las claves del CSV (español) a la estructura interna.
+  const rows: ImportRow[] = rawRows.map(mapCsvRow)
 
   // 1) Validación por fila + duplicados DENTRO del CSV.
   const seenEmail = new Map<string, number>()
