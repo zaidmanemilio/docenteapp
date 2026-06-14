@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Commission, AdditionalLink } from '@/types'
+import { effectiveCoursePermission } from '@/lib/permissions'
 import SessionModal, { type ExtendedSession } from '@/components/schedule/SessionModal'
 import {
   type CalendarView, ViewSwitch, MonthNav, MonthGrid, fmtMonthLabel,
@@ -85,16 +86,7 @@ export default function CalendarPage() {
     ])
 
     const globalRole = profileRes.data?.global_role
-    if (globalRole === 'admin') {
-      setCoursePermission('full')
-    } else {
-      const PERM_RANK: Record<string, number> = { full: 3, edit: 2, read: 1 }
-      const best = (permRes.data || []).reduce((acc: string | null, row) => {
-        if (!acc) return row.permission
-        return (PERM_RANK[row.permission] || 0) > (PERM_RANK[acc] || 0) ? row.permission : acc
-      }, null)
-      setCoursePermission(best)
-    }
+    setCoursePermission(effectiveCoursePermission(globalRole, permRes.data || []))
 
     setCourseName(courseRes.data?.name || '')
     setZoomUrl(courseRes.data?.zoom_url || '')
