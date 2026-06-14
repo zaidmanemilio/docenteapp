@@ -5,6 +5,7 @@ import { useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { SessionType, SessionModality, SessionStatus } from '@/types'
+import { readCsvFile } from '@/lib/csv-encoding'
 
 const FIELD_DEFS = [
   { key: 'date',            label: 'Fecha',          required: true },
@@ -84,9 +85,7 @@ export default function ImportPage() {
     setFileName(file.name)
 
     if (file.name.endsWith('.csv') || file.name.endsWith('.txt')) {
-      const reader = new FileReader()
-      reader.onload = ev => {
-        const text = ev.target?.result as string
+      readCsvFile(file).then(text => {   // detecta UTF-8 o Windows-1252
         const data = parseCSV(text)
         const cols = data[0] ? Object.keys(data[0]) : []
         setRawData(data)
@@ -97,8 +96,7 @@ export default function ImportPage() {
           if (found) autoMap[field] = found
         })
         setMapping(autoMap)
-      }
-      reader.readAsText(file, 'UTF-8')
+      })
     } else {
       // XLSX — load dynamically
       import('xlsx').then(XLSX => {
