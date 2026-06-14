@@ -124,3 +124,68 @@ export async function assertIsAdmin(
   }
   return { ok: true }
 }
+
+export interface UpdateUserInput {
+  id: string // id del profile (== id de Auth)
+  first_name: string
+  last_name: string
+  email: string
+  dni: string
+  password?: string // opcional: solo si se quiere cambiar
+}
+
+// Edita un usuario: datos administrativos en profiles + email/password en Auth.
+// El password (si viene) se usa solo aquí y se descarta.
+export async function updateUserWithProfile(
+  admin: SupabaseClient,
+  u: UpdateUserInput
+): Promise<{ ok: boolean; error?: string }> {
+  if (!u.id) return { ok: false, error: 'Falta el id del usuario.' }
+  if (!u.first_name?.trim()) return { ok: false, error: 'Falta el nombre.' }
+  if (!u.last_name?.trim()) return { ok: false, error: 'Falta el apellido.' }
+  if (!u.email?.trim()) return { ok: false, error: 'Falta el email.' }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizeEmail(u.email))) return { ok: false, error: 'Email inválido.' }
+  if (!u.dni?.trim()) return { ok: false, error: 'Falta el DNI.' }
+  if (u.password && u.password.length < 8) return { ok: false, error: 'La contraseña debe tener al menos 8 caracteres.' }
+
+  const email = normalizeEmail(u.email)
+  const dni = normalizeDni(u.dni)
+  const fullName = `${u.first_name.trim()} ${u.last_name.trim()}`.trim()
+
+  // 1) Duplicados de email/dni en OTROS usuarios (no el actual).
+  const { data: dupe } = await admin
+    .from('profiles')
+    .select('id, email, dni')
+    .or(`email.eq.${email},dni.eq.${dni}`)
+    .neq('id', u.id)
+    .limit(1)
+  if (dupe && dupe.length > 0) {
+    const d = dupe[0]
+    if (normalizeEmail(d.email || '') === email) return { ok: false, error: `Otro usuario ya tiene el email ${email}.` }
+    return { ok: false, error: `Otro usuario ya tiene el DNI ${dni}.` }
+  }
+
+  // 2) Actualizar email y/o password en Auth (el id del profile == id de Auth).
+  const authPatch: { email?: string; password?: string } = {}
+  // Solo actualizar email en Auth si cambió, para no disparar reverificación innecesaria.
+  authPatch.email = email
+  if (u.password) authPatch.password = u.password
+  const { error: authErr } = await admin.auth.admin.updateUserById(u.id, authPatch)
+  if (authErr) {
+    return { ok: false, error: `Auth: ${authErr.message}` }
+  }
+
+  // 3) Actualizar el perfil administrativo.
+  const { error: profErr } = await admin.from('profiles').update({
+    full_name: fullName,
+    first_name: u.first_name.trim(),
+    last_name: u.last_name.trim(),
+    email,
+    dni,
+  }).eq('id', u.id)
+  if (profErr) {
+    return { ok: false, error: `Perfil: ${profErr.message}` }
+  }
+
+  return { ok: true }
+}
