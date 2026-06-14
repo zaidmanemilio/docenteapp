@@ -9,11 +9,22 @@ export type SessionStatus = 'pendiente' | 'dada' | 'reprogramada' | 'cancelada'
 export type TodoPriority = 'low' | 'medium' | 'high'
 export type TodoStatus = 'open' | 'closed'
 
+export type ProfileStatus = 'activo' | 'pendiente' | 'inactivo'
+
 export interface Profile {
   id: string
   full_name: string
   global_role: GlobalRole
   created_at: string
+  // Campos administrativos (sub-paso B). Opcionales: los usuarios
+  // existentes pueden no tenerlos cargados todavía.
+  first_name?: string | null
+  last_name?: string | null
+  email?: string | null
+  dni?: string | null
+  status?: ProfileStatus
+  auth_user_id?: string | null
+  updated_at?: string
 }
 
 export interface Subject {
