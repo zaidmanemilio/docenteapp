@@ -16,9 +16,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   if (!profile) redirect('/login')
 
-  // Obtener cursos NO archivados accesibles por el usuario
+  // Obtener cursos NO archivados accesibles por el usuario.
+  // - admin (full global): ve todos.
+  // - guest (read global): ve todos (en modo lectura; la edición se controla
+  //   por curso más adelante).
+  // - teacher (sin global): solo los cursos donde tiene permiso asignado.
   let courses = []
-  if (profile.global_role === 'admin') {
+  if (profile.global_role === 'admin' || profile.global_role === 'guest') {
     const { data } = await supabase
       .from('courses')
       .select('*, subjects(name)')
