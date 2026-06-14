@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Commission, Profile, AdditionalLink } from '@/types'
 import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS } from '@/types'
 import type { SessionType } from '@/types'
+import { effectiveCoursePermission } from '@/lib/permissions'
 import SessionModal, { type ExtendedSession } from '@/components/schedule/SessionModal'
 
 // ─── Tipos y constantes ───────────────────────────────────────────────────────
@@ -121,20 +122,8 @@ export default function SchedulePage() {
     setSessions(sessionsRes.data || [])
     setCommissions(commissionsRes.data || [])
 
-    // Determinar permiso efectivo:
-    // Admin global → siempre 'full'
-    // Otros → tomar el permiso más alto que tenga en este curso
-    if (p?.global_role === 'admin') {
-      setCoursePermission('full')
-    } else {
-      const perms = permRes.data || []
-      const PERM_RANK: Record<string, number> = { full: 3, edit: 2, read: 1 }
-      const best = perms.reduce((acc: string | null, row) => {
-        if (!acc) return row.permission
-        return (PERM_RANK[row.permission] || 0) > (PERM_RANK[acc] || 0) ? row.permission : acc
-      }, null)
-      setCoursePermission(best)
-    }
+    // Permiso efectivo unificado (incluye lectura global para guest).
+    setCoursePermission(effectiveCoursePermission(p?.global_role, permRes.data || []))
 
     setLoading(false)
   }, [courseId])
