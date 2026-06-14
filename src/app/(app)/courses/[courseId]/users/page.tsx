@@ -172,26 +172,46 @@ export default function UsersPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newUser),
       })
-      const data = await res.json()
-      if (!res.ok) { setCreateError(data.error || 'No se pudo crear el usuario.'); setCreating(false); return }
+      // Leer como texto primero: si el servidor devolvió HTML (error 500),
+      // res.json() explotaría y ocultaría la causa real.
+      const raw = await res.text()
+      let data: { error?: string; ok?: boolean } = {}
+      try { data = JSON.parse(raw) } catch { /* respuesta no-JSON */ }
+      if (!res.ok) {
+        setCreateError(data.error || `Error ${res.status}: ${raw.slice(0, 200) || 'sin detalle'}`)
+        setCreating(false)
+        return
+      }
       setShowNewUser(false)
       setNewUser({ first_name: '', last_name: '', email: '', dni: '', password: '', status: 'activo', global_role: 'teacher' })
       load()
-    } catch {
-      setCreateError('Error de red al crear el usuario.')
+    } catch (err) {
+      setCreateError(`No se pudo conectar con el servidor: ${err instanceof Error ? err.message : 'error desconocido'}`)
     }
     setCreating(false)
   }
 
   // --- Import CSV: parseo en cliente, validación y creación en servidor ---
   function parseUsersCSV(text: string): Record<string, string>[] {
-    const lines = text.trim().split(/\r?\n/).filter(l => l.trim())
+    // Limpia una celda: quita BOM, espacios y comillas envolventes ("..." o '...').
+    const cleanCell = (v: string) =>
+      (v || '')
+        .replace(/\ufeff/g, '')        // BOM en cualquier posición
+        .trim()
+        .replace(/^["']|["']$/g, '')   // comillas envolventes
+        .trim()
+
+    const clean = text.replace(/^\ufeff/, '')
+    const lines = clean.trim().split(/\r?\n/).filter(l => l.trim())
     if (lines.length < 2) return []
-    const headers = lines[0].split(',').map(h => h.trim().toLowerCase())
+    // Detecta separador: ';' si la cabecera tiene más ';' que ',', si no ','.
+    const headerLine = lines[0]
+    const sep = (headerLine.split(';').length > headerLine.split(',').length) ? ';' : ','
+    const headers = headerLine.split(sep).map(h => cleanCell(h).toLowerCase())
     return lines.slice(1).map((line, i) => {
-      const cells = line.split(',')
+      const cells = line.split(sep)
       const row: Record<string, string> = { _row: String(i + 2) }
-      headers.forEach((h, j) => { row[h] = (cells[j] || '').trim() })
+      headers.forEach((h, j) => { if (h) row[h] = cleanCell(cells[j] || '') })
       return row
     })
   }
