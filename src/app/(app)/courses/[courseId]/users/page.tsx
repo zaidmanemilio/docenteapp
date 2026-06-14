@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile, Commission } from '@/types'
+import { readCsvFile } from '@/lib/csv-encoding'
 
 interface Permission {
   id: string
@@ -216,23 +217,20 @@ export default function UsersPage() {
     })
   }
 
-  function handleCSVFile(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleCSVFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = async () => {
-      const rows = parseUsersCSV(String(reader.result))
-      setImportRows(rows)
-      setImportMsg('')
-      // Previsualizar (commit:false) para ver errores antes de crear.
-      const res = await fetch('/api/users/import', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rows, commit: false }),
-      })
-      const data = await res.json()
-      setImportPreview(data.errors || [])
-    }
-    reader.readAsText(file)
+    const text = await readCsvFile(file)   // detecta UTF-8 o Windows-1252
+    const rows = parseUsersCSV(text)
+    setImportRows(rows)
+    setImportMsg('')
+    // Previsualizar (commit:false) para ver errores antes de crear.
+    const res = await fetch('/api/users/import', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rows, commit: false }),
+    })
+    const data = await res.json()
+    setImportPreview(data.errors || [])
   }
 
   async function commitImport() {
