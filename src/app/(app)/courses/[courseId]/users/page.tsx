@@ -67,6 +67,10 @@ export default function UsersPage() {
   const [importPreview, setImportPreview] = useState<{ row: number; errors: string[] }[] | null>(null)
   const [importing,    setImporting]    = useState(false)
   const [importMsg,    setImportMsg]    = useState('')
+  // Edición de usuario.
+  const [editUser,     setEditUser]     = useState<null | { id: string; first_name: string; last_name: string; email: string; dni: string; password: string }>(null)
+  const [savingUser,   setSavingUser]   = useState(false)
+  const [editError,    setEditError]    = useState('')
 
   const load = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -251,6 +255,40 @@ export default function UsersPage() {
     load()
   }
 
+  // --- Edición de usuario ---
+  function openEditUser(u: Profile) {
+    setEditUser({
+      id: u.id,
+      first_name: u.first_name || '',
+      last_name: u.last_name || '',
+      email: u.email || '',
+      dni: u.dni || '',
+      password: '', // vacío = no cambiar
+    })
+    setEditError('')
+  }
+
+  async function saveEditUser() {
+    if (!editUser) return
+    setSavingUser(true)
+    setEditError('')
+    try {
+      const res = await fetch('/api/users/update', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editUser),
+      })
+      const raw = await res.text()
+      let data: { error?: string } = {}
+      try { data = JSON.parse(raw) } catch { /* no-JSON */ }
+      if (!res.ok) { setEditError(data.error || `Error ${res.status}`); setSavingUser(false); return }
+      setEditUser(null)
+      load()
+    } catch (err) {
+      setEditError(`No se pudo conectar: ${err instanceof Error ? err.message : 'error'}`)
+    }
+    setSavingUser(false)
+  }
+
   if (loading) return <div style={{ padding: '24px', color: 'var(--text-muted)' }}>Cargando...</div>
 
   if (!isAdmin) return (
@@ -431,9 +469,15 @@ export default function UsersPage() {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 500, fontSize: '13px' }}>{u.full_name}</div>
                   <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                    {u.global_role === 'admin' ? 'Administrador' : u.global_role === 'teacher' ? 'Docente' : 'Invitado'}
+                    {u.email ? u.email : (u.global_role === 'admin' ? 'Administrador' : u.global_role === 'teacher' ? 'Docente' : 'Invitado')}
                   </div>
                 </div>
+                <button onClick={() => openEditUser(u)} title="Editar usuario" style={{
+                  background: 'none', border: '1px solid var(--border)', borderRadius: '6px',
+                  padding: '4px 8px', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '12px', flexShrink: 0,
+                }}>
+                  <i className="ti ti-pencil" aria-hidden="true"></i>
+                </button>
                 <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                   {userPerms.length === 0 ? (
                     <>
@@ -564,6 +608,47 @@ export default function UsersPage() {
                 style={{ padding: '8px 16px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', opacity: (importing || importRows.length === 0 || (importPreview != null && importPreview.length > 0)) ? 0.5 : 1 }}>
                 {importing ? 'Importando...' : 'Importar'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Modal: Editar usuario */}
+      {editUser && (
+        <div onClick={() => !savingUser && setEditUser(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '20px' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: '12px', width: '440px', maxWidth: '100%', maxHeight: '90vh', overflow: 'auto' }}>
+            <div style={{ padding: '18px 22px 14px', borderBottom: '1px solid var(--border)' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 600 }}>Editar usuario</h3>
+            </div>
+            <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {editError && (
+                <div className="alert alert-danger" style={{ padding: '8px 12px', borderRadius: '8px', fontSize: '12px' }}>{editError}</div>
+              )}
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <label style={{ flex: 1, fontSize: '12px', color: 'var(--text-muted)' }}>Nombre *
+                  <input value={editUser.first_name} onChange={e => setEditUser({ ...editUser, first_name: e.target.value })}
+                    style={{ width: '100%', marginTop: '4px', padding: '8px 10px', border: '1px solid var(--input-border)', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit' }} />
+                </label>
+                <label style={{ flex: 1, fontSize: '12px', color: 'var(--text-muted)' }}>Apellido *
+                  <input value={editUser.last_name} onChange={e => setEditUser({ ...editUser, last_name: e.target.value })}
+                    style={{ width: '100%', marginTop: '4px', padding: '8px 10px', border: '1px solid var(--input-border)', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit' }} />
+                </label>
+              </div>
+              <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Email *
+                <input type="email" value={editUser.email} onChange={e => setEditUser({ ...editUser, email: e.target.value })}
+                  style={{ width: '100%', marginTop: '4px', padding: '8px 10px', border: '1px solid var(--input-border)', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit' }} />
+              </label>
+              <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>DNI *
+                <input value={editUser.dni} onChange={e => setEditUser({ ...editUser, dni: e.target.value })}
+                  style={{ width: '100%', marginTop: '4px', padding: '8px 10px', border: '1px solid var(--input-border)', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit' }} />
+              </label>
+              <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Nueva contraseña (dejar vacío para no cambiar)
+                <input type="password" value={editUser.password} onChange={e => setEditUser({ ...editUser, password: e.target.value })} placeholder="mín. 8 caracteres"
+                  style={{ width: '100%', marginTop: '4px', padding: '8px 10px', border: '1px solid var(--input-border)', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit' }} />
+              </label>
+            </div>
+            <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <button onClick={() => setEditUser(null)} disabled={savingUser} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)' }}>Cancelar</button>
+              <button onClick={saveEditUser} disabled={savingUser} style={{ padding: '8px 16px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', opacity: savingUser ? 0.6 : 1 }}>{savingUser ? 'Guardando...' : 'Guardar cambios'}</button>
             </div>
           </div>
         </div>
