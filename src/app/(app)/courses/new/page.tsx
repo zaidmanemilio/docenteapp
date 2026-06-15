@@ -122,7 +122,7 @@ export default function NewCoursePage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
             <div>
               <label style={labelStyle}>Carrera</label>
-              <input value={form.career} onChange={e => updateField('career', e.target.value)} placeholder="Ej: Ing. en Sistemas" style={inputStyle} />
+              <input value={form.career} onChange={e => updateField('career', e.target.value)} placeholder="Ej: Lic. en Administración" style={inputStyle} />
             </div>
             <div>
               <label style={labelStyle}>Año</label>
@@ -132,7 +132,7 @@ export default function NewCoursePage() {
 
           <div style={{ marginBottom: '14px' }}>
             <label style={labelStyle}>Facultad / Universidad</label>
-            <input value={form.faculty} onChange={e => updateField('faculty', e.target.value)} placeholder="Ej: UNLP - Facultad de Informática" style={inputStyle} />
+            <input value={form.faculty} onChange={e => updateField('faculty', e.target.value)} placeholder="Ej: FCE - UNLP" style={inputStyle} />
           </div>
 
           <div style={{ marginBottom: '14px' }}>
