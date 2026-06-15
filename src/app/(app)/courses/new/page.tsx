@@ -122,7 +122,7 @@ export default function NewCoursePage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
             <div>
               <label style={labelStyle}>Carrera</label>
-              <input value={form.career} onChange={e => updateField('career', e.target.value)} placeholder="Ej: Lic. en Administración" style={inputStyle} />
+              <input value={form.career} onChange={e => updateField('career', e.target.value)} placeholder="Ej: Licenciatura en Administración" style={inputStyle} />
             </div>
             <div>
               <label style={labelStyle}>Año</label>
