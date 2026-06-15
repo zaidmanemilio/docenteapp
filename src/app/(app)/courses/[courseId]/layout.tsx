@@ -14,10 +14,12 @@ export default async function CourseLayout({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Verificar que el usuario tiene acceso al curso
+  // Verificar que el usuario tiene acceso al curso.
+  // Acceso = admin o guest (lectura global), o tener algún permiso en el curso.
   const { data: profile } = await supabase.from('profiles').select('global_role').eq('id', user.id).single()
+  const globalRole = profile?.global_role
 
-  if (profile?.global_role !== 'admin') {
+  if (globalRole !== 'admin' && globalRole !== 'guest') {
     const { data: perm } = await supabase
       .from('user_course_permissions')
       .select('id')
