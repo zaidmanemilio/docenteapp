@@ -205,6 +205,17 @@ const filteredCourses = levelFilter === 'all'
                 borderRadius: '10px', padding: '4px', zIndex: 41,
                 boxShadow: '0 -4px 16px rgba(0,0,0,0.3)',
               }}>
+                <div
+                  onClick={() => { setUserMenuOpen(false); router.push('/profile') }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    padding: '8px 10px', borderRadius: '7px', cursor: 'pointer',
+                    color: 'var(--sidebar-text)', fontSize: '13px',
+                  }}
+                >
+                  <i className="ti ti-user" style={{ fontSize: '15px', width: '18px' }} aria-hidden="true"></i>
+                  Mi perfil
+                </div>
                 {isAdmin && (
                   <div
                     onClick={() => { setUserMenuOpen(false); router.push('/archived') }}
