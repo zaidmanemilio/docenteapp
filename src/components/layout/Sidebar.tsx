@@ -45,6 +45,7 @@ export default function Sidebar({ profile, courses }: SidebarProps) {
 
   const isAdmin   = profile.global_role === 'admin'
   const [levelFilter, setLevelFilter] = useState('all')
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
 const filteredCourses = levelFilter === 'all'
   ? courses
   : courses.filter(c => (c as Record<string, unknown>).level === levelFilter || (!(c as Record<string, unknown>).level && levelFilter === 'grado'))
@@ -143,12 +144,14 @@ const filteredCourses = levelFilter === 'all'
       Sin cursos de {levelFilter === 'grado' ? 'Grado' : 'Posgrado'}.
     </p>
   )}
-  {isAdmin && (
+</div>
+{/* Nuevo curso: FIJO fuera del scroll, así nunca queda tapado */}
+{isAdmin && (
+  <div style={{ padding: '4px 8px 0' }}>
     <div
       onClick={() => router.push('/courses/new')}
       style={{
         padding: '7px 10px', borderRadius: '8px', cursor: 'pointer',
-        marginBottom: '2px', marginTop: '4px',
         color: pathname === '/courses/new' ? 'var(--accent-light)' : '#555575',
         background: pathname === '/courses/new' ? 'rgba(99,102,241,0.18)' : 'transparent',
         fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px',
@@ -158,8 +161,8 @@ const filteredCourses = levelFilter === 'all'
       <i className="ti ti-plus" style={{ fontSize: '13px' }} aria-hidden="true"></i>
       <span>Nuevo curso</span>
     </div>
-  )}
-</div>
+  </div>
+)}
 
         <div style={{ height: '1px', background: 'var(--sidebar-border)', margin: '8px 16px' }}></div>
 
@@ -187,30 +190,58 @@ const filteredCourses = levelFilter === 'all'
               )
             })
           }
+        </div>
 
-          {isAdmin && (
+        {/* Usuario — menú desplegable */}
+        <div style={{ borderTop: '1px solid var(--sidebar-border)', padding: '8px', position: 'relative' }}>
+          {/* Menú desplegable (se abre hacia arriba) */}
+          {userMenuOpen && (
             <>
-              <div style={{ height: '1px', background: 'var(--sidebar-border)', margin: '8px 4px' }}></div>
-              <div
-                onClick={() => router.push('/archived')}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '8px',
-                  padding: '7px 10px', borderRadius: '8px', cursor: 'pointer',
-                  color: pathname === '/archived' ? 'var(--accent-light)' : '#555575',
-                  background: pathname === '/archived' ? 'rgba(99,102,241,0.18)' : 'transparent',
-                  fontSize: '12px', marginBottom: '1px',
-                }}
-              >
-                <i className="ti ti-archive" style={{ fontSize: '15px', width: '18px' }} aria-hidden="true"></i>
-                Cursos archivados
+              {/* Capa para cerrar al hacer click afuera */}
+              <div onClick={() => setUserMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
+              <div style={{
+                position: 'absolute', bottom: 'calc(100% - 4px)', left: '8px', right: '8px',
+                background: 'var(--surface-elevated)', border: '1px solid var(--sidebar-border)',
+                borderRadius: '10px', padding: '4px', zIndex: 41,
+                boxShadow: '0 -4px 16px rgba(0,0,0,0.3)',
+              }}>
+                {isAdmin && (
+                  <div
+                    onClick={() => { setUserMenuOpen(false); router.push('/archived') }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '8px',
+                      padding: '8px 10px', borderRadius: '7px', cursor: 'pointer',
+                      color: 'var(--sidebar-text)', fontSize: '13px',
+                    }}
+                  >
+                    <i className="ti ti-archive" style={{ fontSize: '15px', width: '18px' }} aria-hidden="true"></i>
+                    Cursos archivados
+                  </div>
+                )}
+                <div
+                  onClick={handleLogout}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    padding: '8px 10px', borderRadius: '7px', cursor: 'pointer',
+                    color: 'var(--sidebar-text)', fontSize: '13px',
+                  }}
+                >
+                  <i className="ti ti-logout" style={{ fontSize: '15px', width: '18px' }} aria-hidden="true"></i>
+                  Cerrar sesión
+                </div>
               </div>
             </>
           )}
-        </div>
 
-        {/* Usuario */}
-        <div style={{ borderTop: '1px solid var(--sidebar-border)', padding: '12px 16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Botón de usuario (abre el menú) */}
+          <div
+            onClick={() => setUserMenuOpen(o => !o)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              padding: '6px 8px', borderRadius: '8px', cursor: 'pointer',
+              background: userMenuOpen ? 'rgba(255,255,255,0.04)' : 'transparent',
+            }}
+          >
             <div style={{
               width: '28px', height: '28px', borderRadius: '50%',
               background: getColor(profile.id), color: 'white',
@@ -225,13 +256,7 @@ const filteredCourses = levelFilter === 'all'
               </p>
               <span style={{ fontSize: '10px', color: 'var(--sidebar-text)' }}>{roleLabel}</span>
             </div>
-            <button
-              onClick={handleLogout}
-              title="Cerrar sesión"
-              style={{ background: 'none', border: 'none', color: '#555575', cursor: 'pointer', fontSize: '16px', padding: '2px' }}
-            >
-              <i className="ti ti-logout" aria-hidden="true"></i>
-            </button>
+            <i className="ti ti-selector" style={{ color: '#555575', fontSize: '15px', flexShrink: 0 }} aria-hidden="true"></i>
           </div>
         </div>
       </nav>
