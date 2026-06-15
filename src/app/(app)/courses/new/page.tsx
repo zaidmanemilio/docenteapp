@@ -116,7 +116,7 @@ export default function NewCoursePage() {
 
           <div style={{ marginBottom: '14px' }}>
             <label style={labelStyle}>Nombre completo de la materia</label>
-            <input value={form.full_name} onChange={e => updateField('full_name', e.target.value)} placeholder="Ej: Tecnología de la Información y Sistemas Integrados" style={inputStyle} />
+            <input value={form.full_name} onChange={e => updateField('full_name', e.target.value)} placeholder="Ej: Tecnología Informática y Sistemas de Información" style={inputStyle} />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
