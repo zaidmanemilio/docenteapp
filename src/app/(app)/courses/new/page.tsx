@@ -85,10 +85,10 @@ export default function NewCoursePage() {
 
   const labelStyle: React.CSSProperties = {
     display: 'block', fontSize: '11px', fontWeight: 600,
-    color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '5px',
+    color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '5px',
   }
   const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '8px 10px', border: '1px solid #e5e7eb',
+    width: '100%', padding: '8px 10px', border: '1px solid var(--input-border)',
     borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit', color: 'var(--text-primary)',
   }
 
@@ -99,14 +99,14 @@ export default function NewCoursePage() {
       <div style={{ maxWidth: '620px' }}>
         <div style={{ marginBottom: '24px' }}>
           <h2 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-primary)' }}>Nuevo curso</h2>
-          <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
             Una vez creado, vas a poder importar el cronograma desde un archivo CSV o Excel.
           </p>
         </div>
 
         {/* Datos del curso */}
-        <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px', marginBottom: '16px' }}>
-          <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#6b7280', marginBottom: '16px' }}>Identificación</p>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '24px', marginBottom: '16px' }}>
+          <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: '16px' }}>Identificación</p>
 
           <div style={{ marginBottom: '14px' }}>
             <label style={labelStyle}>Nombre corto del curso *</label>
@@ -142,8 +142,8 @@ export default function NewCoursePage() {
         </div>
 
         {/* Configuración */}
-        <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px', marginBottom: '16px' }}>
-          <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#6b7280', marginBottom: '16px' }}>Configuración</p>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '24px', marginBottom: '16px' }}>
+          <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: '16px' }}>Configuración</p>
 <div style={{ marginBottom: '14px' }}>
   <label style={labelStyle}>Nivel académico</label>
   <select value={form.level} onChange={e => updateField('level', e.target.value)} style={inputStyle}>
@@ -177,8 +177,8 @@ export default function NewCoursePage() {
         </div>
 
         {/* Comisiones */}
-        <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px', marginBottom: '24px' }}>
-          <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#6b7280', marginBottom: '16px' }}>Comisiones</p>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '24px', marginBottom: '24px' }}>
+          <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: '16px' }}>Comisiones</p>
 
           <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
             {(['single', 'multi'] as CommissionMode[]).map(mode => (
@@ -196,7 +196,7 @@ export default function NewCoursePage() {
           </div>
 
           {commissionMode === 'single' ? (
-            <div style={{ padding: '10px 14px', background: '#f9fafb', borderRadius: '8px', fontSize: '13px', color: '#6b7280' }}>
+            <div style={{ padding: '10px 14px', background: 'var(--hover-bg)', borderRadius: '8px', fontSize: '13px', color: 'var(--text-muted)' }}>
               Se creará automáticamente una comisión llamada <strong>&quot;Única&quot;</strong>.
             </div>
           ) : (
@@ -208,14 +208,14 @@ export default function NewCoursePage() {
                     style={{ ...inputStyle, flex: 1, marginBottom: 0 }} />
                   {multiCommissions.length > 1 && (
                     <button onClick={() => setMultiCommissions(prev => prev.filter((_, j) => j !== i))}
-                      style={{ background: 'none', border: '1px solid #fca5a5', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', color: 'var(--danger)', fontSize: '13px' }}>
+                      style={{ background: 'none', border: '1px solid var(--badge-danger-bd)', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', color: 'var(--danger)', fontSize: '13px' }}>
                       <i className="ti ti-trash" aria-hidden="true"></i>
                     </button>
                   )}
                 </div>
               ))}
               <button onClick={() => setMultiCommissions(prev => [...prev, `Comisión ${prev.length + 1}`])}
-                style={{ background: 'none', border: '1px dashed #d1d5db', borderRadius: '8px', padding: '7px 14px', cursor: 'pointer', color: '#6b7280', fontSize: '13px', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                style={{ background: 'none', border: '1px dashed var(--input-border)', borderRadius: '8px', padding: '7px 14px', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '13px', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
                 <i className="ti ti-plus" aria-hidden="true"></i> Agregar comisión
               </button>
             </div>
@@ -230,13 +230,13 @@ export default function NewCoursePage() {
 
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
           <button onClick={() => router.back()} style={{
-            padding: '9px 18px', background: 'transparent', border: '1px solid #e5e7eb',
-            borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: '#6b7280',
+            padding: '9px 18px', background: 'transparent', border: '1px solid var(--input-border)',
+            borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)',
           }}>
             Cancelar
           </button>
           <button onClick={handleCreate} disabled={saving} style={{
-            padding: '9px 20px', background: '#6366f1', color: 'white',
+            padding: '9px 20px', background: 'var(--accent)', color: 'white',
             border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
             cursor: saving ? 'wait' : 'pointer', opacity: saving ? 0.7 : 1, fontFamily: 'inherit',
             display: 'flex', alignItems: 'center', gap: '6px',
