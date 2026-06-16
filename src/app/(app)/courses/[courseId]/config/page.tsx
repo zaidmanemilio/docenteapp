@@ -6,6 +6,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Course, Commission, Profile } from '@/types'
+import { buildCourseBackup, downloadJson, downloadCsv, sessionsToCsv, todosToCsv } from '@/lib/backup/course-backup'
+import { validateBackup, restoreCourseFromBackup } from '@/lib/backup/course-restore'
 
 interface Permission {
   id: string
@@ -41,7 +43,13 @@ export default function ConfigPage() {
   const [loading,      setLoading]      = useState(true)
   const [saving,       setSaving]       = useState(false)
   const [saved,        setSaved]        = useState(false)
-  const [tab,          setTab]          = useState<'general'|'links'|'commissions'|'teachers'>('general')
+  const [tab,          setTab]          = useState<'general'|'links'|'commissions'|'teachers'|'backup'>('general')
+  // Respaldo / restauración
+  const [backupBusy,   setBackupBusy]   = useState(false)
+  const [backupMsg,    setBackupMsg]    = useState('')
+  const [restoreBusy,  setRestoreBusy]  = useState(false)
+  const [restoreMsg,   setRestoreMsg]   = useState('')
+  const [restoreErr,   setRestoreErr]   = useState('')
 
   // Estado para el formulario de agregar docente
   const [addingTeacher,    setAddingTeacher]    = useState(false)
@@ -72,6 +80,66 @@ export default function ConfigPage() {
   useEffect(() => { load() }, [load])
 
   const isAdmin = profile?.global_role === 'admin'
+
+  // --- Respaldo / exportación ---
+  async function exportBackupJson() {
+    setBackupBusy(true); setBackupMsg('')
+    try {
+      const backup = await buildCourseBackup(supabase, courseId)
+      const safeName = (course?.name || 'curso').replace(/[^a-z0-9]+/gi, '_').toLowerCase()
+      const date = new Date().toISOString().slice(0, 10)
+      downloadJson(backup, `respaldo_${safeName}_${date}.json`)
+      setBackupMsg('Respaldo JSON descargado.')
+    } catch (e) {
+      setBackupMsg(`Error: ${e instanceof Error ? e.message : 'no se pudo generar el respaldo'}`)
+    }
+    setBackupBusy(false)
+  }
+
+  async function exportCsv(kind: 'sessions' | 'todos') {
+    setBackupBusy(true); setBackupMsg('')
+    try {
+      const backup = await buildCourseBackup(supabase, courseId)
+      const safeName = (course?.name || 'curso').replace(/[^a-z0-9]+/gi, '_').toLowerCase()
+      const date = new Date().toISOString().slice(0, 10)
+      if (kind === 'sessions') {
+        downloadCsv(sessionsToCsv(backup.sessions), `cronograma_${safeName}_${date}.csv`)
+      } else {
+        downloadCsv(todosToCsv(backup.todos), `tareas_${safeName}_${date}.csv`)
+      }
+      setBackupMsg('CSV descargado.')
+    } catch (e) {
+      setBackupMsg(`Error: ${e instanceof Error ? e.message : 'no se pudo generar el CSV'}`)
+    }
+    setBackupBusy(false)
+  }
+
+  // --- Restauración desde JSON ---
+  async function handleRestoreFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = '' // permitir re-seleccionar el mismo archivo
+    if (!file) return
+    setRestoreErr(''); setRestoreMsg('')
+
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(await file.text())
+    } catch {
+      setRestoreErr('El archivo no es un JSON válido.')
+      return
+    }
+    const check = validateBackup(parsed)
+    if (!check.ok || !check.backup) { setRestoreErr(check.error || 'Respaldo inválido.'); return }
+
+    const origName = (check.backup.course.name as string) || 'curso'
+    if (!confirm(`Esto creará un curso NUEVO a partir del respaldo de "${origName}" (no modifica ningún curso existente). ¿Continuar?`)) return
+
+    setRestoreBusy(true)
+    const result = await restoreCourseFromBackup(supabase, check.backup)
+    setRestoreBusy(false)
+    if (!result.ok) { setRestoreErr(result.error || 'No se pudo restaurar.'); return }
+    setRestoreMsg(`Curso restaurado: ${result.counts?.commissions || 0} comisiones, ${result.counts?.sessions || 0} clases, ${result.counts?.todos || 0} tareas. Recargá la lista de cursos para verlo.`)
+  }
 
   async function saveCourse() {
     if (!course) return
@@ -214,6 +282,7 @@ export default function ConfigPage() {
         <button style={tabStyle('links')}       onClick={() => setTab('links')}>Links del curso</button>
         <button style={tabStyle('commissions')} onClick={() => setTab('commissions')}>Comisiones</button>
         <button style={tabStyle('teachers')}    onClick={() => setTab('teachers')}>Docentes y permisos</button>
+        {isAdmin && <button style={tabStyle('backup')} onClick={() => setTab('backup')}>Respaldo</button>}
       </div>
 
       <div style={{ maxWidth: '620px' }}>
@@ -463,6 +532,51 @@ export default function ConfigPage() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {tab === 'backup' && isAdmin && (
+          <div style={{ maxWidth: '640px' }}>
+            {/* Exportar */}
+            <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '6px' }}>Exportar y respaldar</h3>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                El respaldo JSON guarda el curso completo (clases, comisiones, tareas) y sirve para restaurarlo. Los CSV son para leer o compartir en Excel.
+              </p>
+              {backupMsg && <div className="alert" style={{ padding: '8px 12px', borderRadius: '8px', fontSize: '12px', marginBottom: '12px', color: 'var(--text-muted)' }}>{backupMsg}</div>}
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <button onClick={exportBackupJson} disabled={backupBusy}
+                  style={{ padding: '8px 14px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', opacity: backupBusy ? 0.6 : 1 }}>
+                  <i className="ti ti-download" style={{ marginRight: '6px' }} aria-hidden="true"></i>
+                  Respaldo completo (JSON)
+                </button>
+                <button onClick={() => exportCsv('sessions')} disabled={backupBusy}
+                  style={{ padding: '8px 14px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-primary)' }}>
+                  Cronograma (CSV)
+                </button>
+                <button onClick={() => exportCsv('todos')} disabled={backupBusy}
+                  style={{ padding: '8px 14px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-primary)' }}>
+                  Tareas (CSV)
+                </button>
+              </div>
+            </div>
+
+            {/* Restaurar */}
+            <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '6px' }}>Restaurar desde respaldo</h3>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                Subí un archivo JSON de respaldo. Se creará un <strong>curso nuevo</strong> con su contenido — no se modifica ningún curso existente.
+              </p>
+              <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                Nota: los permisos de usuarios no se restauran automáticamente; reasignalos en la pestaña Docentes del curso restaurado.
+              </p>
+              {restoreErr && <div className="alert alert-danger" style={{ padding: '8px 12px', borderRadius: '8px', fontSize: '12px', marginBottom: '12px' }}>{restoreErr}</div>}
+              {restoreMsg && <div className="alert alert-success" style={{ padding: '8px 12px', borderRadius: '8px', fontSize: '12px', marginBottom: '12px' }}>{restoreMsg}</div>}
+              <label style={{ display: 'inline-block', padding: '8px 14px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px', cursor: restoreBusy ? 'wait' : 'pointer', fontFamily: 'inherit', color: 'var(--text-primary)' }}>
+                {restoreBusy ? 'Restaurando...' : 'Elegir archivo JSON'}
+                <input type="file" accept=".json,application/json" onChange={handleRestoreFile} disabled={restoreBusy} style={{ display: 'none' }} />
+              </label>
+            </div>
           </div>
         )}
       </div>
