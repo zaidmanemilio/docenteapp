@@ -2,7 +2,7 @@
 
 export type GlobalRole = 'admin' | 'teacher' | 'guest'
 export type Permission = 'full' | 'edit' | 'read'
-export type CourseStatus = 'draft' | 'active' | 'closed'
+export type CourseStatus = 'draft' | 'active' | 'closed' | 'archived'
 export type SessionType = 'teorica' | 'practica' | 'taller' | 'invitado' | 'parcial' | 'recuperatorio' | 'exposicion' | 'proyecto'
 export type SessionModality = 'presencial' | 'virtual'
 export type SessionStatus = 'pendiente' | 'dada' | 'reprogramada' | 'cancelada'
