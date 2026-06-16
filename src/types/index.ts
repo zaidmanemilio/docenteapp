@@ -89,8 +89,16 @@ export interface Session {
   private_notes?: string
   moodle_status?: string  // 'no_iniciado' | 'borrador' | 'publicado' | 'revisado'
   moodle_checklist?: MoodleChecklist
+  prep_status?: PrepStatus  // estado de armado de la clase
   created_at: string
   updated_at: string
+}
+
+export type PrepStatus = 'a_terminar' | 'finalizada'
+
+export const PREP_STATUS_LABELS: Record<PrepStatus, string> = {
+  a_terminar: 'A terminar',
+  finalizada: 'Finalizada',
 }
 
 export interface MoodleChecklist {
