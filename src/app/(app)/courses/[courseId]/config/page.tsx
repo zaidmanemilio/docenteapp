@@ -81,6 +81,19 @@ export default function ConfigPage() {
 
   const isAdmin = profile?.global_role === 'admin'
 
+  // --- Archivar curso ---
+  const [archiving, setArchiving] = useState(false)
+  async function archiveCourse() {
+    if (!course) return
+    if (!confirm('¿Confirma que desea archivar el curso? Dejará de aparecer en el menú lateral. Podrás restaurarlo o reutilizarlo desde "Cursos archivados".')) return
+    setArchiving(true)
+    const { error } = await supabase.from('courses').update({ status: 'archived' }).eq('id', courseId)
+    setArchiving(false)
+    if (error) { alert('No se pudo archivar: ' + error.message); return }
+    router.push('/')
+    router.refresh()
+  }
+
   // --- Respaldo / exportación ---
   async function exportBackupJson() {
     setBackupBusy(true); setBackupMsg('')
@@ -360,6 +373,20 @@ export default function ConfigPage() {
               <label style={labelStyle}>Observaciones internas</label>
               <textarea value={course.internal_notes || ''} onChange={e => setCourse({...course, internal_notes: e.target.value})} disabled={!isAdmin} rows={2} placeholder="Notas visibles solo para el equipo docente..." style={{...inputStyle, resize: 'vertical', minHeight: '56px'}} />
             </div>
+
+            {isAdmin && (
+              <div style={{ marginTop: '8px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
+                <label style={{ ...labelStyle, marginBottom: '8px' }}>Archivar curso</label>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '10px' }}>
+                  Al archivar, el curso deja de aparecer en el menú lateral. Podrás restaurarlo o reutilizarlo cuando quieras desde &quot;Cursos archivados&quot;. No se borra nada.
+                </p>
+                <button onClick={archiveCourse} disabled={archiving}
+                  style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--badge-warning-bd)', color: 'var(--warning)', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: archiving ? 'wait' : 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: '6px', opacity: archiving ? 0.6 : 1 }}>
+                  <i className="ti ti-archive" aria-hidden="true"></i>
+                  {archiving ? 'Archivando...' : 'Archivar curso'}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
