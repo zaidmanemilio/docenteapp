@@ -3,9 +3,10 @@
 // Extraído de schedule/page.tsx — sin cambios de comportamiento ni diseño.
 
 import { useState } from 'react'
-import type { Commission, AdditionalLink } from '@/types'
+import type { Commission, AdditionalLink, MoodleChecklist } from '@/types'
 import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS } from '@/types'
 import type { SessionType, SessionStatus, SessionModality } from '@/types'
+import { MOODLE_STATUSES, CHECKLIST_ITEMS, normalizeChecklist, isChecklistComplete } from '@/lib/moodle'
 
 // Tipo extendido con campos de review y horario (v2)
 export interface ExtendedSession {
@@ -37,6 +38,9 @@ export interface ExtendedSession {
   start_time?: string
   end_time?: string
   location?: string
+  // Campos Moodle
+  moodle_status?: string
+  moodle_checklist?: MoodleChecklist
   // Campos de Supabase
   created_at?: string
   updated_at?: string
@@ -77,7 +81,7 @@ const labelStyle: React.CSSProperties = {
   marginBottom: '5px',
 }
 
-type ModalTab = 'basic' | 'links' | 'notes' | 'review' | 'schedule'
+type ModalTab = 'basic' | 'links' | 'notes' | 'review' | 'schedule' | 'moodle'
 
 // ─── Componente ──────────────────────────────────────────────────────────────
 export default function SessionModal({
@@ -169,6 +173,7 @@ export default function SessionModal({
               )}
             </button>
             <button style={tabStyle('schedule')} onClick={() => setModalTab('schedule')}>Horario</button>
+            <button style={tabStyle('moodle')} onClick={() => setModalTab('moodle')}>Moodle</button>
           </div>
         </div>
 
@@ -486,6 +491,69 @@ export default function SessionModal({
                   placeholder="Ej: Aula 2 - Edificio A"
                   style={inputStyle}
                 />
+              </div>
+            </>
+          )}
+
+          {modalTab === 'moodle' && (
+            <>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                Seguimiento de la publicación de esta clase en Moodle.
+              </p>
+
+              {/* Estado Moodle */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={labelStyle}>Estado de publicación</label>
+                <select
+                  value={session.moodle_status || 'no_iniciado'}
+                  onChange={e => onSessionChange({ ...session, moodle_status: e.target.value })}
+                  style={inputStyle}
+                  disabled={!canEdit}
+                >
+                  {MOODLE_STATUSES.map(s => (
+                    <option key={s.value} value={s.value}>{s.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Checklist */}
+              <div>
+                <label style={labelStyle}>Checklist de publicación</label>
+                {(() => {
+                  const cl = normalizeChecklist(session.moodle_checklist)
+                  const complete = isChecklistComplete(cl)
+                  return (
+                    <>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
+                        {CHECKLIST_ITEMS.map(item => (
+                          <label key={item.key} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', cursor: canEdit ? 'pointer' : 'default', color: 'var(--text-primary)' }}>
+                            <input
+                              type="checkbox"
+                              checked={cl[item.key]}
+                              disabled={!canEdit}
+                              onChange={e => onSessionChange({ ...session, moodle_checklist: { ...cl, [item.key]: e.target.checked } })}
+                              style={{ width: '16px', height: '16px', cursor: canEdit ? 'pointer' : 'default' }}
+                            />
+                            <span>{item.label}</span>
+                            {item.optional && <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(optativo)</span>}
+                          </label>
+                        ))}
+                      </div>
+                      <div style={{ marginTop: '14px' }}>
+                        {complete ? (
+                          <span className="badge-success" style={{ fontSize: '12px', padding: '3px 10px', borderRadius: '99px' }}>
+                            <i className="ti ti-circle-check" style={{ marginRight: '4px' }} aria-hidden="true"></i>
+                            Publicación completa
+                          </span>
+                        ) : (
+                          <span className="badge-warning" style={{ fontSize: '12px', padding: '3px 10px', borderRadius: '99px' }}>
+                            Pendiente de completar
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  )
+                })()}
               </div>
             </>
           )}
