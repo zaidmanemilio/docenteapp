@@ -74,6 +74,7 @@ export default function SchedulePage() {
 
   const [sessions,     setSessions]     = useState<ExtendedSession[]>([])
   const [commissions,  setCommissions]  = useState<Commission[]>([])
+  const [courseTeachers, setCourseTeachers] = useState<string[]>([])
   const [profile,      setProfile]      = useState<Profile | null>(null)
   const [courseName,   setCourseName]   = useState('')
   const [zoomUrl,      setZoomUrl]      = useState('')
@@ -102,7 +103,7 @@ export default function SchedulePage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const [profileRes, courseRes, sessionsRes, commissionsRes, permRes] = await Promise.all([
+    const [profileRes, courseRes, sessionsRes, commissionsRes, permRes, courseTeachersRes] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', user.id).single(),
       supabase.from('courses').select('name, zoom_url').eq('id', courseId).single(),
       supabase.from('sessions').select('*').eq('course_id', courseId).order('date').order('class_number'),
@@ -112,7 +113,11 @@ export default function SchedulePage() {
         .select('permission')
         .eq('user_id', user.id)
         .eq('course_id', courseId)
-        .order('permission') // full > edit > read alfabéticamente no funciona, manejamos abajo
+        .order('permission'), // full > edit > read alfabéticamente no funciona, manejamos abajo
+      // Docentes asociados al curso (para el desplegable de Responsable)
+      supabase.from('user_course_permissions')
+        .select('profiles(full_name)')
+        .eq('course_id', courseId),
     ])
 
     const p = profileRes.data
@@ -121,6 +126,15 @@ export default function SchedulePage() {
     setZoomUrl(courseRes.data?.zoom_url || '')
     setSessions(sessionsRes.data || [])
     setCommissions(commissionsRes.data || [])
+
+    // Nombres de docentes del curso, sin duplicados, ordenados.
+    const names = (courseTeachersRes.data || [])
+      .map((r: { profiles: { full_name?: string } | { full_name?: string }[] | null }) => {
+        const prof = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles
+        return prof?.full_name || ''
+      })
+      .filter(Boolean)
+    setCourseTeachers([...new Set(names)].sort())
 
     // Permiso efectivo unificado (incluye lectura global para guest).
     setCoursePermission(effectiveCoursePermission(p?.global_role, permRes.data || []))
@@ -510,6 +524,7 @@ export default function SchedulePage() {
           session={editSession}
           isNew={isNew}
           commissions={commissions}
+          teachers={courseTeachers}
           addLinks={addLinks}
           canEdit={canEdit}
           isAdmin={canDelete}
