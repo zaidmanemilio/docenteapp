@@ -87,8 +87,17 @@ export interface Session {
   workshop_brief_url?: string
   shared_notes?: string
   private_notes?: string
+  moodle_status?: string  // 'no_iniciado' | 'borrador' | 'publicado' | 'revisado'
+  moodle_checklist?: MoodleChecklist
   created_at: string
   updated_at: string
+}
+
+export interface MoodleChecklist {
+  etiqueta: boolean       // Etiqueta creada
+  presentacion: boolean   // Presentación subida
+  grabacion: boolean      // Link a grabación
+  otros: boolean          // Otros (optativo, no cuenta para "completo")
 }
 
 export interface Todo {
