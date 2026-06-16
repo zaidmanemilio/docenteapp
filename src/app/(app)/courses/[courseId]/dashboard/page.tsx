@@ -2,6 +2,7 @@
 // Fix: empty state con CTA a Importar cronograma cuando no hay encuentros
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { isChecklistComplete, normalizeChecklist } from '@/lib/moodle'
 import Link from 'next/link'
 
 function KpiCard({ label, value, sub, variant = 'default' }: {
@@ -109,6 +110,8 @@ export default async function DashboardPage({ params }: { params: Promise<{ cour
   const sinResp   = sessions.filter(s => !s.responsible           && s.status !== 'cancelada').length
   const todosOpen = todos.filter(t => t.status === 'open').length
   const dadasSinReview    = sessions.filter(s => s.status === 'dada' && !s.review_what_worked && !s.review_what_didnt && !s.review_change_next).length
+  // Clases dadas que aún no están completas en Moodle (los 3 ítems obligatorios).
+  const dadasSinMoodle    = sessions.filter(s => s.status === 'dada' && !isChecklistComplete(normalizeChecklist(s.moodle_checklist))).length
   const fechaPasadaPend   = sessions.filter(s => s.status === 'pendiente' && s.date < today).length
   const virtualSinZoom    = course.zoom_url ? 0 : sessions.filter(s => s.modality === 'virtual' && !s.canva_url && s.status !== 'cancelada').length
 
@@ -123,6 +126,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ cour
 
   const alerts = [
     dadasSinReview   > 0 && { text:`${dadasSinReview} clase${dadasSinReview>1?'s':''} dada${dadasSinReview>1?'s':''} sin review post-clase`, icon:'ti-notes-off',         variant:'warning' },
+    dadasSinMoodle   > 0 && { text:`${dadasSinMoodle} clase${dadasSinMoodle>1?'s':''} dada${dadasSinMoodle>1?'s':''} sin publicar en Moodle`, icon:'ti-school',         variant:'info' as const },
     fechaPasadaPend  > 0 && { text:`${fechaPasadaPend} clase${fechaPasadaPend>1?'s':''} con fecha pasada y estado Pendiente`, icon:'ti-calendar-x',     variant:'danger' },
     sinCanva         > 0 && { text:`${sinCanva} clase${sinCanva>1?'s':''} sin link a presentación/Canva`, icon:'ti-brand-figma',       variant:'warning' },
     sinBrief         > 0 && { text:`${sinBrief} taller${sinBrief>1?'es':''} sin brief/consigna`, icon:'ti-file-description',  variant:'warning' },
