@@ -4,8 +4,8 @@
 
 import { useState } from 'react'
 import type { Commission, AdditionalLink, MoodleChecklist } from '@/types'
-import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS } from '@/types'
-import type { SessionType, SessionStatus, SessionModality } from '@/types'
+import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS, PREP_STATUS_LABELS } from '@/types'
+import type { SessionType, SessionStatus, SessionModality, PrepStatus } from '@/types'
 import { MOODLE_STATUSES, CHECKLIST_ITEMS, normalizeChecklist, isChecklistComplete } from '@/lib/moodle'
 
 // Tipo extendido con campos de review y horario (v2)
@@ -41,6 +41,7 @@ export interface ExtendedSession {
   // Campos Moodle
   moodle_status?: string
   moodle_checklist?: MoodleChecklist
+  prep_status?: string
   // Campos de Supabase
   created_at?: string
   updated_at?: string
@@ -50,6 +51,7 @@ export interface SessionModalProps {
   session: ExtendedSession
   isNew: boolean
   commissions: Commission[]
+  teachers?: string[]
   addLinks: AdditionalLink[]
   canEdit: boolean
   isAdmin: boolean
@@ -88,6 +90,7 @@ export default function SessionModal({
   session,
   isNew,
   commissions,
+  teachers = [],
   addLinks,
   canEdit,
   isAdmin,
@@ -228,7 +231,7 @@ export default function SessionModal({
                   </select>
                 </div>
                 <div>
-                  <label style={labelStyle}>Estado</label>
+                  <label style={labelStyle}>Estado del dictado</label>
                   <select
                     value={session.status}
                     onChange={e => onSessionChange({ ...session, status: e.target.value as SessionStatus })}
@@ -241,15 +244,44 @@ export default function SessionModal({
                 </div>
               </div>
 
+              {/* Estado de preparación (armado de la clase) */}
+              <div style={{ marginBottom: '14px' }}>
+                <label style={labelStyle}>Estado de preparación</label>
+                <select
+                  value={session.prep_status || 'a_terminar'}
+                  onChange={e => onSessionChange({ ...session, prep_status: e.target.value as PrepStatus })}
+                  style={{ ...inputStyle, maxWidth: '240px' }}
+                  disabled={!canEdit}
+                >
+                  {Object.entries(PREP_STATUS_LABELS).map(([v, l]) => (
+                    <option key={v} value={v}>{l}</option>
+                  ))}
+                </select>
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  Si ya terminaste de armar esta clase, marcala como Finalizada (independiente de si ya se dictó o se subió a Moodle).
+                </p>
+              </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
                 <div>
                   <label style={labelStyle}>Responsable</label>
-                  <input
-                    value={session.responsible}
+                  <select
+                    value={session.responsible || ''}
                     onChange={e => onSessionChange({ ...session, responsible: e.target.value })}
-                    placeholder="Nombre del docente"
                     style={inputStyle}
-                  />
+                    disabled={!canEdit}
+                  >
+                    <option value="">— Sin asignar —</option>
+                    {teachers.map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                    <option value="Invitado/a">Invitado/a</option>
+                    {/* Si el responsable actual no está en la lista (valor viejo escrito a mano), lo mostramos igual para no perderlo */}
+                    {session.responsible
+                      && session.responsible !== 'Invitado/a'
+                      && !teachers.includes(session.responsible)
+                      && <option value={session.responsible}>{session.responsible} (actual)</option>}
+                  </select>
                 </div>
                 <div>
                   <label style={labelStyle}>Modalidad</label>
