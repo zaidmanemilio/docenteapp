@@ -1,7 +1,7 @@
 // src/app/(app)/courses/[courseId]/dashboard/page.tsx
 // Fix: empty state con CTA a Importar cronograma cuando no hay encuentros
-import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { requireProfile } from '@/lib/supabase/session'
 import { isChecklistComplete, normalizeChecklist } from '@/lib/moodle'
 import Link from 'next/link'
 
@@ -31,9 +31,9 @@ function AlertRow({ text, icon, variant = 'warning' }: { text: string; icon: str
 
 export default async function DashboardPage({ params }: { params: Promise<{ courseId: string }> }) {
   const { courseId } = await params
+  // Deduplicado por request: reusa el usuario+perfil ya validado por los layouts.
+  await requireProfile()
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
   const today = new Date().toISOString().slice(0, 10)
 

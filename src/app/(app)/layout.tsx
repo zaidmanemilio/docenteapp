@@ -1,20 +1,13 @@
 // src/app/(app)/layout.tsx
-import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { requireProfile } from '@/lib/supabase/session'
 import Sidebar from '@/components/layout/Sidebar'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  // requireProfile() está deduplicado por request (cache): esta llamada comparte
+  // el getUser()/perfil con el course-layout y la página hijos → 1 sola ida a Auth.
+  const profile = await requireProfile()
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile) redirect('/login')
 
   // Obtener cursos NO archivados accesibles por el usuario.
   // - admin (full global): ve todos.
@@ -34,8 +27,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     const { data: perms } = await supabase
       .from('user_course_permissions')
       .select('course_id')
-      .eq('user_id', user.id)
-    const courseIds = [...new Set((perms || []).map((p: { course_id: string }) => p.course_id))]
+      .eq('user_id', profile.id)
+    const courseIds = Array.from(new Set((perms || []).map((p: { course_id: string }) => p.course_id)))
     if (courseIds.length > 0) {
       const { data } = await supabase
         .from('courses')
