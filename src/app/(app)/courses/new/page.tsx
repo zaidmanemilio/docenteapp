@@ -69,6 +69,22 @@ export default function NewCoursePage() {
 
     await supabase.from('commissions').insert(commissionsToCreate)
 
+    // Crear el Encuentro #0 fijo: "ESTRUCTURA DEL CURSO".
+    // Es un encuentro como cualquier otro (mismo modal), pero con número 0.
+    // Se le pone la fecha de hoy como placeholder (el modal exige fecha al
+    // editar); el usuario puede ajustarla o dejarla.
+    await supabase.from('sessions').insert({
+      course_id: courseId,
+      class_number: 0,
+      title: 'ESTRUCTURA DEL CURSO',
+      type: 'teorica',
+      responsible: '',
+      modality: form.modality === 'virtual' ? 'virtual' : 'presencial',
+      status: 'pendiente',
+      commission_scope: 'all',
+      date: new Date().toISOString().slice(0, 10),
+    })
+
     // Asignar permiso full al usuario actual
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
