@@ -112,22 +112,37 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--track); border-radius: 99px; }
 
-/* Filter pills */
+/* Filter pills.
+   Antes eran un borde fino de 1px sobre el fondo: en pantalla no se leían como
+   algo apretable. Ahora tienen superficie propia, y el estado activo se marca
+   además con un anillo, no solo con color. */
 .filter-pill {
-  padding: 4px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
   border-radius: 99px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   border: 1px solid var(--pill-border);
-  background: var(--pill-bg);
-  color: var(--pill-text);
-  transition: all 0.15s;
+  background: var(--surface-elevated);
+  color: var(--text-secondary);
+  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
   font-family: inherit;
   white-space: nowrap;
 }
-.filter-pill:hover { border-color: var(--accent); color: var(--accent); }
-.filter-pill.active { background: var(--accent); color: white; border-color: var(--accent); }
+.filter-pill:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--hover-bg);
+}
+.filter-pill.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
 
 /* Progress bar */
 .progress-bar { height: 6px; background: var(--track); border-radius: 99px; overflow: hidden; }
@@ -168,36 +183,40 @@ body {
 /* Botones de navegación de mes/semana (CalendarViews), estilo calendario Mac:
    redondos, fondo translúcido que destaca sobre cualquier superficie, hover claro. */
 .nav-btn {
-  width: 34px; height: 34px;
+  width: 38px; height: 38px;
   display: inline-flex; align-items: center; justify-content: center;
   border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--text-primary) 8%, transparent);
+  background: var(--surface-elevated);
   border-radius: 50%;
   cursor: pointer;
   color: var(--text-primary);
-  font-size: 17px;
+  font-size: 18px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
   transition: background 0.12s, border-color 0.12s, transform 0.08s;
 }
 .nav-btn:hover {
-  background: color-mix(in srgb, var(--text-primary) 16%, transparent);
-  border-color: var(--text-muted);
+  background: var(--hover-bg);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 .nav-btn:active { transform: scale(0.92); }
 
 .nav-today {
-  height: 34px; padding: 0 16px;
+  height: 38px; padding: 0 18px;
   display: inline-flex; align-items: center; justify-content: center;
   border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--text-primary) 8%, transparent);
+  background: var(--surface-elevated);
   border-radius: 99px;
   cursor: pointer;
   color: var(--text-primary);
   font-size: 13px; font-weight: 600; font-family: inherit;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
   transition: background 0.12s, border-color 0.12s;
 }
 .nav-today:hover {
-  background: color-mix(in srgb, var(--text-primary) 16%, transparent);
-  border-color: var(--text-muted);
+  background: var(--hover-bg);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 /* ── Campos de formulario: fondo y texto del tema en todos los inputs ── */
@@ -250,10 +269,21 @@ select option { background-color: var(--surface); color: var(--text-primary); }
   border-right: 1px solid var(--sidebar-border);
 }
 
-/* En escritorio no se ven ni el botón hamburguesa ni la capa oscura */
+/* En escritorio no se ven ni el botón de menú, ni la capa oscura, ni el
+   botón de cerrar del drawer */
 .sidebar-toggle,
-.sidebar-backdrop {
+.sidebar-backdrop,
+.sidebar-close {
   display: none;
+}
+
+/* Cabecera del sidebar: logo + botón de cerrar (este último solo en móvil) */
+.sidebar-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 18px 16px 14px;
 }
 
 @media (max-width: 768px) {
@@ -280,25 +310,58 @@ select option { background-color: var(--surface); color: var(--text-primary); }
     transform: translateX(0);
   }
 
-  /* Botón hamburguesa fijo arriba a la izquierda */
+  /* Botón de menú fijo arriba a la izquierda.
+     Antes era un cuadrado con el color del sidebar sobre un fondo casi
+     idéntico: se leía como un borde vacío. Ahora usa el color de acento,
+     dice "Menú" y tiene sombra, así se distingue del fondo sí o sí. */
   .sidebar-toggle {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
+    gap: 7px;
     position: fixed;
     top: 8px;
     left: 8px;
     z-index: 55;
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    background: var(--sidebar-bg);
-    border: 1px solid var(--sidebar-border);
+    min-height: 44px;
+    padding: 0 16px 0 13px;
+    border-radius: 99px;
+    background: var(--accent);
+    border: none;
     color: #fff;
-    font-size: 20px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
     -webkit-tap-highlight-color: transparent;
   }
+  .sidebar-toggle i { font-size: 20px; }
+  .sidebar-toggle:active { transform: scale(0.96); }
+
+  /* Al abrir el drawer el botón se oculta: cerrar se hace desde el propio
+     panel o tocando la capa oscura. */
+  .sidebar-toggle.is-hidden { display: none; }
+
+  /* Botón de cerrar dentro del drawer */
+  .sidebar-close {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 38px;
+    padding: 0 12px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--sidebar-border);
+    color: var(--sidebar-active);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sidebar-close i { font-size: 15px; }
+  .sidebar-close:active { transform: scale(0.96); }
 
   /* Capa oscura que cierra el drawer al tocarla */
   .sidebar-backdrop.is-open {
@@ -309,8 +372,95 @@ select option { background-color: var(--surface); color: var(--text-primary); }
     background: rgba(0, 0, 0, 0.5);
   }
 
-  /* Espacio arriba para que el botón no tape los títulos de cada pantalla */
+  /* Espacio arriba para que el botón no tape los títulos de cada pantalla.
+     El botón mide 44px + 8px de separación. */
   .app-main {
-    padding-top: 48px;
+    padding-top: 60px;
   }
+
+  /* El drawer ocupa toda la altura real y puede scrollear entero */
+  .app-sidebar { overflow-y: auto; }
+}
+
+/* ============================================================
+   RESPONSIVE — Fase 2: contenido
+   ------------------------------------------------------------
+   El esqueleto ya se adapta; acá se adapta lo que va adentro,
+   que es lo que hoy desborda o queda impracticable en celular.
+   ============================================================ */
+
+/* Cualquier tabla metida acá scrollea sola en lugar de estirar la página.
+   Sin esto, una tabla ancha empuja el layout y aparece scroll horizontal
+   en TODA la pantalla. */
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.table-scroll > table { min-width: 560px; }
+
+@media (max-width: 768px) {
+  /* Tipografía y aire: menos padding lateral para ganar ancho útil */
+  .app-main > * { min-width: 0; }
+
+  /* Los grupos de filtros pasan a poder envolver en varias líneas */
+  .filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Diálogos: en celular ocupan el ancho completo, pegados abajo
+     (patrón hoja inferior), que es mucho más cómodo que una caja
+     centrada y recortada. */
+  .modal-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 92dvh !important;
+    margin: 0 !important;
+    border-radius: 16px 16px 0 0 !important;
+    align-self: flex-end;
+  }
+  .modal-overlay {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+}
+
+/* ============================================================
+   ACCESIBILIDAD / AFFORDANCE DE CONTROLES
+   ------------------------------------------------------------
+   El problema de fondo era que muchos controles eran solo un
+   borde: no se distinguían del fondo ni se entendían como
+   apretables. Estas reglas aplican a toda la plataforma.
+   ============================================================ */
+
+/* Anillo de foco visible al navegar con teclado (antes no había ninguno) */
+:where(button, a, input, select, textarea, [role='button']):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Todo lo apretable se siente apretable */
+button:not(:disabled),
+[role='button']:not([aria-disabled='true']) {
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* En pantallas táctiles, ningún control queda por debajo del mínimo
+   cómodo para el dedo (~44px). */
+@media (pointer: coarse) {
+  button,
+  [role='button'],
+  select,
+  input[type='checkbox'],
+  input[type='radio'] {
+    min-height: 40px;
+  }
+  .filter-pill { min-height: 40px; }
 }

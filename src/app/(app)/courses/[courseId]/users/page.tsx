@@ -345,7 +345,6 @@ export default function UsersPage() {
 
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.8.0/tabler-icons.min.css" />
 
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
         <h2 style={{ fontSize: '20px', fontWeight: 600 }}>Usuarios y permisos</h2>
@@ -418,54 +417,56 @@ export default function UsersPage() {
               No hay permisos asignados a este curso todavía.
             </div>
           ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ background: 'var(--hover-bg)' }}>
-                  {['Usuario','Comisión','Permiso',''].map(h => (
-                    <th key={h} style={{ textAlign: 'left', padding: '8px 16px', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {permissions.map(p => {
-                  const u = p.profiles as Profile | null
-                  const com = p.commission_id ? commissions.find(c => c.id === p.commission_id) : null
-                  return (
-                    <tr key={p.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                      <td style={{ padding: '10px 16px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          {u && (
-                            <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: getColor(u.id), color: 'white', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                              {getInitials(u.full_name)}
+            <div className="table-scroll">
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: 'var(--hover-bg)' }}>
+                    {['Usuario','Comisión','Permiso',''].map(h => (
+                      <th key={h} style={{ textAlign: 'left', padding: '8px 16px', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {permissions.map(p => {
+                    const u = p.profiles as Profile | null
+                    const com = p.commission_id ? commissions.find(c => c.id === p.commission_id) : null
+                    return (
+                      <tr key={p.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                        <td style={{ padding: '10px 16px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            {u && (
+                              <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: getColor(u.id), color: 'white', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                {getInitials(u.full_name)}
+                              </div>
+                            )}
+                            <div>
+                              <div style={{ fontSize: '13px', fontWeight: 500 }}>{u?.full_name || p.user_id}</div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{u?.global_role === 'admin' ? 'Administrador' : u?.global_role === 'teacher' ? 'Docente' : 'Invitado'}</div>
                             </div>
-                          )}
-                          <div>
-                            <div style={{ fontSize: '13px', fontWeight: 500 }}>{u?.full_name || p.user_id}</div>
-                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{u?.global_role === 'admin' ? 'Administrador' : u?.global_role === 'teacher' ? 'Docente' : 'Invitado'}</div>
                           </div>
-                        </div>
-                      </td>
-                      <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text-muted)' }}>
-                        {com ? <span className="badge badge-success" style={{ fontSize: '11px' }}>{com.name}</span> : <span style={{ color: 'var(--text-muted)' }}>Todas</span>}
-                      </td>
-                      <td style={{ padding: '10px 16px' }}>
-                        <select value={p.permission} onChange={e => changePerm(p.id, e.target.value)}
-                          style={{ padding: '4px 8px', border: '1px solid var(--input-border)', borderRadius: '6px', fontSize: '12px', fontFamily: 'inherit' }}>
-                          <option value="full">full</option>
-                          <option value="edit">edit</option>
-                          <option value="read">read</option>
-                        </select>
-                      </td>
-                      <td style={{ padding: '10px 16px' }}>
-                        <button onClick={() => removePerm(p.id)} style={{ background: 'none', border: '1px solid var(--badge-danger-bd)', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', color: 'var(--danger)', fontSize: '12px' }}>
-                          <i className="ti ti-trash" aria-hidden="true"></i>
-                        </button>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+                        </td>
+                        <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text-muted)' }}>
+                          {com ? <span className="badge badge-success" style={{ fontSize: '11px' }}>{com.name}</span> : <span style={{ color: 'var(--text-muted)' }}>Todas</span>}
+                        </td>
+                        <td style={{ padding: '10px 16px' }}>
+                          <select value={p.permission} onChange={e => changePerm(p.id, e.target.value)}
+                            style={{ padding: '4px 8px', border: '1px solid var(--input-border)', borderRadius: '6px', fontSize: '12px', fontFamily: 'inherit' }}>
+                            <option value="full">full</option>
+                            <option value="edit">edit</option>
+                            <option value="read">read</option>
+                          </select>
+                        </td>
+                        <td style={{ padding: '10px 16px' }}>
+                          <button onClick={() => removePerm(p.id)} style={{ background: 'none', border: '1px solid var(--badge-danger-bd)', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', color: 'var(--danger)', fontSize: '12px' }}>
+                            <i className="ti ti-trash" aria-hidden="true"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}

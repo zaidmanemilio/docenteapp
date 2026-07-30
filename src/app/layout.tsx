@@ -1,5 +1,11 @@
 // src/app/layout.tsx
 import type { Metadata, Viewport } from 'next'
+// Los íconos se sirven desde el propio dominio (paquete npm), no desde un CDN.
+// Antes cada pantalla inyectaba su propio <link> a jsdelivr: hasta que esa
+// hoja externa cargaba, los botones con solo ícono se veían como cuadrados
+// vacíos, y si el CDN fallaba no aparecían nunca. Importado acá una sola vez
+// forma parte del bundle y siempre está disponible al pintar.
+import '@tabler/icons-webfont/dist/tabler-icons.min.css'
 import '../styles/globals.css'
 
 export const metadata: Metadata = {

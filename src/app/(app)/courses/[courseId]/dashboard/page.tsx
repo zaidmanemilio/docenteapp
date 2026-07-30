@@ -53,7 +53,6 @@ export default async function DashboardPage({ params }: { params: Promise<{ cour
   if (sessions.length === 0) {
     return (
       <div style={{ flex:1, overflow:'auto', padding:'24px' }}>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.8.0/tabler-icons.min.css" />
         <div style={{ marginBottom:'20px' }}>
           <p style={{ fontSize:'12px', color:'var(--text-muted)', marginBottom:'2px' }}>{course.name}</p>
           <h2 style={{ fontSize:'20px', fontWeight:600 }}>Dashboard</h2>
@@ -139,7 +138,6 @@ export default async function DashboardPage({ params }: { params: Promise<{ cour
 
   return (
     <div style={{ flex:1, overflow:'auto', padding:'24px' }}>
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.8.0/tabler-icons.min.css" />
 
       <div style={{ marginBottom:'20px' }}>
         <p style={{ fontSize:'12px', color:'var(--text-muted)', marginBottom:'2px' }}>{course.name}</p>

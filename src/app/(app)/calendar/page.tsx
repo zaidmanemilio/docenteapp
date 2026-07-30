@@ -220,7 +220,6 @@ export default function UnifiedCalendarPage() {
 
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.8.0/tabler-icons.min.css" />
 
       {/* Header */}
       <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>

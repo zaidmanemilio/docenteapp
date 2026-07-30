@@ -132,7 +132,6 @@ export default function ArchivedPage() {
 
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.8.0/tabler-icons.min.css" />
 
       <div style={{ marginBottom: '24px' }}>
         <h2 style={{ fontSize: '20px', fontWeight: 600 }}>Cursos archivados</h2>

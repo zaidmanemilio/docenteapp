@@ -182,7 +182,6 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
 
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.8.0/tabler-icons.min.css" />
 
       <div style={{ marginBottom: '20px' }}>
         <h2 style={{ fontSize: '20px', fontWeight: 600 }}>Importar cronograma</h2>
@@ -304,7 +303,7 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
                   Sin errores detectados. Listo para importar.
                 </div>
               )}
-              <div style={{ overflowX: 'auto' }}>
+              <div className="table-scroll">
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                   <thead>
                     <tr>

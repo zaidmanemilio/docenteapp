@@ -257,7 +257,6 @@ export default function ConfigPage() {
 
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.8.0/tabler-icons.min.css" />
 
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
         <div>
@@ -451,52 +450,54 @@ export default function ConfigPage() {
               Docentes con acceso a este curso. <strong>full</strong> permite eliminar encuentros, <strong>edit</strong> permite editar, <strong>read</strong> es solo lectura.
             </p>
 
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', marginBottom: '16px' }}>
-              <thead>
-                <tr style={{ background: 'var(--hover-bg)' }}>
-                  {['Docente','Comisión','Permiso',''].map(h => (
-                    <th key={h} style={{ textAlign: 'left', padding: '7px 10px', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {permissions.map(p => {
-                  const u = p.profiles as { full_name: string; global_role: string } | null
-                  const com = p.commission_id ? commissions.find(c => c.id === p.commission_id) : null
-                  const permCls: Record<string, string> = { full: 'badge-accent', edit: 'badge-info', read: 'badge-neutral' }
-                  const pc = permCls[p.permission] || permCls.read
-                  return (
-                    <tr key={p.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                      <td style={{ padding: '9px 10px', fontWeight: 500 }}>{u?.full_name || '—'}</td>
-                      <td style={{ padding: '9px 10px', color: 'var(--text-muted)' }}>
-                        {com ? com.name : <span style={{ color: 'var(--text-muted)' }}>Todas</span>}
-                      </td>
-                      <td style={{ padding: '9px 10px' }}>
-                        {isAdmin ? (
-                          <select value={p.permission} onChange={e => changePermission(p.id, e.target.value)}
-                            style={{ padding: '3px 7px', border: '1px solid var(--input-border)', borderRadius: '6px', fontSize: '12px', fontFamily: 'inherit' }}>
-                            <option value="full">full</option>
-                            <option value="edit">edit</option>
-                            <option value="read">read</option>
-                          </select>
-                        ) : (
-                          <span className={`badge ${pc}`}>
-                            {p.permission}
-                          </span>
-                        )}
-                      </td>
-                      <td style={{ padding: '9px 10px' }}>
-                        {isAdmin && (
-                          <button onClick={() => removePermission(p.id)} style={{ background: 'none', border: '1px solid var(--badge-danger-bd)', borderRadius: '6px', padding: '3px 7px', cursor: 'pointer', color: 'var(--danger)', fontSize: '12px' }}>
-                            <i className="ti ti-trash" aria-hidden="true"></i>
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+            <div className="table-scroll">
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', marginBottom: '16px' }}>
+                <thead>
+                  <tr style={{ background: 'var(--hover-bg)' }}>
+                    {['Docente','Comisión','Permiso',''].map(h => (
+                      <th key={h} style={{ textAlign: 'left', padding: '7px 10px', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {permissions.map(p => {
+                    const u = p.profiles as { full_name: string; global_role: string } | null
+                    const com = p.commission_id ? commissions.find(c => c.id === p.commission_id) : null
+                    const permCls: Record<string, string> = { full: 'badge-accent', edit: 'badge-info', read: 'badge-neutral' }
+                    const pc = permCls[p.permission] || permCls.read
+                    return (
+                      <tr key={p.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                        <td style={{ padding: '9px 10px', fontWeight: 500 }}>{u?.full_name || '—'}</td>
+                        <td style={{ padding: '9px 10px', color: 'var(--text-muted)' }}>
+                          {com ? com.name : <span style={{ color: 'var(--text-muted)' }}>Todas</span>}
+                        </td>
+                        <td style={{ padding: '9px 10px' }}>
+                          {isAdmin ? (
+                            <select value={p.permission} onChange={e => changePermission(p.id, e.target.value)}
+                              style={{ padding: '3px 7px', border: '1px solid var(--input-border)', borderRadius: '6px', fontSize: '12px', fontFamily: 'inherit' }}>
+                              <option value="full">full</option>
+                              <option value="edit">edit</option>
+                              <option value="read">read</option>
+                            </select>
+                          ) : (
+                            <span className={`badge ${pc}`}>
+                              {p.permission}
+                            </span>
+                          )}
+                        </td>
+                        <td style={{ padding: '9px 10px' }}>
+                          {isAdmin && (
+                            <button onClick={() => removePermission(p.id)} style={{ background: 'none', border: '1px solid var(--badge-danger-bd)', borderRadius: '6px', padding: '3px 7px', cursor: 'pointer', color: 'var(--danger)', fontSize: '12px' }}>
+                              <i className="ti ti-trash" aria-hidden="true"></i>
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
 
             {/* Formulario inline para agregar docente */}
             {isAdmin && !addingTeacher && (

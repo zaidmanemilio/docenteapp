@@ -283,7 +283,6 @@ export default function SchedulePage() {
 
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.8.0/tabler-icons.min.css" />
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
@@ -421,100 +420,102 @@ export default function SchedulePage() {
         </div>
       ) : (
         <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ background: 'var(--hover-bg)' }}>
-                {bulkMode && <th style={{ width: '36px', padding: '8px 12px', borderBottom: '1px solid var(--border)' }}></th>}
-                {['#','Fecha','Clase','Tipo','Responsable','Modalidad',...(commissions.length>1?['Comisión']:[]),'Estado','Links','Ver'].map((h, i) => (
-                  <th key={i} style={{ textAlign: 'left', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', padding: '8px 12px', borderBottom: '1px solid var(--border)' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map(s => {
-                const com = commissions.find(c => c.id === s.commission_scope)
-                const hasReview  = s.review_what_worked || s.review_what_didnt || s.review_change_next
-                const showZoomLink = s.modality === 'virtual' && !s.canva_url && zoomUrl
+          <div className="table-scroll">
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: 'var(--hover-bg)' }}>
+                  {bulkMode && <th style={{ width: '36px', padding: '8px 12px', borderBottom: '1px solid var(--border)' }}></th>}
+                  {['#','Fecha','Clase','Tipo','Responsable','Modalidad',...(commissions.length>1?['Comisión']:[]),'Estado','Links','Ver'].map((h, i) => (
+                    <th key={i} style={{ textAlign: 'left', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', padding: '8px 12px', borderBottom: '1px solid var(--border)' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(s => {
+                  const com = commissions.find(c => c.id === s.commission_scope)
+                  const hasReview  = s.review_what_worked || s.review_what_didnt || s.review_change_next
+                  const showZoomLink = s.modality === 'virtual' && !s.canva_url && zoomUrl
 
-                return (
-                  <tr key={s.id} style={{ borderBottom: '1px solid var(--border)', background: selected.has(s.id as string) ? 'var(--chip-accent-bg)' : 'var(--surface)' }}>
-                    {bulkMode && (
+                  return (
+                    <tr key={s.id} style={{ borderBottom: '1px solid var(--border)', background: selected.has(s.id as string) ? 'var(--chip-accent-bg)' : 'var(--surface)' }}>
+                      {bulkMode && (
+                        <td style={{ padding: '10px 12px' }}>
+                          <input type="checkbox" checked={selected.has(s.id as string)}
+                            onChange={() => toggleSelect(s.id as string)}
+                            style={{ width: '15px', height: '15px', cursor: 'pointer' }} />
+                        </td>
+                      )}
+                      <td style={{ padding: '10px 12px', fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{s.class_number}</td>
+                      <td style={{ padding: '10px 12px', fontSize: '12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{fmtDate(s.date)}</td>
                       <td style={{ padding: '10px 12px' }}>
-                        <input type="checkbox" checked={selected.has(s.id as string)}
-                          onChange={() => toggleSelect(s.id as string)}
-                          style={{ width: '15px', height: '15px', cursor: 'pointer' }} />
+                        <div style={{ fontSize: '13px', fontWeight: 500 }}>{s.title}</div>
+                        <div style={{ display: 'flex', gap: '4px', marginTop: '3px', flexWrap: 'wrap' }}>
+                          {s.shared_notes && <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>📝 notas</span>}
+                          {hasReview && <span style={{ fontSize: '10px', color: 'var(--success)' }}>✅ review</span>}
+                          {s.status === 'dada' && !hasReview && <span style={{ fontSize: '10px', color: 'var(--warning)' }}>⚠ sin review</span>}
+                        </div>
                       </td>
-                    )}
-                    <td style={{ padding: '10px 12px', fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{s.class_number}</td>
-                    <td style={{ padding: '10px 12px', fontSize: '12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{fmtDate(s.date)}</td>
-                    <td style={{ padding: '10px 12px' }}>
-                      <div style={{ fontSize: '13px', fontWeight: 500 }}>{s.title}</div>
-                      <div style={{ display: 'flex', gap: '4px', marginTop: '3px', flexWrap: 'wrap' }}>
-                        {s.shared_notes && <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>📝 notas</span>}
-                        {hasReview && <span style={{ fontSize: '10px', color: 'var(--success)' }}>✅ review</span>}
-                        {s.status === 'dada' && !hasReview && <span style={{ fontSize: '10px', color: 'var(--warning)' }}>⚠ sin review</span>}
-                      </div>
-                    </td>
-                    <td style={{ padding: '10px 12px' }}><Badge text={SESSION_TYPE_LABELS[s.type] || s.type} cls={TYPE_BADGE[s.type]} /></td>
-                    <td style={{ padding: '10px 12px', fontSize: '12px' }}>{s.responsible}</td>
-                    <td style={{ padding: '10px 12px' }}><Badge text={s.modality === 'presencial' ? '🏫 Pres.' : '💻 Virt.'} /></td>
-                    {commissions.length > 1 && (
+                      <td style={{ padding: '10px 12px' }}><Badge text={SESSION_TYPE_LABELS[s.type] || s.type} cls={TYPE_BADGE[s.type]} /></td>
+                      <td style={{ padding: '10px 12px', fontSize: '12px' }}>{s.responsible}</td>
+                      <td style={{ padding: '10px 12px' }}><Badge text={s.modality === 'presencial' ? '🏫 Pres.' : '💻 Virt.'} /></td>
+                      {commissions.length > 1 && (
+                        <td style={{ padding: '10px 12px' }}>
+                          {s.commission_scope === 'all'
+                            ? <Badge text="Todas" cls="badge-info" />
+                            : <Badge text={com?.name || s.commission_scope} cls="badge-success" />}
+                        </td>
+                      )}
+                      <td style={{ padding: '10px 12px' }}><Badge text={SESSION_STATUS_LABELS[s.status] || s.status} cls={STATUS_BADGE[s.status]} /></td>
                       <td style={{ padding: '10px 12px' }}>
-                        {s.commission_scope === 'all'
-                          ? <Badge text="Todas" cls="badge-info" />
-                          : <Badge text={com?.name || s.commission_scope} cls="badge-success" />}
-                      </td>
-                    )}
-                    <td style={{ padding: '10px 12px' }}><Badge text={SESSION_STATUS_LABELS[s.status] || s.status} cls={STATUS_BADGE[s.status]} /></td>
-                    <td style={{ padding: '10px 12px' }}>
-                      <div style={{ display: 'flex', gap: '4px' }}>
-                        {LINK_FIELDS.map(field => {
-                          if (field === 'partial_file_url'   && !['parcial','recuperatorio'].includes(s.type)) return null
-                          if (field === 'guest_bio_url'      && s.type !== 'invitado') return null
-                          if (field === 'workshop_brief_url' && s.type !== 'taller')   return null
-                          const url = getSessionUrl(s, field)
-                          return url ? (
-<a key={field} href={url} target="_blank" rel="noopener noreferrer"
-  title={
-    field === 'canva_url' ? 'Canva / Presentación' :
-    field === 'partial_file_url' ? 'Archivo del parcial' :
-    field === 'guest_bio_url' ? 'Bio del invitado' :
-    field === 'workshop_brief_url' ? 'Brief / Consigna' : field
-  }
-  style={{ width: '24px', height: '24px', borderRadius: '4px', background: 'var(--chip-accent-bg)', border: '1px solid var(--chip-accent-bd)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontSize: '13px', textDecoration: 'none' }}>
-  <i className={`ti ${LINK_ICONS[field]}`} aria-hidden="true"></i>
-</a>                          ) : (
-                            <span key={field} style={{ width: '24px', height: '24px', borderRadius: '4px', background: 'var(--hover-bg)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
-                              <i className={`ti ${LINK_ICONS[field]}`} aria-hidden="true"></i>
-                            </span>
-                          )
-                        })}
-                        {showZoomLink && (
-                          <a href={zoomUrl} target="_blank" rel="noopener noreferrer" title="Zoom del curso"
-                            style={{ width: '24px', height: '24px', borderRadius: '4px', background: 'var(--chip-accent-bg)', border: '1px solid var(--chip-accent-bd)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontSize: '13px' }}>
-                            <i className="ti ti-video" aria-hidden="true"></i>
-                          </a>
-                        )}
-{(s.additional_links || []).map((link, idx) => (
-  <a key={idx} href={link.url} target="_blank" rel="noopener noreferrer"
-    title={link.label || `Link ${idx + 1}`}
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          {LINK_FIELDS.map(field => {
+                            if (field === 'partial_file_url'   && !['parcial','recuperatorio'].includes(s.type)) return null
+                            if (field === 'guest_bio_url'      && s.type !== 'invitado') return null
+                            if (field === 'workshop_brief_url' && s.type !== 'taller')   return null
+                            const url = getSessionUrl(s, field)
+                            return url ? (
+  <a key={field} href={url} target="_blank" rel="noopener noreferrer"
+    title={
+      field === 'canva_url' ? 'Canva / Presentación' :
+      field === 'partial_file_url' ? 'Archivo del parcial' :
+      field === 'guest_bio_url' ? 'Bio del invitado' :
+      field === 'workshop_brief_url' ? 'Brief / Consigna' : field
+    }
     style={{ width: '24px', height: '24px', borderRadius: '4px', background: 'var(--chip-accent-bg)', border: '1px solid var(--chip-accent-bd)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontSize: '13px', textDecoration: 'none' }}>
-    <i className="ti ti-link" aria-hidden="true"></i>
-  </a>
-))}                      </div>
-                    </td>
-                    <td style={{ padding: '10px 12px' }}>
-<button onClick={() => openEdit(s)}
-  title="Ver y editar clase"
-  style={{ background: 'var(--accent)', border: 'none', borderRadius: '6px', padding: '5px 10px', cursor: 'pointer', color: 'white', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-  <i className="ti ti-player-play-filled" aria-hidden="true"></i>
-</button>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+    <i className={`ti ${LINK_ICONS[field]}`} aria-hidden="true"></i>
+  </a>                          ) : (
+                              <span key={field} style={{ width: '24px', height: '24px', borderRadius: '4px', background: 'var(--hover-bg)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+                                <i className={`ti ${LINK_ICONS[field]}`} aria-hidden="true"></i>
+                              </span>
+                            )
+                          })}
+                          {showZoomLink && (
+                            <a href={zoomUrl} target="_blank" rel="noopener noreferrer" title="Zoom del curso"
+                              style={{ width: '24px', height: '24px', borderRadius: '4px', background: 'var(--chip-accent-bg)', border: '1px solid var(--chip-accent-bd)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontSize: '13px' }}>
+                              <i className="ti ti-video" aria-hidden="true"></i>
+                            </a>
+                          )}
+  {(s.additional_links || []).map((link, idx) => (
+    <a key={idx} href={link.url} target="_blank" rel="noopener noreferrer"
+      title={link.label || `Link ${idx + 1}`}
+      style={{ width: '24px', height: '24px', borderRadius: '4px', background: 'var(--chip-accent-bg)', border: '1px solid var(--chip-accent-bd)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontSize: '13px', textDecoration: 'none' }}>
+      <i className="ti ti-link" aria-hidden="true"></i>
+    </a>
+  ))}                      </div>
+                      </td>
+                      <td style={{ padding: '10px 12px' }}>
+  <button onClick={() => openEdit(s)}
+    title="Ver y editar clase"
+    style={{ background: 'var(--accent)', border: 'none', borderRadius: '6px', padding: '5px 10px', cursor: 'pointer', color: 'white', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+    <i className="ti ti-player-play-filled" aria-hidden="true"></i>
+  </button>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

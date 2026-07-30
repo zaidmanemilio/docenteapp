@@ -80,16 +80,19 @@ const filteredCourses = levelFilter === 'all'
 
   return (
     <>
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.8.0/tabler-icons.min.css" />
 
-      {/* Botón hamburguesa — solo visible en móvil (lo controla globals.css) */}
+      {/* Botón de menú — solo visible en móvil (lo controla globals.css).
+          Lleva la palabra "Menú" además del ícono: un cuadrado con un ícono
+          solo no se entiende como algo apretable. */}
       <button
-        className="sidebar-toggle"
-        onClick={() => setMobileOpen(o => !o)}
-        aria-label={mobileOpen ? 'Cerrar menú' : 'Abrir menú'}
+        className={`sidebar-toggle${mobileOpen ? ' is-hidden' : ''}`}
+        onClick={() => setMobileOpen(true)}
+        aria-label="Abrir menú de navegación"
         aria-expanded={mobileOpen}
+        aria-controls="app-sidebar"
       >
-        <i className={mobileOpen ? 'ti ti-x' : 'ti ti-menu-2'} aria-hidden="true"></i>
+        <i className="ti ti-menu-2" aria-hidden="true"></i>
+        <span>Menú</span>
       </button>
 
       {/* Capa oscura: al tocarla se cierra el menú */}
@@ -99,13 +102,24 @@ const filteredCourses = levelFilter === 'all'
         aria-hidden="true"
       />
 
-      <nav className={`app-sidebar${mobileOpen ? ' is-open' : ''}`}>
+      <nav id="app-sidebar" className={`app-sidebar${mobileOpen ? ' is-open' : ''}`}>
         {/* Logo */}
-        <div style={{ padding: '18px 16px 14px', borderBottom: '1px solid var(--sidebar-border)' }}>
-          <h1 style={{ fontSize: '13px', fontWeight: 600, color: '#fff', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-            DocenteApp
-          </h1>
-          <p style={{ fontSize: '11px', color: 'var(--sidebar-text)', marginTop: '2px' }}>Gestión docente</p>
+        <div className="sidebar-head" style={{ borderBottom: '1px solid var(--sidebar-border)' }}>
+          <div>
+            <h1 style={{ fontSize: '13px', fontWeight: 600, color: '#fff', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+              DocenteApp
+            </h1>
+            <p style={{ fontSize: '11px', color: 'var(--sidebar-text)', marginTop: '2px' }}>Gestión docente</p>
+          </div>
+          {/* Cerrar el drawer — solo móvil. Con texto para que se entienda. */}
+          <button
+            className="sidebar-close"
+            onClick={() => setMobileOpen(false)}
+            aria-label="Cerrar menú"
+          >
+            <i className="ti ti-x" aria-hidden="true"></i>
+            <span>Cerrar</span>
+          </button>
         </div>
 
         {/* Calendario unificado — sección global */}

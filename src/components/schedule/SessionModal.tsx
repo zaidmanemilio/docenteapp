@@ -127,6 +127,7 @@ export default function SessionModal({
 
   return (
     <div
+      className="modal-overlay"
       style={{
         position: 'fixed', inset: 0,
         background: 'rgba(0,0,0,0.5)',
@@ -135,6 +136,7 @@ export default function SessionModal({
       }}
     >
       <div
+        className="modal-panel"
         style={{
           background: 'var(--surface)', borderRadius: '12px',
           width: '680px', maxWidth: '100%',
