@@ -217,3 +217,100 @@ select option { background-color: var(--surface); color: var(--text-primary); }
 [data-theme="dark"] input[type="time"]::-webkit-calendar-picker-indicator {
   filter: invert(0.8);
 }
+
+/* ============================================================
+   RESPONSIVE — Esqueleto de la app (Fase 1)
+   ------------------------------------------------------------
+   Los estilos inline de React no admiten media queries, por eso
+   la estructura principal se define acá con clases.
+   Breakpoint: 768px (celular / tablet chica).
+   ============================================================ */
+
+.app-shell {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0; /* clave: permite que el contenido se encoja en vez de desbordar */
+}
+
+.app-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+}
+
+/* En escritorio no se ven ni el botón hamburguesa ni la capa oscura */
+.sidebar-toggle,
+.sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* dvh = alto real del visor en móvil (descuenta la barra del navegador) */
+  .app-shell {
+    height: 100dvh;
+  }
+
+  /* El sidebar pasa a ser un panel deslizante (drawer) */
+  .app-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 60;
+    width: 264px;
+    max-width: 82vw;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+    box-shadow: 2px 0 18px rgba(0, 0, 0, 0.45);
+  }
+
+  .app-sidebar.is-open {
+    transform: translateX(0);
+  }
+
+  /* Botón hamburguesa fijo arriba a la izquierda */
+  .sidebar-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 8px;
+    left: 8px;
+    z-index: 55;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--sidebar-bg);
+    border: 1px solid var(--sidebar-border);
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Capa oscura que cierra el drawer al tocarla */
+  .sidebar-backdrop.is-open {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 59;
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  /* Espacio arriba para que el botón no tape los títulos de cada pantalla */
+  .app-main {
+    padding-top: 48px;
+  }
+}
