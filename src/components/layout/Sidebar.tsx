@@ -2,7 +2,7 @@
 // src/components/layout/Sidebar.tsx
 // Agrega "Calendario unificado" como sección global (fuera del curso activo)
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile, Course } from '@/types'
@@ -46,6 +46,8 @@ export default function Sidebar({ profile, courses }: SidebarProps) {
   const isAdmin   = profile.global_role === 'admin'
   const [levelFilter, setLevelFilter] = useState('all')
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  // Drawer móvil: en pantallas chicas el sidebar se abre/cierra.
+  const [mobileOpen, setMobileOpen] = useState(false)
 const filteredCourses = levelFilter === 'all'
   ? courses
   : courses.filter(c => (c as Record<string, unknown>).level === levelFilter || (!(c as Record<string, unknown>).level && levelFilter === 'grado'))
@@ -73,15 +75,31 @@ const filteredCourses = levelFilter === 'all'
 
   const isUnifiedCalendar = pathname === '/calendar'
 
+  // Al navegar a otra pantalla, cerrar el drawer (en móvil quedaría tapando).
+  useEffect(() => { setMobileOpen(false) }, [pathname])
+
   return (
     <>
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.8.0/tabler-icons.min.css" />
-      <nav style={{
-        width: '220px', background: 'var(--sidebar-bg)',
-        borderRight: '1px solid var(--sidebar-border)',
-        display: 'flex', flexDirection: 'column',
-        flexShrink: 0, overflow: 'hidden',
-      }}>
+
+      {/* Botón hamburguesa — solo visible en móvil (lo controla globals.css) */}
+      <button
+        className="sidebar-toggle"
+        onClick={() => setMobileOpen(o => !o)}
+        aria-label={mobileOpen ? 'Cerrar menú' : 'Abrir menú'}
+        aria-expanded={mobileOpen}
+      >
+        <i className={mobileOpen ? 'ti ti-x' : 'ti ti-menu-2'} aria-hidden="true"></i>
+      </button>
+
+      {/* Capa oscura: al tocarla se cierra el menú */}
+      <div
+        className={`sidebar-backdrop${mobileOpen ? ' is-open' : ''}`}
+        onClick={() => setMobileOpen(false)}
+        aria-hidden="true"
+      />
+
+      <nav className={`app-sidebar${mobileOpen ? ' is-open' : ''}`}>
         {/* Logo */}
         <div style={{ padding: '18px 16px 14px', borderBottom: '1px solid var(--sidebar-border)' }}>
           <h1 style={{ fontSize: '13px', fontWeight: 600, color: '#fff', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
