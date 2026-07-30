@@ -1,51 +1,23 @@
-// src/app/(app)/layout.tsx
-import { createClient } from '@/lib/supabase/server'
-import { requireProfile } from '@/lib/supabase/session'
-import Sidebar from '@/components/layout/Sidebar'
+// src/app/layout.tsx
+import type { Metadata, Viewport } from 'next'
+import '../styles/globals.css'
 
-export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  // requireProfile() está deduplicado por request (cache): esta llamada comparte
-  // el getUser()/perfil con el course-layout y la página hijos → 1 sola ida a Auth.
-  const profile = await requireProfile()
-  const supabase = await createClient()
+export const metadata: Metadata = {
+  title: 'DocenteApp — Gestión docente universitaria',
+  description: 'Plataforma interna de planificación y seguimiento docente',
+}
 
-  // Obtener cursos NO archivados accesibles por el usuario.
-  // - admin (full global): ve todos.
-  // - guest (read global): ve todos (en modo lectura; la edición se controla
-  //   por curso más adelante).
-  // - teacher (sin global): solo los cursos donde tiene permiso asignado.
-  let courses = []
-  if (profile.global_role === 'admin' || profile.global_role === 'guest') {
-    const { data } = await supabase
-      .from('courses')
-      .select('*, subjects(name)')
-      .not('status', 'eq', 'archived')
-      .order('year', { ascending: false })
-      .order('name')
-    courses = data || []
-  } else {
-    const { data: perms } = await supabase
-      .from('user_course_permissions')
-      .select('course_id')
-      .eq('user_id', profile.id)
-    const courseIds = Array.from(new Set((perms || []).map((p: { course_id: string }) => p.course_id)))
-    if (courseIds.length > 0) {
-      const { data } = await supabase
-        .from('courses')
-        .select('*, subjects(name)')
-        .in('id', courseIds)
-        .not('status', 'eq', 'archived')
-        .order('year', { ascending: false })
-      courses = data || []
-    }
-  }
+// Sin esto, un celular renderiza la página con ancho de escritorio y la
+// achica entera (todo queda ilegible). Es la base de todo lo responsive.
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+}
 
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="app-shell">
-      <Sidebar profile={profile} courses={courses} />
-      <main className="app-main">
-        {children}
-      </main>
-    </div>
+    <html lang="es" data-theme="dark">
+      <body>{children}</body>
+    </html>
   )
 }
