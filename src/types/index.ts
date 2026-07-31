@@ -44,6 +44,19 @@ export interface Course {
   created_at: string
   updated_at: string
   subjects?: Subject
+  // Columnas que ya existían en la base pero no estaban declaradas acá.
+  // 'level' es la que usa el filtro Grado/Posgrado del sidebar.
+  level?: string | null
+  full_name?: string | null
+  career?: string | null
+  faculty?: string | null
+  schedule_text?: string | null
+  zoom_url?: string | null
+  program_url?: string | null
+  moodle_url?: string | null
+  materials_url?: string | null
+  modality?: string | null
+  internal_notes?: string | null
 }
 
 export interface Commission {

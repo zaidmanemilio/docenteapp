@@ -10,6 +10,8 @@ import type { Profile, Course } from '@/types'
 interface SidebarProps {
   profile: Profile
   courses: Course[]
+  /** Curso fijado por el usuario (va primero en la lista y es el que abre la home). */
+  pinnedCourseId?: string | null
 }
 
 const NAV_ITEMS = [
@@ -34,10 +36,15 @@ function getColor(id: string) {
   return AVATAR_COLORS[n % AVATAR_COLORS.length]
 }
 
-export default function Sidebar({ profile, courses }: SidebarProps) {
+export default function Sidebar({ profile, courses, pinnedCourseId = null }: SidebarProps) {
   const router   = useRouter()
   const pathname = usePathname()
   const supabase = createClient()
+
+  // Se refleja al instante al fijar/desfijar; el servidor se sincroniza
+  // después con router.refresh().
+  const [pinnedId, setPinnedId] = useState<string | null>(pinnedCourseId)
+  const [pinning, setPinning] = useState(false)
 
   const parts = pathname.split('/')
   const activeCourseId = parts[1] === 'courses' && parts[2] && parts[2] !== 'new' ? parts[2] : ''
@@ -48,9 +55,17 @@ export default function Sidebar({ profile, courses }: SidebarProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   // Drawer móvil: en pantallas chicas el sidebar se abre/cierra.
   const [mobileOpen, setMobileOpen] = useState(false)
-const filteredCourses = levelFilter === 'all'
+// Los cursos sin nivel cargado cuentan como "grado" (comportamiento previo).
+const visibleCourses = levelFilter === 'all'
   ? courses
-  : courses.filter(c => (c as Record<string, unknown>).level === levelFilter || (!(c as Record<string, unknown>).level && levelFilter === 'grado'))
+  : courses.filter(c => c.level === levelFilter || (!c.level && levelFilter === 'grado'))
+
+  // El curso fijado siempre arriba. El servidor ya lo manda ordenado así, pero
+  // se reordena también acá para que el cambio se vea sin esperar el refresh.
+  const filteredCourses = pinnedId
+    ? [...visibleCourses].sort((a, b) =>
+        (a.id === pinnedId ? -1 : 0) - (b.id === pinnedId ? -1 : 0))
+    : visibleCourses
   const roleLabel = profile.global_role === 'admin' ? 'Administrador'
     : profile.global_role === 'teacher' ? 'Docente' : 'Invitado'
 
@@ -65,6 +80,24 @@ const filteredCourses = levelFilter === 'all'
 
   function selectCourse(cid: string) {
     router.push(`/courses/${cid}/dashboard`)
+  }
+
+  // Fijar / desfijar. La preferencia se guarda en los metadatos del usuario de
+  // Auth (es de la persona, no del curso, que es compartido con otros docentes)
+  // y por eso viaja también al celular.
+  async function togglePin(e: React.MouseEvent, cid: string) {
+    e.stopPropagation() // no navegar al curso al tocar el pin
+    if (pinning) return
+    const next = pinnedId === cid ? null : cid
+    setPinnedId(next)
+    setPinning(true)
+    const { error } = await supabase.auth.updateUser({ data: { pinned_course_id: next } })
+    setPinning(false)
+    if (error) {
+      setPinnedId(pinnedId) // revertir si falló
+      return
+    }
+    router.refresh() // que la home y el orden del servidor tomen el cambio
   }
 
   async function handleLogout() {
@@ -158,6 +191,7 @@ const filteredCourses = levelFilter === 'all'
   {filteredCourses.map(c => (
     <div
       key={c.id}
+      className="course-row"
       onClick={() => selectCourse(c.id)}
       style={{
         padding: '7px 10px', borderRadius: '8px', cursor: 'pointer',
@@ -168,7 +202,16 @@ const filteredCourses = levelFilter === 'all'
       }}
     >
       <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'currentColor', flexShrink: 0 }}></span>
-      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
+      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
+      <button
+        className={`course-pin${pinnedId === c.id ? ' is-pinned' : ''}`}
+        onClick={e => togglePin(e, c.id)}
+        title={pinnedId === c.id ? 'Quitar de favoritos' : 'Fijar como curso por defecto'}
+        aria-label={pinnedId === c.id ? `Quitar ${c.name} de favoritos` : `Fijar ${c.name} como curso por defecto`}
+        aria-pressed={pinnedId === c.id}
+      >
+        <i className={pinnedId === c.id ? 'ti ti-pin-filled' : 'ti ti-pin'} aria-hidden="true"></i>
+      </button>
     </div>
   ))}
   {filteredCourses.length === 0 && (
