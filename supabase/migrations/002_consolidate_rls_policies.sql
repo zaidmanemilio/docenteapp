@@ -1,3 +1,16 @@
+-- ✅ APLICADA EN PRODUCCIÓN el 2026-08-01.
+-- Se conserva como referencia del cambio. NO hace falta volver a correrla.
+--
+-- Verificación posterior (todo confirmado contra la base real):
+--   · Cada usuario ve exactamente la misma cantidad de filas que antes:
+--     admin y guest 8 cursos / 46 encuentros / 11 perfiles; los 8 docentes,
+--     idénticos a su línea base. Nadie ganó ni perdió acceso.
+--   · Regla de borrado: los 7 permisos 'edit' NO pueden eliminar encuentros;
+--     los 6 'full' sí. Es lo que la pantalla de configuración promete.
+--   · Políticas: de 35 a 20, ninguna alcanza ya al rol anónimo, y ninguna
+--     reevalúa auth.uid() fila por fila.
+--   · Linter de Supabase: de 153 avisos a 10.
+--
 -- 002_consolidate_rls_policies.sql
 --
 -- QUÉ RESUELVE
