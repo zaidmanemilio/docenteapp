@@ -1,19 +1,23 @@
+'use client'
 // src/app/(app)/page.tsx
-import { redirect } from 'next/navigation'
-import { getAccessibleCourses } from '@/lib/courses'
+//
+// Manda al panel del primer curso de la lista. La lista ya viene del
+// SessionProvider con los archivados excluidos y el curso fijado adelante,
+// así que "el primero" es el mismo que se ve arriba en el sidebar.
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useSession } from '@/lib/session-context'
 
-export default async function HomePage() {
-  // getAccessibleCourses() ya excluye los archivados y deja el curso fijado
-  // primero, así que "el primero de la lista" es exactamente lo que el usuario
-  // ve arriba en el sidebar. Antes esta pantalla tenía su propia consulta, sin
-  // filtrar por estado y sin contemplar el rol guest, y por eso podía mandarte
-  // al panel de un curso que habías archivado.
-  const courses = await getAccessibleCourses()
+export default function HomePage() {
+  const router = useRouter()
+  const { courses } = useSession()
   const target = courses[0]
 
-  if (target) {
-    redirect(`/courses/${target.id}/dashboard`)
-  }
+  useEffect(() => {
+    if (target) router.replace(`/courses/${target.id}/dashboard`)
+  }, [target, router])
+
+  if (target) return null
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '24px', textAlign: 'center' }}>

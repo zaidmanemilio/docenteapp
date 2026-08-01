@@ -17,10 +17,19 @@ const BASE_HEADERS: Record<string, string> = {
   'Access-Control-Max-Age': '86400',
 }
 
+// Un Origin del navegador nunca trae barra final ni mayúsculas en el host,
+// pero al configurar el secreto es muy fácil pegar la URL completa
+// ("https://appdocente.ednunlp.com.ar/"). Si no se normaliza, la comparación
+// falla y el síntoma es confuso: la app carga bien pero el alta de usuarios
+// muere con un error de CORS en la consola.
+function normalizeOrigin(o: string): string {
+  return o.trim().replace(/\/+$/, '').toLowerCase()
+}
+
 function allowedOrigins(): string[] {
   return (Deno.env.get('ALLOWED_ORIGINS') ?? '')
     .split(',')
-    .map(o => o.trim())
+    .map(normalizeOrigin)
     .filter(Boolean)
 }
 
@@ -33,8 +42,10 @@ export function corsHeaders(req: Request): Record<string, string> {
   if (allowed.length === 0) {
     return { ...BASE_HEADERS, 'Access-Control-Allow-Origin': origin || '*' }
   }
-  // Con lista: solo se refleja el origen si está autorizado.
-  if (origin && allowed.includes(origin)) {
+  // Con lista: solo se refleja el origen si está autorizado. Se compara
+  // normalizado, pero se devuelve el Origin tal cual lo mandó el navegador,
+  // que es lo que este exige que coincida.
+  if (origin && allowed.includes(normalizeOrigin(origin))) {
     return { ...BASE_HEADERS, 'Access-Control-Allow-Origin': origin, Vary: 'Origin' }
   }
   return { ...BASE_HEADERS, 'Access-Control-Allow-Origin': allowed[0], Vary: 'Origin' }

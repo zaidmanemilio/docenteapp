@@ -1,18 +1,14 @@
+'use client'
 // src/app/(app)/layout.tsx
-import { requireProfile } from '@/lib/supabase/session'
-import { getAccessibleCourses, getPinnedCourseId } from '@/lib/courses'
+//
+// Antes resolvía sesión, perfil y cursos en el servidor. Ahora lo hace
+// SessionProvider en el navegador, porque un sitio estático no tiene servidor
+// que pueda mirar la cookie antes de responder.
+import { SessionProvider, useSession } from '@/lib/session-context'
 import Sidebar from '@/components/layout/Sidebar'
 
-export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  // requireProfile() está deduplicado por request (cache): esta llamada comparte
-  // el getUser()/perfil con el course-layout y la página hijos → 1 sola ida a Auth.
-  // La lista de cursos vive en @/lib/courses para que el layout y la home usen
-  // exactamente el mismo criterio (archivados fuera, curso fijado primero).
-  const [profile, courses, pinnedCourseId] = await Promise.all([
-    requireProfile(),
-    getAccessibleCourses(),
-    getPinnedCourseId(),
-  ])
+function AppShell({ children }: { children: React.ReactNode }) {
+  const { profile, courses, pinnedCourseId } = useSession()
 
   return (
     <div className="app-shell">
@@ -21,5 +17,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         {children}
       </main>
     </div>
+  )
+}
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <SessionProvider>
+      <AppShell>{children}</AppShell>
+    </SessionProvider>
   )
 }

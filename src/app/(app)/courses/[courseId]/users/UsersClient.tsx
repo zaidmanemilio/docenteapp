@@ -4,6 +4,7 @@
 
 import { useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { callEdgeFunction } from '@/lib/edge'
 import type { Profile, Commission } from '@/types'
 import { readCsvFile } from '@/lib/csv-encoding'
 
@@ -206,18 +207,10 @@ export default function UsersClient({
     setCreating(true)
     setCreateError('')
     try {
-      const res = await fetch('/api/users/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newUser),
-      })
-      // Leer como texto primero: si el servidor devolvió HTML (error 500),
-      // res.json() explotaría y ocultaría la causa real.
-      const raw = await res.text()
-      let data: { error?: string; ok?: boolean } = {}
-      try { data = JSON.parse(raw) } catch { /* respuesta no-JSON */ }
+      const res = await callEdgeFunction<{ error?: string; ok?: boolean }>('users-create', newUser)
+      const data = res.data || {}
       if (!res.ok) {
-        setCreateError(data.error || `Error ${res.status}: ${raw.slice(0, 200) || 'sin detalle'}`)
+        setCreateError(data.error || `Error ${res.status}: sin detalle`)
         setCreating(false)
         return
       }
@@ -263,22 +256,17 @@ export default function UsersClient({
     setImportRows(rows)
     setImportMsg('')
     // Previsualizar (commit:false) para ver errores antes de crear.
-    const res = await fetch('/api/users/import', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rows, commit: false }),
-    })
-    const data = await res.json()
-    setImportPreview(data.errors || [])
+    const res = await callEdgeFunction<{ errors?: unknown[] }>('users-import', { rows, commit: false })
+    setImportPreview((res.data?.errors || []) as never[])
   }
 
   async function commitImport() {
     setImporting(true)
     setImportMsg('')
-    const res = await fetch('/api/users/import', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rows: importRows, commit: true }),
-    })
-    const data = await res.json()
+    const res = await callEdgeFunction<{
+      created?: number; failed?: unknown[]; error?: string
+    }>('users-import', { rows: importRows, commit: true })
+    const data = res.data || {}
     if (data.created != null) {
       setImportMsg(`${data.created} usuario(s) creado(s).${data.failed?.length ? ` ${data.failed.length} fallaron.` : ''}`)
       if (!data.failed?.length) { setShowImport(false); setImportRows([]); setImportPreview(null) }
@@ -308,14 +296,8 @@ export default function UsersClient({
     setSavingUser(true)
     setEditError('')
     try {
-      const res = await fetch('/api/users/update', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editUser),
-      })
-      const raw = await res.text()
-      let data: { error?: string } = {}
-      try { data = JSON.parse(raw) } catch { /* no-JSON */ }
-      if (!res.ok) { setEditError(data.error || `Error ${res.status}`); setSavingUser(false); return }
+      const res = await callEdgeFunction<{ error?: string }>('users-update', editUser)
+      if (!res.ok) { setEditError(res.data?.error || `Error ${res.status}`); setSavingUser(false); return }
       setEditUser(null)
       load()
     } catch (err) {

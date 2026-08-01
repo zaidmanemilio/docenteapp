@@ -1,40 +1,47 @@
+'use client'
 // src/app/(app)/courses/[courseId]/layout.tsx
-import { notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
-import { requireProfile } from '@/lib/supabase/session'
+//
+// Verifica que el curso exista y sea accesible antes de mostrar sus pantallas.
+//
+// La comprobación ahora corre en el navegador, pero no es lo que protege los
+// datos: de eso se ocupa la RLS en Postgres, que devuelve cero filas para un
+// curso ajeno sin importar qué pida el cliente. Esto es para dar un mensaje
+// claro en vez de una pantalla vacía.
+import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import PageLoading from '@/components/layout/PageLoading'
 
-export default async function CourseLayout({
-  children,
-  params,
-}: {
-  children: React.ReactNode
-  params: Promise<{ courseId: string }>
-}) {
-  const { courseId } = await params
-  // Deduplicado por request: comparte usuario+perfil con el app-layout padre.
-  const profile = await requireProfile()
-  const supabase = await createClient()
-  const globalRole = profile.global_role
+export default function CourseLayout({ children }: { children: React.ReactNode }) {
+  const { courseId } = useParams<{ courseId: string }>()
+  const [supabase] = useState(() => createClient())
+  const [state, setState] = useState<'checking' | 'ok' | 'denied'>('checking')
 
-  // Acceso = admin o guest (lectura global), o tener algún permiso en el curso.
-  if (globalRole !== 'admin' && globalRole !== 'guest') {
-    const { data: perm } = await supabase
-      .from('user_course_permissions')
-      .select('id')
-      .eq('user_id', profile.id)
-      .eq('course_id', courseId)
-      .limit(1)
+  useEffect(() => {
+    let cancelled = false
+    setState('checking')
+    ;(async () => {
+      // Si la RLS no deja verlo, esta consulta no devuelve nada.
+      const { data } = await supabase
+        .from('courses')
+        .select('id')
+        .eq('id', courseId)
+        .maybeSingle()
+      if (cancelled) return
+      setState(data ? 'ok' : 'denied')
+    })()
+    return () => { cancelled = true }
+  }, [courseId, supabase])
 
-    if (!perm || perm.length === 0) notFound()
+  if (state === 'checking') return <PageLoading />
+
+  if (state === 'denied') {
+    return (
+      <div style={{ padding: '24px', color: 'var(--text-muted)' }}>
+        Este curso no existe o no tenés acceso.
+      </div>
+    )
   }
-
-  const { data: course } = await supabase
-    .from('courses')
-    .select('id, name')
-    .eq('id', courseId)
-    .single()
-
-  if (!course) notFound()
 
   return <>{children}</>
 }

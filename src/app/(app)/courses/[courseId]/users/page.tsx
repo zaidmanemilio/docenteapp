@@ -1,30 +1,54 @@
+'use client'
 // src/app/(app)/courses/[courseId]/users/page.tsx
-// Server component: precarga el padrón de perfiles, las comisiones y los
-// permisos del curso. El cliente mantiene el alta de usuarios, la importación
-// y la asignación de permisos.
-import { createClient } from '@/lib/supabase/server'
-import { requireProfile } from '@/lib/supabase/session'
+// Carga en el navegador el padrón de perfiles, las comisiones y los permisos.
+import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import { useSession } from '@/lib/session-context'
+import PageLoading from '@/components/layout/PageLoading'
 import UsersClient from './UsersClient'
 
-export default async function UsersPage({ params }: { params: Promise<{ courseId: string }> }) {
-  const { courseId } = await params
-  const profile = await requireProfile()
-  const supabase = await createClient()
+/* eslint-disable @typescript-eslint/no-explicit-any */
+interface Data {
+  allProfiles: any[]
+  commissions: any[]
+  permissions: any[]
+}
 
-  const [allProfilesRes, commsRes, permsRes] = await Promise.all([
-    supabase.from('profiles').select('*').order('full_name'),
-    supabase.from('commissions').select('*').eq('course_id', courseId),
-    supabase.from('user_course_permissions').select('*, profiles(*)').eq('course_id', courseId),
-  ])
+export default function UsersPage() {
+  const { courseId } = useParams<{ courseId: string }>()
+  const { profile } = useSession()
+  const [supabase] = useState(() => createClient())
+  const [data, setData] = useState<Data | null>(null)
 
-  /* eslint-disable @typescript-eslint/no-explicit-any */
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      const [allProfilesRes, commsRes, permsRes] = await Promise.all([
+        supabase.from('profiles').select('*').order('full_name'),
+        supabase.from('commissions').select('*').eq('course_id', courseId),
+        supabase.from('user_course_permissions').select('*, profiles(*)').eq('course_id', courseId),
+      ])
+      if (cancelled) return
+      setData({
+        allProfiles: allProfilesRes.data || [],
+        commissions: commsRes.data || [],
+        permissions: permsRes.data || [],
+      })
+    })()
+    return () => { cancelled = true }
+  }, [courseId, supabase])
+
+  if (!data) return <PageLoading />
+
   return (
     <UsersClient
+      key={courseId}
       courseId={courseId}
       myProfile={profile}
-      initialAllProfiles={allProfilesRes.data || []}
-      initialCommissions={commsRes.data || []}
-      initialPermissions={(permsRes.data || []) as any}
+      initialAllProfiles={data.allProfiles}
+      initialCommissions={data.commissions}
+      initialPermissions={data.permissions}
     />
   )
 }

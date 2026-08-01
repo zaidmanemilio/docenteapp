@@ -1,55 +1,56 @@
+'use client'
 // src/app/(app)/calendar/page.tsx
-// Server component del calendario unificado.
-//
-// Era la pantalla más lenta de todas: en el cliente encadenaba cuatro viajes
-// uno atrás del otro (getUser → perfil → cursos → encuentros), más un quinto
-// re-fetch de cursos que existía solo para esquivar un closure viejo. Todo eso
-// recién arrancaba después de hidratar. Acá se resuelve en el servidor y el
-// re-fetch redundante desaparece.
-import { createClient } from '@/lib/supabase/server'
-import { requireProfile } from '@/lib/supabase/session'
+// Calendario unificado: los encuentros de todos los cursos accesibles.
+// La lista de cursos sale del SessionProvider, así que acá solo falta traer
+// los encuentros: una consulta en vez de la cadena que había antes.
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { useSession } from '@/lib/session-context'
+import PageLoading from '@/components/layout/PageLoading'
 import UnifiedCalendarClient from './UnifiedCalendarClient'
 
 const SESSION_COLS =
   'id, course_id, date, class_number, title, type, responsible, modality, status, start_time, end_time, location'
 
-export default async function UnifiedCalendarPage() {
-  const profile = await requireProfile()
-  const supabase = await createClient()
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-  // Cursos accesibles (mismo criterio que traía el cliente).
-  let courses: { id: string; name: string }[] = []
-  if (profile.global_role === 'admin') {
-    const { data } = await supabase
-      .from('courses').select('id, name').not('status', 'eq', 'archived')
-    courses = data || []
-  } else {
-    const { data: perms } = await supabase
-      .from('user_course_permissions').select('course_id').eq('user_id', profile.id)
-    const courseIds = Array.from(new Set((perms || []).map(p => p.course_id)))
-    if (courseIds.length > 0) {
+export default function UnifiedCalendarPage() {
+  const { courses } = useSession()
+  const [supabase] = useState(() => createClient())
+  const [sessions, setSessions] = useState<any[] | null>(null)
+
+  const courseIds = courses.map(c => c.id).join(',')
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      const ids = courseIds ? courseIds.split(',') : []
+      if (ids.length === 0) {
+        if (!cancelled) setSessions([])
+        return
+      }
       const { data } = await supabase
-        .from('courses').select('id, name').in('id', courseIds).not('status', 'eq', 'archived')
-      courses = data || []
-    }
-  }
+        .from('sessions').select(SESSION_COLS)
+        .in('course_id', ids)
+        .order('date').order('start_time')
+      if (cancelled) return
 
-  const courseIds = courses.map(c => c.id)
-  let sessions: Record<string, unknown>[] = []
-  if (courseIds.length > 0) {
-    const { data } = await supabase
-      .from('sessions').select(SESSION_COLS)
-      .in('course_id', courseIds)
-      .order('date').order('start_time')
-    sessions = data || []
-  }
+      const byId = new Map(courses.map(c => [c.id, c]))
+      setSessions((data || []).map(s => {
+        const cid = s.course_id as string
+        return { ...s, course: byId.get(cid) || { id: cid, name: 'Curso' } }
+      }))
+    })()
+    return () => { cancelled = true }
+    // courses se serializa en courseIds para no re-disparar por identidad.
+  }, [courseIds, supabase]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const byId = new Map(courses.map(c => [c.id, c]))
-  const enriched = sessions.map(s => {
-    const cid = s.course_id as string
-    return { ...s, course: byId.get(cid) || { id: cid, name: 'Curso' } }
-  })
+  if (!sessions) return <PageLoading />
 
-  /* eslint-disable @typescript-eslint/no-explicit-any */
-  return <UnifiedCalendarClient initialSessions={enriched as any} initialCourses={courses} />
+  return (
+    <UnifiedCalendarClient
+      initialSessions={sessions as any}
+      initialCourses={courses as any}
+    />
+  )
 }

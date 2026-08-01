@@ -1,8 +1,11 @@
 // src/app/(app)/courses/[courseId]/dashboard/page.tsx
 // Fix: empty state con CTA a Importar cronograma cuando no hay encuentros
-import { createClient } from '@/lib/supabase/server'
-import { requireProfile } from '@/lib/supabase/session'
+'use client'
+import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 import { isChecklistComplete, normalizeChecklist } from '@/lib/moodle'
+import PageLoading from '@/components/layout/PageLoading'
 import Link from 'next/link'
 
 function KpiCard({ label, value, sub, variant = 'default' }: {
@@ -29,23 +32,39 @@ function AlertRow({ text, icon, variant = 'warning' }: { text: string; icon: str
   )
 }
 
-export default async function DashboardPage({ params }: { params: Promise<{ courseId: string }> }) {
-  const { courseId } = await params
-  // Deduplicado por request: reusa el usuario+perfil ya validado por los layouts.
-  await requireProfile()
-  const supabase = await createClient()
+/* eslint-disable @typescript-eslint/no-explicit-any */
+interface DashboardData { course: any; sessions: any[]; todos: any[] }
 
+export default function DashboardPage() {
+  const { courseId } = useParams<{ courseId: string }>()
+  const [supabase] = useState(() => createClient())
+  const [data, setData] = useState<DashboardData | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    setData(null)
+    ;(async () => {
+      const [courseRes, sessionsRes, todosRes] = await Promise.all([
+        supabase.from('courses').select('*, subjects(name)').eq('id', courseId).single(),
+        supabase.from('sessions').select('*').eq('course_id', courseId).order('date').order('class_number'),
+        supabase.from('todos').select('*').eq('course_id', courseId),
+      ])
+      if (cancelled) return
+      setData({
+        course: courseRes.data,
+        sessions: sessionsRes.data || [],
+        todos: todosRes.data || [],
+      })
+    })()
+    return () => { cancelled = true }
+  }, [courseId, supabase])
+
+  if (!data) return <PageLoading />
+
+  // A partir de acá no hay hooks: es el mismo render que antes resolvía el
+  // servidor, con los datos ya cargados.
+  const { course, sessions, todos } = data
   const today = new Date().toISOString().slice(0, 10)
-
-  const [courseRes, sessionsRes, todosRes] = await Promise.all([
-    supabase.from('courses').select('*, subjects(name)').eq('id', courseId).single(),
-    supabase.from('sessions').select('*').eq('course_id', courseId).order('date').order('class_number'),
-    supabase.from('todos').select('*').eq('course_id', courseId),
-  ])
-
-  const course   = courseRes.data
-  const sessions = sessionsRes.data || []
-  const todos    = todosRes.data    || []
 
   if (!course) return <div style={{ padding:'24px', color:'var(--text-muted)' }}>Curso no encontrado.</div>
 
