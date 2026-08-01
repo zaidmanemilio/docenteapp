@@ -1,14 +1,13 @@
 'use client'
-// src/app/(app)/courses/[courseId]/calendar/page.tsx
-// Carga en el navegador. El permiso efectivo sobre el curso se calcula acá,
-// así el componente ya sabe desde el primer pintado si puede editar.
+// src/app/(app)/courses/[courseId]/schedule/page.tsx
+// Carga en el navegador. Las 5 consultas salen en paralelo, no encadenadas.
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useCourseId } from '@/lib/use-course'
 import { createClient } from '@/lib/supabase/client'
 import { useSession } from '@/lib/session-context'
 import { effectiveCoursePermission } from '@/lib/permissions'
 import PageLoading from '@/components/layout/PageLoading'
-import CalendarClient from './CalendarClient'
+import ScheduleClient from './ScheduleClient'
 import type { Commission } from '@/types'
 import type { ExtendedSession } from '@/components/schedule/SessionModal'
 
@@ -18,10 +17,11 @@ interface Data {
   coursePermission: string | null
   sessions: ExtendedSession[]
   commissions: Commission[]
+  courseTeachers: string[]
 }
 
-export default function CalendarPage() {
-  const { courseId } = useParams<{ courseId: string }>()
+export default function SchedulePage() {
+  const courseId = useCourseId()
   const { profile } = useSession()
   const [supabase] = useState(() => createClient())
   const [data, setData] = useState<Data | null>(null)
@@ -29,20 +29,31 @@ export default function CalendarPage() {
   useEffect(() => {
     let cancelled = false
     ;(async () => {
-      const [courseRes, sessionsRes, commsRes, permRes] = await Promise.all([
+      const [courseRes, sessionsRes, commissionsRes, permRes, courseTeachersRes] = await Promise.all([
         supabase.from('courses').select('name, zoom_url').eq('id', courseId).single(),
-        supabase.from('sessions').select('*').eq('course_id', courseId).order('date').order('start_time'),
-        supabase.from('commissions').select('id, name').eq('course_id', courseId),
+        supabase.from('sessions').select('*').eq('course_id', courseId).order('date').order('class_number'),
+        supabase.from('commissions').select('*').eq('course_id', courseId),
         supabase.from('user_course_permissions').select('permission')
           .eq('user_id', profile.id).eq('course_id', courseId),
+        // Docentes del curso, para el desplegable de Responsable
+        supabase.from('user_course_permissions').select('profiles(full_name)').eq('course_id', courseId),
       ])
       if (cancelled) return
+
+      const teacherNames = (courseTeachersRes.data || [])
+        .map((r: { profiles: { full_name?: string } | { full_name?: string }[] | null }) => {
+          const prof = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles
+          return prof?.full_name || ''
+        })
+        .filter(Boolean)
+
       setData({
         courseName: courseRes.data?.name || '',
         zoomUrl: courseRes.data?.zoom_url || '',
         coursePermission: effectiveCoursePermission(profile.global_role, permRes.data || []),
         sessions: (sessionsRes.data || []) as ExtendedSession[],
-        commissions: commsRes.data || [],
+        commissions: commissionsRes.data || [],
+        courseTeachers: Array.from(new Set(teacherNames)).sort(),
       })
     })()
     return () => { cancelled = true }
@@ -51,14 +62,16 @@ export default function CalendarPage() {
   if (!data) return <PageLoading />
 
   return (
-    <CalendarClient
+    <ScheduleClient
       key={courseId}
       courseId={courseId}
       courseName={data.courseName}
       zoomUrl={data.zoomUrl}
+      profile={profile}
       coursePermission={data.coursePermission}
       initialSessions={data.sessions}
       initialCommissions={data.commissions}
+      initialCourseTeachers={data.courseTeachers}
     />
   )
 }

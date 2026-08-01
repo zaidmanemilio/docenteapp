@@ -5,6 +5,8 @@
 import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useCourseId } from '@/lib/use-course'
+import { useSession } from '@/lib/session-context'
 import type { Profile, Course } from '@/types'
 
 interface SidebarProps {
@@ -43,12 +45,15 @@ export default function Sidebar({ profile, courses, pinnedCourseId = null }: Sid
 
   // Se refleja al instante al fijar/desfijar; el servidor se sincroniza
   // después con router.refresh().
+  const { reload } = useSession()
   const [pinnedId, setPinnedId] = useState<string | null>(pinnedCourseId)
   const [pinning, setPinning] = useState(false)
 
+  // El curso activo ahora viaja en la query (?c=…) y la sección en la ruta
+  // (/courses/<sección>). Antes ambos salían del pathname.
+  const activeCourseId = useCourseId()
   const parts = pathname.split('/')
-  const activeCourseId = parts[1] === 'courses' && parts[2] && parts[2] !== 'new' ? parts[2] : ''
-  const currentSection = parts[3] || 'dashboard'
+  const currentSection = parts[1] === 'courses' && parts[2] && parts[2] !== 'new' ? parts[2] : ''
 
   const isAdmin   = profile.global_role === 'admin'
   const [levelFilter, setLevelFilter] = useState('all')
@@ -72,14 +77,14 @@ const visibleCourses = levelFilter === 'all'
   function navigate(section: string) {
     if (!activeCourseId) {
       const first = courses[0]?.id
-      if (first) router.push(`/courses/${first}/${section}`)
+      if (first) router.push(`/courses/${section}?c=${first}`)
       return
     }
-    router.push(`/courses/${activeCourseId}/${section}`)
+    router.push(`/courses/${section}?c=${activeCourseId}`)
   }
 
   function selectCourse(cid: string) {
-    router.push(`/courses/${cid}/dashboard`)
+    router.push(`/courses/dashboard?c=${cid}`)
   }
 
   // Fijar / desfijar. La preferencia se guarda en los metadatos del usuario de
@@ -97,7 +102,7 @@ const visibleCourses = levelFilter === 'all'
       setPinnedId(pinnedId) // revertir si falló
       return
     }
-    router.refresh() // que la home y el orden del servidor tomen el cambio
+    reload() // que la home y el orden tomen el cambio
   }
 
   async function handleLogout() {

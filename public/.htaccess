@@ -1,0 +1,57 @@
+# .htaccess — DocenteApp en Hostinger
+#
+# Este archivo se copia solo a out/ durante el build (está en public/).
+# Va en la carpeta del subdominio, junto a index.html.
+
+# ─────────────────────────────────────────────────────────────
+# 1) Compatibilidad con las URLs viejas
+# ─────────────────────────────────────────────────────────────
+# Antes el curso viajaba en la ruta:   /courses/<uuid>/dashboard
+# Ahora viaja como parámetro:          /courses/dashboard/?c=<uuid>
+# Sin esto, un favorito o un link compartido de antes daría 404.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  RewriteRule ^courses/([0-9a-fA-F-]{36})/([a-z]+)/?$ /courses/$2/?c=$1 [R=301,L,QSA]
+</IfModule>
+
+# ─────────────────────────────────────────────────────────────
+# 2) Página de error
+# ─────────────────────────────────────────────────────────────
+ErrorDocument 404 /404.html
+
+# ─────────────────────────────────────────────────────────────
+# 3) Caché
+# ─────────────────────────────────────────────────────────────
+# Todo lo que cuelga de /_next/static/ lleva un hash en el nombre: si el
+# contenido cambia, cambia el nombre. Por eso se puede cachear para siempre.
+# El HTML, en cambio, NO se cachea: es lo que apunta a los archivos nuevos
+# después de cada actualización. Si se cacheara, al subir una versión nueva
+# la gente seguiría viendo la vieja.
+<IfModule mod_headers.c>
+  <FilesMatch "\.(js|css|woff2|woff|ttf|png|jpg|jpeg|gif|svg|webp)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+</IfModule>
+
+# ─────────────────────────────────────────────────────────────
+# 4) Compresión
+# ─────────────────────────────────────────────────────────────
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain
+  AddOutputFilterByType DEFLATE application/javascript application/json
+  AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+# ─────────────────────────────────────────────────────────────
+# 5) Tipos MIME
+# ─────────────────────────────────────────────────────────────
+# Algunos servidores no traen el de woff2 y la tipografía no carga.
+<IfModule mod_mime.c>
+  AddType font/woff2 .woff2
+  AddType text/csv   .csv
+</IfModule>

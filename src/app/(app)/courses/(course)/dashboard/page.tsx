@@ -2,11 +2,11 @@
 // Fix: empty state con CTA a Importar cronograma cuando no hay encuentros
 'use client'
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { isChecklistComplete, normalizeChecklist } from '@/lib/moodle'
 import PageLoading from '@/components/layout/PageLoading'
 import Link from 'next/link'
+import { useCourseId } from '@/lib/use-course'
 
 function KpiCard({ label, value, sub, variant = 'default' }: {
   label: string; value: string | number; sub?: string
@@ -36,7 +36,7 @@ function AlertRow({ text, icon, variant = 'warning' }: { text: string; icon: str
 interface DashboardData { course: any; sessions: any[]; todos: any[] }
 
 export default function DashboardPage() {
-  const { courseId } = useParams<{ courseId: string }>()
+  const courseId = useCourseId()
   const [supabase] = useState(() => createClient())
   const [data, setData] = useState<DashboardData | null>(null)
 
@@ -91,7 +91,7 @@ export default function DashboardPage() {
             Para empezar, podés importar tu cronograma desde un archivo CSV o Excel, o agregar las clases manualmente una por una.
           </p>
           <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
-            <Link href={`/courses/${courseId}/import`} style={{
+            <Link href={`/courses/import?c=${courseId}`} style={{
               display:'flex', alignItems:'center', justifyContent:'center', gap:'8px',
               padding:'12px 20px', background:'var(--accent)', color:'white',
               borderRadius:'10px', textDecoration:'none', fontSize:'14px', fontWeight:600,
@@ -99,7 +99,7 @@ export default function DashboardPage() {
               <i className="ti ti-upload" aria-hidden="true"></i>
               Importar cronograma desde CSV / Excel
             </Link>
-            <Link href={`/courses/${courseId}/schedule`} style={{
+            <Link href={`/courses/schedule?c=${courseId}`} style={{
               display:'flex', alignItems:'center', justifyContent:'center', gap:'8px',
               padding:'12px 20px', background:'var(--surface)', color:'var(--text-secondary)',
               border:'1px solid var(--border)', borderRadius:'10px', textDecoration:'none', fontSize:'14px',

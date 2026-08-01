@@ -2,7 +2,7 @@
 // src/app/(app)/courses/[courseId]/presentation/page.tsx
 
 import { useState, useEffect, useCallback } from 'react'
-import { useParams } from 'next/navigation'
+import { useCourseId } from '@/lib/use-course'
 import { createClient } from '@/lib/supabase/client'
 
 interface CourseData {
@@ -68,7 +68,7 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 export default function PresentationPage() {
-  const { courseId } = useParams<{ courseId: string }>()
+  const courseId = useCourseId()
   const supabase = createClient()
 
   const [course, setCourse] = useState<CourseData | null>(null)
@@ -116,7 +116,7 @@ export default function PresentationPage() {
           <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>{course.name}</h1>
           {course.full_name && <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>{course.full_name}</p>}
         </div>
-        <a href={`/courses/${courseId}/config`} style={{
+        <a href={`/courses/config?c=${courseId}`} style={{
           display: 'flex', alignItems: 'center', gap: '6px',
           padding: '7px 14px', borderRadius: '8px',
           border: '1px solid var(--border)', background: 'var(--surface)',

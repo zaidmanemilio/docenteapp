@@ -125,7 +125,7 @@ export default function TodosClient({
         <i className="ti ti-info-circle" style={{ fontSize: '15px', flexShrink: 0, marginTop: '1px' }} aria-hidden="true"></i>
         <span>
           Acá se listan <strong>tareas operativas del curso</strong> — cosas como "Cargar Canva de clase 4", "Definir invitado", "Subir archivo del parcial".
-          Las <strong>clases pendientes</strong> de dar se gestionan desde <a href={`/courses/${courseId}/schedule`} style={{ color: 'var(--accent)' }}>Cronograma</a>, filtrando por estado Pendiente.
+          Las <strong>clases pendientes</strong> de dar se gestionan desde <a href={`/courses/schedule?c=${courseId}`} style={{ color: 'var(--accent)' }}>Cronograma</a>, filtrando por estado Pendiente.
         </span>
       </div>
 

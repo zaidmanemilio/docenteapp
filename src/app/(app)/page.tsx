@@ -14,7 +14,7 @@ export default function HomePage() {
   const target = courses[0]
 
   useEffect(() => {
-    if (target) router.replace(`/courses/${target.id}/dashboard`)
+    if (target) router.replace(`/courses/dashboard?c=${target.id}`)
   }, [target, router])
 
   if (target) return null

@@ -4,8 +4,10 @@
 // Antes resolvía sesión, perfil y cursos en el servidor. Ahora lo hace
 // SessionProvider en el navegador, porque un sitio estático no tiene servidor
 // que pueda mirar la cookie antes de responder.
+import { Suspense } from 'react'
 import { SessionProvider, useSession } from '@/lib/session-context'
 import Sidebar from '@/components/layout/Sidebar'
+import PageLoading from '@/components/layout/PageLoading'
 
 function AppShell({ children }: { children: React.ReactNode }) {
   const { profile, courses, pinnedCourseId } = useSession()
@@ -21,9 +23,13 @@ function AppShell({ children }: { children: React.ReactNode }) {
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  // El curso activo viaja en la query, y leerla (useSearchParams) exige un
+  // límite de Suspense cuando la página se genera de forma estática.
   return (
     <SessionProvider>
-      <AppShell>{children}</AppShell>
+      <Suspense fallback={<PageLoading />}>
+        <AppShell>{children}</AppShell>
+      </Suspense>
     </SessionProvider>
   )
 }

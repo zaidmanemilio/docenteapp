@@ -2,7 +2,7 @@
 // src/app/(app)/courses/[courseId]/import/page.tsx
 
 import { useState, useCallback } from 'react'
-import { useParams } from 'next/navigation'
+import { useCourseId } from '@/lib/use-course'
 import { createClient } from '@/lib/supabase/client'
 import type { SessionType, SessionModality, SessionStatus } from '@/types'
 import { readCsvFile } from '@/lib/csv-encoding'
@@ -66,7 +66,7 @@ interface PreviewRow {
 }
 
 export default function ImportPage() {
-  const { courseId } = useParams<{ courseId: string }>()
+  const courseId = useCourseId()
   const supabase = createClient()
 
   const [step, setStep] = useState(1)
@@ -347,7 +347,7 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
               <h3 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>¡Importación exitosa!</h3>
               <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Se importaron <strong>{importedCount}</strong> encuentros al cronograma.</p>
               <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                <a href={`/courses/${courseId}/schedule`} style={{ padding: '10px 20px', background: 'var(--accent)', color: 'white', textDecoration: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <a href={`/courses/schedule?c=${courseId}`} style={{ padding: '10px 20px', background: 'var(--accent)', color: 'white', textDecoration: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                   <i className="ti ti-calendar-event" aria-hidden="true"></i> Ver cronograma
                 </a>
                 <button onClick={() => { setStep(1); setRawData([]); setFileName(''); setPreview([]) }} style={{ padding: '10px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)' }}>

@@ -95,7 +95,7 @@ export default function NewCoursePage() {
 
     setSaving(false)
     // Redirigir a Importar cronograma en vez de Dashboard
-    router.push(`/courses/${courseId}/import`)
+    router.push(`/courses/import?c=${courseId}`)
     router.refresh()
   }
 

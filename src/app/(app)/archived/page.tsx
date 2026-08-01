@@ -124,7 +124,7 @@ export default function ArchivedPage() {
 
     setDuplicating(null)
     alert(`Curso "${newName}" creado correctamente.`)
-    router.push(`/courses/${newCourse.id}/dashboard`)
+    router.push(`/courses/dashboard?c=${newCourse.id}`)
     router.refresh()
   }
 

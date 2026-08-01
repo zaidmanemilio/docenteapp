@@ -1,22 +1,23 @@
 'use client'
-// src/app/(app)/courses/[courseId]/users/page.tsx
-// Carga en el navegador el padrón de perfiles, las comisiones y los permisos.
+// src/app/(app)/courses/[courseId]/config/page.tsx
+// Carga en el navegador curso, comisiones, permisos y el padrón de perfiles.
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useSession } from '@/lib/session-context'
 import PageLoading from '@/components/layout/PageLoading'
-import UsersClient from './UsersClient'
+import ConfigClient from './ConfigClient'
+import { useCourseId } from '@/lib/use-course'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 interface Data {
-  allProfiles: any[]
+  course: any
   commissions: any[]
   permissions: any[]
+  allProfiles: any[]
 }
 
-export default function UsersPage() {
-  const { courseId } = useParams<{ courseId: string }>()
+export default function ConfigPage() {
+  const courseId = useCourseId()
   const { profile } = useSession()
   const [supabase] = useState(() => createClient())
   const [data, setData] = useState<Data | null>(null)
@@ -24,16 +25,20 @@ export default function UsersPage() {
   useEffect(() => {
     let cancelled = false
     ;(async () => {
-      const [allProfilesRes, commsRes, permsRes] = await Promise.all([
-        supabase.from('profiles').select('*').order('full_name'),
+      const [courseRes, commsRes, permsRes, allProfilesRes] = await Promise.all([
+        supabase.from('courses').select('*').eq('id', courseId).single(),
         supabase.from('commissions').select('*').eq('course_id', courseId),
-        supabase.from('user_course_permissions').select('*, profiles(*)').eq('course_id', courseId),
+        supabase.from('user_course_permissions')
+          .select('id, user_id, commission_id, permission, profiles(full_name, global_role)')
+          .eq('course_id', courseId),
+        supabase.from('profiles').select('id, full_name, global_role').order('full_name'),
       ])
       if (cancelled) return
       setData({
-        allProfiles: allProfilesRes.data || [],
+        course: courseRes.data,
         commissions: commsRes.data || [],
         permissions: permsRes.data || [],
+        allProfiles: allProfilesRes.data || [],
       })
     })()
     return () => { cancelled = true }
@@ -42,13 +47,14 @@ export default function UsersPage() {
   if (!data) return <PageLoading />
 
   return (
-    <UsersClient
+    <ConfigClient
       key={courseId}
       courseId={courseId}
-      myProfile={profile}
-      initialAllProfiles={data.allProfiles}
+      profile={profile}
+      initialCourse={data.course}
       initialCommissions={data.commissions}
       initialPermissions={data.permissions}
+      initialAllProfiles={data.allProfiles}
     />
   )
 }

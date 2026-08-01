@@ -3,7 +3,7 @@
 // Carga los datos en el navegador y se los pasa al componente de pantalla,
 // que no cambió. El perfil sale del SessionProvider, así no se vuelve a pedir.
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useCourseId } from '@/lib/use-course'
 import { createClient } from '@/lib/supabase/client'
 import { useSession } from '@/lib/session-context'
 import PageLoading from '@/components/layout/PageLoading'
@@ -14,7 +14,7 @@ interface SessionRef { id: string; class_number: number | null; title: string }
 interface Data { courseName: string; todos: Todo[]; sessions: SessionRef[] }
 
 export default function TodosPage() {
-  const { courseId } = useParams<{ courseId: string }>()
+  const courseId = useCourseId()
   const { profile } = useSession()
   const [supabase] = useState(() => createClient())
   const [data, setData] = useState<Data | null>(null)

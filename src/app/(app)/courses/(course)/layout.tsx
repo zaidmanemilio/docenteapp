@@ -8,12 +8,12 @@
 // curso ajeno sin importar qué pida el cliente. Esto es para dar un mensaje
 // claro en vez de una pantalla vacía.
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useCourseId } from '@/lib/use-course'
 import { createClient } from '@/lib/supabase/client'
 import PageLoading from '@/components/layout/PageLoading'
 
 export default function CourseLayout({ children }: { children: React.ReactNode }) {
-  const { courseId } = useParams<{ courseId: string }>()
+  const courseId = useCourseId()
   const [supabase] = useState(() => createClient())
   const [state, setState] = useState<'checking' | 'ok' | 'denied'>('checking')
 
