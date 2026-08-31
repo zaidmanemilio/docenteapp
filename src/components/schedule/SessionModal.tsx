@@ -12,7 +12,7 @@ import { MOODLE_STATUSES, CHECKLIST_ITEMS, normalizeChecklist, isChecklistComple
 export interface ExtendedSession {
   id?: string
   course_id: string
-  class_number?: number
+  class_number?: number | null
   date: string
   title: string
   type: SessionType
@@ -191,10 +191,23 @@ export default function SessionModal({
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
                 <div>
                   <label style={labelStyle}>Nº de clase</label>
+                  {/* ?? y no ||: 0 es un número válido (el encuentro
+                      "ESTRUCTURA DEL CURSO" lleva 0) y con || se mostraba
+                      vacío, como si no se hubiera guardado. */}
                   <input
                     type="number"
-                    value={session.class_number || ''}
-                    onChange={e => onSessionChange({ ...session, class_number: parseInt(e.target.value) })}
+                    value={session.class_number ?? ''}
+                    onChange={e => {
+                      const v = e.target.value
+                      // Vacío = sin número. Antes parseInt('') daba NaN, que
+                      // Postgres rechaza: fallaba el guardado entero y en
+                      // silencio, y se perdían también los otros campos.
+                      const n = v === '' ? null : parseInt(v, 10)
+                      onSessionChange({
+                        ...session,
+                        class_number: (n === null || Number.isNaN(n)) ? null : n,
+                      })
+                    }}
                     style={inputStyle}
                   />
                 </div>

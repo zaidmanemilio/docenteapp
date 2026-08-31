@@ -157,10 +157,14 @@ export default function CalendarClient({
     if (!editSession.title || !editSession.date) { alert('Título y fecha son obligatorios.'); return }
     setSaving(true)
     const { id, created_at, updated_at, ...payload } = editSession as ExtendedSession & { created_at: string; updated_at: string }
-    await supabase.from('sessions')
+    const { error } = await supabase.from('sessions')
       .update({ ...payload, additional_links: addLinks, updated_at: new Date().toISOString() })
       .eq('id', id)
     setSaving(false)
+    if (error) {
+      alert(`No se pudo guardar el encuentro:\n\n${error.message}`)
+      return
+    }
     setEditSession(null)
     load()
   }

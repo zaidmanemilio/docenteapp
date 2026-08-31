@@ -175,15 +175,72 @@ export default function ScheduleClient({
     const { id, created_at, updated_at, ...payload } = editSession as ExtendedSession & { created_at: string; updated_at: string }
     const finalPayload = { ...payload, additional_links: addLinks, course_id: courseId }
 
-    if (isNew) {
-      await supabase.from('sessions').insert(finalPayload)
-    } else {
-      await supabase.from('sessions')
-        .update({ ...finalPayload, updated_at: new Date().toISOString() })
-        .eq('id', id)
+    // Antes el resultado se descartaba: si la base rechazaba el cambio, el
+    // modal se cerraba igual y parecía que había guardado.
+    const { error } = isNew
+      ? await supabase.from('sessions').insert(finalPayload)
+      : await supabase.from('sessions')
+          .update({ ...finalPayload, updated_at: new Date().toISOString() })
+          .eq('id', id)
+
+    setSaving(false)
+    if (error) {
+      alert(`No se pudo guardar el encuentro:\n\n${error.message}`)
+      return // el modal queda abierto para no perder lo cargado
+    }
+    setEditSession(null)
+    load()
+  }
+
+  // Renumera TODOS los encuentros del curso siguiendo el orden de fecha.
+  // Los cursos creados antes de que existiera el encuentro 0 quedaron con la
+  // numeración corrida (y a veces con números repetidos), y arreglarlos uno
+  // por uno era inviable.
+  async function renumerar() {
+    if (!canEdit) {
+      alert('No tenés permiso para editar encuentros en este curso.')
+      return
+    }
+    const resp = prompt(
+      'Renumerar los encuentros por orden de fecha.\n\n' +
+      '¿Desde qué número querés empezar?\n' +
+      '  0 = el primero es el encuentro 0 (ej. "ESTRUCTURA DEL CURSO")\n' +
+      '  1 = numeración clásica desde 1',
+      '0',
+    )
+    if (resp === null) return
+    const desde = parseInt(resp, 10)
+    if (Number.isNaN(desde) || desde < 0) {
+      alert('Ingresá 0 o 1.')
+      return
+    }
+
+    // Orden por fecha y, a igual fecha, por hora de inicio.
+    const orden = [...sessions].sort((a, b) => {
+      const f = (a.date || '').localeCompare(b.date || '')
+      if (f !== 0) return f
+      return (a.start_time || '').localeCompare(b.start_time || '')
+    })
+
+    const preview = orden
+      .map((s, i) => `${desde + i}. ${s.title}`)
+      .join('\n')
+    if (!confirm(`Va a quedar así:\n\n${preview}\n\n¿Confirmás?`)) return
+
+    setSaving(true)
+    const errores: string[] = []
+    for (let i = 0; i < orden.length; i++) {
+      const { error } = await supabase
+        .from('sessions')
+        .update({ class_number: desde + i, updated_at: new Date().toISOString() })
+        .eq('id', orden[i].id as string)
+      if (error) errores.push(`${orden[i].title}: ${error.message}`)
     }
     setSaving(false)
-    setEditSession(null)
+
+    if (errores.length > 0) {
+      alert(`No se pudieron renumerar ${errores.length} encuentro(s):\n\n${errores.join('\n')}`)
+    }
     load()
   }
 
@@ -275,6 +332,18 @@ export default function ScheduleClient({
             }}>
               <i className="ti ti-list-check" aria-hidden="true"></i>
               {bulkMode ? 'Salir de edición masiva' : 'Edición masiva'}
+            </button>
+          )}
+          {canEdit && (
+            <button onClick={renumerar} title="Renumerar los encuentros por orden de fecha" style={{
+              padding: '7px 14px', background: 'var(--surface)',
+              border: '1px solid var(--border)', color: 'var(--text-secondary)',
+              borderRadius: '8px', fontSize: '13px',
+              cursor: 'pointer', fontFamily: 'inherit',
+              display: 'flex', alignItems: 'center', gap: '6px',
+            }}>
+              <i className="ti ti-sort-ascending-numbers" aria-hidden="true"></i>
+              Renumerar
             </button>
           )}
           {canEdit && (
