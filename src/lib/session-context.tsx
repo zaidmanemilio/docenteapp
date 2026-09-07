@@ -1,19 +1,12 @@
 'use client'
 // src/lib/session-context.tsx
 //
-// Reemplaza en el navegador lo que hasta ahora hacían el middleware y los
-// server components: verificar que haya sesión, traer el perfil y la lista de
-// cursos accesibles, y dejarlos disponibles para toda la app.
+// Verifica la sesión y carga perfil + cursos una sola vez para toda la app.
 //
-// Por qué existe: un sitio estático no tiene servidor que pueda mirar la
-// cookie antes de responder. La protección pasa a ser del lado del cliente.
-// Eso NO afecta la seguridad de los datos —de eso se ocupa la RLS de Postgres,
-// que corre en la base— pero sí implica que el HTML se sirve a cualquiera y
-// que hay un instante de "Cargando…" antes de redirigir a quien no tiene
-// sesión.
-//
-// Se carga UNA sola vez en el layout y se comparte por contexto, así las
-// pantallas no repiten la consulta de perfil/cursos en cada navegación.
+// El arranque encadenaba 4 viajes a Supabase que dependían uno del otro
+// (validar sesión -> perfil -> permisos -> cursos). Desde Europa cada viaje
+// cuesta unos 209 ms, así que era casi un segundo de espera antes de pintar
+// nada. Ahora son dos pasos y el primero ni siquiera va por red.
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -25,7 +18,7 @@ interface SessionValue {
   profile: Profile
   courses: Course[]
   pinnedCourseId: string | null
-  /** Relee perfil y cursos (después de crear/archivar un curso, por ejemplo). */
+  /** Relee perfil y cursos (después de crear o archivar un curso). */
   reload: () => Promise<void>
 }
 
@@ -38,50 +31,12 @@ export function useSession(): SessionValue {
   return ctx
 }
 
-/**
- * Cursos NO archivados accesibles, con el fijado primero.
- * Mismo criterio que tenía src/lib/courses.ts en el servidor: admin y guest
- * ven todos, el resto solo donde tiene permiso asignado.
- */
-async function loadCourses(
-  supabase: ReturnType<typeof createClient>,
-  userId: string,
-  globalRole: string | undefined,
-  pinnedId: string | null,
-): Promise<Course[]> {
-  let courses: Course[] = []
-
-  if (globalRole === 'admin' || globalRole === 'guest') {
-    const { data } = await supabase
-      .from('courses')
-      .select('*, subjects(name)')
-      .not('status', 'eq', 'archived')
-      .order('year', { ascending: false })
-      .order('name')
-    courses = data || []
-  } else {
-    const { data: perms } = await supabase
-      .from('user_course_permissions')
-      .select('course_id')
-      .eq('user_id', userId)
-    const ids = Array.from(new Set((perms || []).map((p: { course_id: string }) => p.course_id)))
-    if (ids.length > 0) {
-      const { data } = await supabase
-        .from('courses')
-        .select('*, subjects(name)')
-        .in('id', ids)
-        .not('status', 'eq', 'archived')
-        .order('year', { ascending: false })
-        .order('name')
-      courses = data || []
-    }
-  }
-
-  if (pinnedId) {
-    const i = courses.findIndex(c => c.id === pinnedId)
-    if (i > 0) courses = [courses[i], ...courses.slice(0, i), ...courses.slice(i + 1)]
-  }
-  return courses
+/** Deja el curso fijado primero. Si ya no está accesible, se ignora solo. */
+function pinnedFirst(courses: Course[], pinnedId: string | null): Course[] {
+  if (!pinnedId) return courses
+  const i = courses.findIndex(c => c.id === pinnedId)
+  if (i <= 0) return courses
+  return [courses[i], ...courses.slice(0, i), ...courses.slice(i + 1)]
 }
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
@@ -91,20 +46,28 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [checked, setChecked] = useState(false)
 
   const load = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser()
+    // getSession() lee el token que ya está guardado en el navegador; no hace
+    // ninguna llamada de red. getUser(), que es lo que había antes, iba hasta
+    // el servidor de Auth a revalidarlo en cada carga.
+    //
+    // Esto NO debilita la seguridad: Postgres verifica la firma del token en
+    // cada consulta y aplica RLS. Con un token manipulado no se obtiene un
+    // solo dato; a lo sumo se ve la interfaz vacía.
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) {
       setChecked(true)
       router.replace('/login')
       return
     }
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single()
+    // Perfil y cursos en una sola llamada. El filtrado de qué cursos ve cada
+    // uno lo sigue haciendo la RLS: my_context() es SECURITY INVOKER.
+    const { data, error } = await supabase.rpc('my_context')
+    const profile = (data as { profile?: Profile } | null)?.profile
 
-    if (!profile) {
+    if (error || !profile) {
+      // Token vencido o perfil inexistente: a login.
       setChecked(true)
       router.replace('/login')
       return
@@ -112,7 +75,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
     const rawPin = user.user_metadata?.[PINNED_META_KEY]
     const pinnedCourseId = typeof rawPin === 'string' && rawPin ? rawPin : null
-    const courses = await loadCourses(supabase, user.id, profile.global_role, pinnedCourseId)
+    const courses = pinnedFirst(
+      ((data as { courses?: Course[] }).courses || []) as Course[],
+      pinnedCourseId,
+    )
 
     setValue({ profile, courses, pinnedCourseId, reload: load })
     setChecked(true)

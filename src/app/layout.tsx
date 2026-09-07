@@ -40,6 +40,13 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es" data-theme="dark" className={dmSans.variable}>
+      <head>
+        {/* La primera consulta a Supabase paga DNS + TLS antes de empezar.
+            Abriendo la conexión desde el HTML, ese costo se solapa con la
+            descarga del JavaScript en vez de sumarse después. */}
+        <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} crossOrigin="" />
+        <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />
+      </head>
       <body>{children}</body>
     </html>
   )
