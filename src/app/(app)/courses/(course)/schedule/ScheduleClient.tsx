@@ -8,6 +8,7 @@ import type { Commission, Profile, AdditionalLink } from '@/types'
 import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS } from '@/types'
 import type { SessionType } from '@/types'
 import SessionModal, { type ExtendedSession } from '@/components/schedule/SessionModal'
+import { buildCourseIcs, icsFileName } from '@/lib/ical'
 
 // ─── Tipos y constantes ───────────────────────────────────────────────────────
 
@@ -70,6 +71,7 @@ interface ScheduleClientProps {
   courseId: string
   courseName: string
   zoomUrl: string
+  timezone: string
   profile: Profile
   coursePermission: string | null
   initialSessions: ExtendedSession[]
@@ -78,7 +80,7 @@ interface ScheduleClientProps {
 }
 
 export default function ScheduleClient({
-  courseId, courseName, zoomUrl, profile, coursePermission,
+  courseId, courseName, zoomUrl, timezone, profile, coursePermission,
   initialSessions, initialCommissions, initialCourseTeachers,
 }: ScheduleClientProps) {
   const supabase = createClient()
@@ -244,6 +246,78 @@ export default function ScheduleClient({
     load()
   }
 
+  // Descarga el cronograma como .ics para importar en cualquier calendario.
+  // Se excluyen el encuentro 0 (es la ficha del curso, no una clase) y los
+  // cancelados. Los horarios se convierten a UTC usando la zona del curso, así
+  // el calendario los muestra en la hora local de quien lo importe.
+  function exportarCalendario() {
+    const ics = buildCourseIcs(
+      sessions.map(s => ({
+        id: String(s.id),
+        class_number: s.class_number,
+        title: s.title,
+        date: s.date,
+        start_time: s.start_time,
+        end_time: s.end_time,
+        status: s.status,
+        modality: s.modality,
+        location: s.location,
+        responsible: s.responsible,
+      })),
+      { courseName, timezone, zoomUrl },
+    )
+
+    const cuantos = (ics.match(/BEGIN:VEVENT/g) || []).length
+    if (cuantos === 0) {
+      alert('No hay clases para exportar.\n\nSe excluyen el encuentro 0 y los encuentros cancelados.')
+      return
+    }
+
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = icsFileName(courseName)
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  // Aplica el horario del encuentro abierto a TODOS los del curso.
+  // Guarda también el actual, así no queda la incoherencia de que los demás
+  // cambien y el que estás editando no.
+  async function replicarHorario() {
+    if (!editSession?.start_time) return
+    if (!canEdit) {
+      alert('No tenés permiso para editar encuentros en este curso.')
+      return
+    }
+    const ini = editSession.start_time
+    const fin = editSession.end_time || ''
+    const otros = sessions.filter(s => s.id !== editSession.id)
+
+    if (!confirm(
+      `Se va a poner el horario ${ini}${fin ? ' a ' + fin : ''} en los ` +
+      `${otros.length + 1} encuentros del curso.\n\n` +
+      'Después podés ajustar los que hagan excepción. ¿Confirmás?'
+    )) return
+
+    setSaving(true)
+    const { error } = await supabase
+      .from('sessions')
+      .update({ start_time: ini, end_time: fin || null, updated_at: new Date().toISOString() })
+      .eq('course_id', courseId)
+    setSaving(false)
+
+    if (error) {
+      alert(`No se pudo replicar el horario:\n\n${error.message}`)
+      return
+    }
+    setEditSession(null)
+    load()
+  }
+
   async function handleDelete() {
     if (!editSession?.id) return
     // Verificar permiso de borrado
@@ -334,6 +408,16 @@ export default function ScheduleClient({
               {bulkMode ? 'Salir de edición masiva' : 'Edición masiva'}
             </button>
           )}
+          <button onClick={exportarCalendario} title="Descargar el cronograma para importar en tu calendario" style={{
+            padding: '7px 14px', background: 'var(--surface)',
+            border: '1px solid var(--border)', color: 'var(--text-secondary)',
+            borderRadius: '8px', fontSize: '13px',
+            cursor: 'pointer', fontFamily: 'inherit',
+            display: 'flex', alignItems: 'center', gap: '6px',
+          }}>
+            <i className="ti ti-calendar-plus" aria-hidden="true"></i>
+            Exportar al calendario
+          </button>
           {canEdit && (
             <button onClick={renumerar} title="Renumerar los encuentros por orden de fecha" style={{
               padding: '7px 14px', background: 'var(--surface)',
@@ -568,6 +652,7 @@ export default function ScheduleClient({
           teachers={courseTeachers}
           addLinks={addLinks}
           canEdit={canEdit}
+          onReplicateTime={replicarHorario}
           isAdmin={canDelete}
           saving={saving}
           onClose={handleClose}

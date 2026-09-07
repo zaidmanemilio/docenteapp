@@ -30,6 +30,7 @@ type CourseDetail = Course & {
   full_name?: string; career?: string; faculty?: string
   schedule_text?: string; zoom_url?: string; program_url?: string
   moodle_url?: string; materials_url?: string; modality?: string; internal_notes?: string
+  timezone?: string
 }
 
 interface ConfigClientProps {
@@ -173,6 +174,7 @@ export default function ConfigClient({
       expected_sessions: course.expected_sessions,
       year:              course.year,
       modality:          course.modality || 'presencial',
+      timezone:          course.timezone || 'America/Argentina/Buenos_Aires',
       level:             (course as Record<string, unknown>).level || 'grado',
       schedule_text:     course.schedule_text || '',
       zoom_url:          course.zoom_url || '',
@@ -350,6 +352,22 @@ export default function ConfigClient({
                   <option value="virtual">Virtual</option>
                   <option value="hibrida">Híbrida</option>
                 </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Zona horaria de las clases</label>
+                <select value={course.timezone || 'America/Argentina/Buenos_Aires'} onChange={e => setCourse({...course, timezone: e.target.value})} disabled={!isAdmin} style={inputStyle}>
+                  <option value="America/Argentina/Buenos_Aires">Argentina (Buenos Aires)</option>
+                  <option value="Europe/Madrid">España (Madrid)</option>
+                  <option value="America/Montevideo">Uruguay (Montevideo)</option>
+                  <option value="America/Santiago">Chile (Santiago)</option>
+                  <option value="America/Sao_Paulo">Brasil (São Paulo)</option>
+                  <option value="America/Bogota">Colombia (Bogotá)</option>
+                  <option value="America/Mexico_City">México (Ciudad de México)</option>
+                </select>
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  En qué huso se dictan las clases. Se usa al exportar el cronograma
+                  al calendario, para que se vea en la hora local de cada persona.
+                </p>
               </div>
               <div>
                 <label style={labelStyle}>Encuentros esperados</label>

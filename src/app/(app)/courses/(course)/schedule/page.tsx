@@ -14,6 +14,7 @@ import type { ExtendedSession } from '@/components/schedule/SessionModal'
 interface Data {
   courseName: string
   zoomUrl: string
+  timezone: string
   coursePermission: string | null
   sessions: ExtendedSession[]
   commissions: Commission[]
@@ -30,7 +31,7 @@ export default function SchedulePage() {
     let cancelled = false
     ;(async () => {
       const [courseRes, sessionsRes, commissionsRes, permRes, courseTeachersRes] = await Promise.all([
-        supabase.from('courses').select('name, zoom_url').eq('id', courseId).single(),
+        supabase.from('courses').select('name, zoom_url, timezone').eq('id', courseId).single(),
         supabase.from('sessions').select('*').eq('course_id', courseId).order('date').order('class_number'),
         supabase.from('commissions').select('*').eq('course_id', courseId),
         supabase.from('user_course_permissions').select('permission')
@@ -50,6 +51,7 @@ export default function SchedulePage() {
       setData({
         courseName: courseRes.data?.name || '',
         zoomUrl: courseRes.data?.zoom_url || '',
+        timezone: courseRes.data?.timezone || 'America/Argentina/Buenos_Aires',
         coursePermission: effectiveCoursePermission(profile.global_role, permRes.data || []),
         sessions: (sessionsRes.data || []) as ExtendedSession[],
         commissions: commissionsRes.data || [],
@@ -67,6 +69,7 @@ export default function SchedulePage() {
       courseId={courseId}
       courseName={data.courseName}
       zoomUrl={data.zoomUrl}
+      timezone={data.timezone}
       profile={profile}
       coursePermission={data.coursePermission}
       initialSessions={data.sessions}

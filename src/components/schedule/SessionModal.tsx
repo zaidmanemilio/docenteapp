@@ -54,6 +54,8 @@ export interface SessionModalProps {
   teachers?: string[]
   addLinks: AdditionalLink[]
   canEdit: boolean
+  /** Copia el horario de este encuentro a todos los demás del curso. */
+  onReplicateTime?: () => void
   isAdmin: boolean
   saving: boolean
   onClose: () => void
@@ -93,6 +95,7 @@ export default function SessionModal({
   teachers = [],
   addLinks,
   canEdit,
+  onReplicateTime,
   isAdmin,
   saving,
   onClose,
@@ -530,6 +533,35 @@ export default function SessionModal({
                   />
                 </div>
               </div>
+              {canEdit && onReplicateTime && (
+                <div style={{ marginBottom: '12px' }}>
+                  <button
+                    type="button"
+                    onClick={onReplicateTime}
+                    disabled={!session.start_time}
+                    title={session.start_time
+                      ? 'Aplicar este horario a todos los encuentros del curso'
+                      : 'Cargá primero una hora de inicio'}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '6px',
+                      padding: '7px 14px', borderRadius: '8px',
+                      border: '1px solid var(--border)', background: 'var(--surface)',
+                      color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 600,
+                      fontFamily: 'inherit',
+                      cursor: session.start_time ? 'pointer' : 'not-allowed',
+                      opacity: session.start_time ? 1 : 0.5,
+                    }}
+                  >
+                    <i className="ti ti-copy" aria-hidden="true"></i>
+                    Replicar horario en los demás encuentros
+                  </button>
+                  <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px' }}>
+                    Aplica esta hora de inicio y fin a todos los encuentros del curso.
+                    Después podés ajustar los que hagan excepción.
+                  </p>
+                </div>
+              )}
+
               <div>
                 <label style={labelStyle}>Aula / Sala / Lugar</label>
                 <input

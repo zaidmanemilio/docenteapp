@@ -56,6 +56,7 @@ export interface Course {
   moodle_url?: string | null
   materials_url?: string | null
   modality?: string | null
+  timezone?: string | null
   internal_notes?: string | null
 }
 
