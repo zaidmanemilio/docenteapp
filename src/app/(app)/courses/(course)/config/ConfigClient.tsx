@@ -3,6 +3,7 @@
 // Fix: agregar docente usa select de usuarios reales, no prompt() con UUID
 
 import { useState, useCallback } from 'react'
+import RichTextArea from '@/components/ui/RichTextArea'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Course, Commission, Profile } from '@/types'
@@ -390,11 +391,11 @@ export default function ConfigClient({
             </div>
             <div style={{ marginBottom: '14px' }}>
               <label style={labelStyle}>Descripción</label>
-              <textarea value={course.description || ''} onChange={e => setCourse({...course, description: e.target.value})} disabled={!isAdmin} rows={3} style={{...inputStyle, resize: 'vertical', minHeight: '72px'}} />
+              <RichTextArea value={course.description || ''} onChange={v => setCourse({...course, description: v})} disabled={!isAdmin} rows={4} style={{...inputStyle, resize: 'vertical', minHeight: '90px', width: '100%'}} />
             </div>
             <div>
               <label style={labelStyle}>Observaciones internas</label>
-              <textarea value={course.internal_notes || ''} onChange={e => setCourse({...course, internal_notes: e.target.value})} disabled={!isAdmin} rows={2} placeholder="Notas visibles solo para el equipo docente..." style={{...inputStyle, resize: 'vertical', minHeight: '56px'}} />
+              <RichTextArea value={course.internal_notes || ''} onChange={v => setCourse({...course, internal_notes: v})} disabled={!isAdmin} rows={4} placeholder="Notas visibles solo para el equipo docente..." style={{...inputStyle, resize: 'vertical', minHeight: '90px', width: '100%'}} />
             </div>
 
             {isAdmin && (

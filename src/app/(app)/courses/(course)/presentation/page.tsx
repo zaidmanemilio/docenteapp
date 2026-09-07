@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useCourseId } from '@/lib/use-course'
+import RichText from '@/components/ui/RichText'
 import { createClient } from '@/lib/supabase/client'
 
 interface CourseData {
@@ -143,7 +144,7 @@ export default function PresentationPage() {
           {course.description && (
             <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #f3f4f6' }}>
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '6px' }}>Descripción</p>
-              <p style={{ fontSize: '13px', color: 'var(--text-primary)', lineHeight: '1.6' }}>{course.description}</p>
+              <RichText texto={course.description} />
             </div>
           )}
         </div>
@@ -209,7 +210,7 @@ export default function PresentationPage() {
               <i className="ti ti-lock" style={{ marginRight: '6px' }} aria-hidden="true"></i>
               Observaciones internas
             </h3>
-            <p style={{ fontSize: '13px', color: 'var(--badge-warning-fg)', lineHeight: '1.6' }}>{course.internal_notes}</p>
+            <RichText texto={course.internal_notes} color="var(--badge-warning-fg)" />
           </div>
         )}
       </div>
