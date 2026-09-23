@@ -181,7 +181,15 @@ export default function ScheduleClient({
     }
     setSaving(true)
     const { id, created_at, updated_at, ...payload } = editSession as ExtendedSession & { created_at: string; updated_at: string }
-    const finalPayload = { ...payload, additional_links: addLinks, course_id: courseId }
+    // date llega como '' si el campo quedó vacío, y Postgres rechaza ''
+    // como fecha. Se normaliza acá además de en el campo, para que ningún
+    // camino futuro vuelva a mandar texto vacío.
+    const finalPayload = {
+      ...payload,
+      date: payload.date || null,
+      additional_links: addLinks,
+      course_id: courseId,
+    }
 
     // Antes el resultado se descartaba: si la base rechazaba el cambio, el
     // modal se cerraba igual y parecía que había guardado.

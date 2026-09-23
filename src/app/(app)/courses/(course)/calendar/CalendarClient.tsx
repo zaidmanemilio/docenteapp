@@ -166,7 +166,12 @@ export default function CalendarClient({
     setSaving(true)
     const { id, created_at, updated_at, ...payload } = editSession as ExtendedSession & { created_at: string; updated_at: string }
     const { error } = await supabase.from('sessions')
-      .update({ ...payload, additional_links: addLinks, updated_at: new Date().toISOString() })
+      .update({
+        ...payload,
+        date: payload.date || null, // '' no es una fecha válida para Postgres
+        additional_links: addLinks,
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', id)
     setSaving(false)
     if (error) {

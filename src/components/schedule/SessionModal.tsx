@@ -218,8 +218,12 @@ export default function SessionModal({
                   <label style={labelStyle}>Fecha *</label>
                   <input
                     type="date"
-                    value={session.date}
-                    onChange={e => onSessionChange({ ...session, date: e.target.value })}
+                    // Un <input type="date"> vacío devuelve "", no null, y
+                    // Postgres rechaza "" como fecha ("invalid input syntax
+                    // for type date"). Se traduce a null para poder dejarlo
+                    // realmente vacío (lo usa el encuentro 0).
+                    value={session.date ?? ''}
+                    onChange={e => onSessionChange({ ...session, date: e.target.value || null })}
                     style={inputStyle}
                   />
                 </div>
