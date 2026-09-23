@@ -141,6 +141,16 @@ export default function ScheduleClient({
     if (filterModal !== 'all' && s.modality    !== filterModal)  return false
     return true
   })
+  // El encuentro 0 es la ficha del curso y va siempre primero.
+  // Antes el orden lo daba la consulta (ORDER BY date), y como la ficha no
+  // tiene fecha, Postgres la mandaba al final: los nulos van últimos.
+  .sort((a, b) => {
+    if (a.class_number === 0) return -1
+    if (b.class_number === 0) return 1
+    const porFecha = (a.date || '').localeCompare(b.date || '')
+    if (porFecha !== 0) return porFecha
+    return (a.class_number ?? 0) - (b.class_number ?? 0)
+  })
 
   // ─── Handlers modal ───────────────────────────────────────────────────────
   function openAdd() {
