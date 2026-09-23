@@ -13,7 +13,7 @@ export interface ExtendedSession {
   id?: string
   course_id: string
   class_number?: number | null
-  date: string
+  date?: string | null
   title: string
   type: SessionType
   responsible: string

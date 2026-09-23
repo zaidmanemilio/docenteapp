@@ -169,8 +169,14 @@ export default function ScheduleClient({
       alert('No tenés permiso para editar encuentros en este curso.')
       return
     }
-    if (!editSession.title || !editSession.date) {
-      alert('Título y fecha son obligatorios.')
+    // El encuentro 0 es la ficha del curso, no una clase: no lleva fecha.
+    const esFicha = editSession.class_number === 0
+    if (!editSession.title) {
+      alert('El título es obligatorio.')
+      return
+    }
+    if (!esFicha && !editSession.date) {
+      alert('La fecha es obligatoria.')
       return
     }
     setSaving(true)
@@ -570,7 +576,7 @@ export default function ScheduleClient({
                         </td>
                       )}
                       <td style={{ padding: '10px 12px', fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{s.class_number}</td>
-                      <td style={{ padding: '10px 12px', fontSize: '12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{fmtDate(s.date)}</td>
+                      <td style={{ padding: '10px 12px', fontSize: '12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{s.date ? fmtDate(s.date) : '—'}</td>
                       <td style={{ padding: '10px 12px' }}>
                         <div style={{ fontSize: '13px', fontWeight: 500 }}>{s.title}</div>
                         <div style={{ display: 'flex', gap: '4px', marginTop: '3px', flexWrap: 'wrap' }}>

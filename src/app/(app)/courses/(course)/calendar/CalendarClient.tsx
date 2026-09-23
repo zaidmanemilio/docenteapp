@@ -28,6 +28,7 @@ const STATUS_COLORS: Record<string, string> = {
 function groupByMonth(sessions: ExtendedSession[]) {
   const groups: Record<string, ExtendedSession[]> = {}
   sessions.forEach(s => {
+    if (!s.date) return // un encuentro sin fecha no va en ningún calendario
     const key = s.date.slice(0, 7)
     if (!groups[key]) groups[key] = []
     groups[key].push(s)
@@ -63,7 +64,11 @@ export default function CalendarClient({
 }: CalendarClientProps) {
   const supabase = createClient()
 
-  const [sessions,     setSessions]     = useState<ExtendedSession[]>(initialSessions)
+  // El encuentro 0 es la ficha "ESTRUCTURA DEL CURSO", no una clase real:
+  // no va en los calendarios ni en la exportación a iCal.
+  const [sessions,     setSessions]     = useState<ExtendedSession[]>(
+    () => initialSessions.filter(s => s.class_number !== 0),
+  )
   const [commissions]                   = useState<Commission[]>(initialCommissions)
   const [filterStatus, setFilterStatus] = useState('all')
 
@@ -87,7 +92,7 @@ export default function CalendarClient({
       .eq('course_id', courseId)
       .order('date')
       .order('start_time')
-    setSessions(data || [])
+    setSessions((data || []).filter(s => s.class_number !== 0))
   }, [courseId, supabase])
 
   const canEdit  = coursePermission === 'full' || coursePermission === 'edit'
@@ -154,7 +159,10 @@ export default function CalendarClient({
   async function handleSave() {
     if (!editSession) return
     if (!canEdit) { alert('No tenés permiso para editar encuentros en este curso.'); return }
-    if (!editSession.title || !editSession.date) { alert('Título y fecha son obligatorios.'); return }
+    if (!editSession.title) { alert('El título es obligatorio.'); return }
+    if (editSession.class_number !== 0 && !editSession.date) {
+      alert('La fecha es obligatoria.'); return
+    }
     setSaving(true)
     const { id, created_at, updated_at, ...payload } = editSession as ExtendedSession & { created_at: string; updated_at: string }
     const { error } = await supabase.from('sessions')

@@ -64,6 +64,7 @@ function fmtDate(d: string) {
 function groupByMonth(sessions: (Session & { course: Course })[]) {
   const groups: Record<string, (Session & { course: Course })[]> = {}
   sessions.forEach(s => {
+    if (!s.date) return // un encuentro sin fecha no va en ningún calendario
     const key = s.date.slice(0, 7)
     if (!groups[key]) groups[key] = []
     groups[key].push(s)
@@ -81,7 +82,11 @@ export default function UnifiedCalendarClient({
 }: UnifiedCalendarClientProps) {
   const router = useRouter()
 
-  const [sessions] = useState<(Session & { course: Course })[]>(initialSessions)
+  // El encuentro 0 es la ficha "ESTRUCTURA DEL CURSO", no una clase real:
+  // no va en los calendarios ni en la exportación a iCal.
+  const [sessions] = useState<(Session & { course: Course })[]>(
+    () => initialSessions.filter(s => s.class_number !== 0),
+  )
   const [courses]  = useState<Course[]>(initialCourses)
   const [filterStatus,   setFilterStatus]   = useState('all')
   const [filterCourse,   setFilterCourse]   = useState('all')
