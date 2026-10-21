@@ -250,7 +250,7 @@ export default function NewCoursePage() {
             Cancelar
           </button>
           <button onClick={handleCreate} disabled={saving} style={{
-            padding: '9px 20px', background: 'var(--accent)', color: 'white',
+            padding: '9px 20px', background: 'var(--accent-solid)', color: 'white',
             border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
             cursor: saving ? 'wait' : 'pointer', opacity: saving ? 0.7 : 1, fontFamily: 'inherit',
             display: 'flex', alignItems: 'center', gap: '6px',

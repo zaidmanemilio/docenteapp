@@ -572,7 +572,7 @@ export default function ConfigClient({
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button onClick={handleAddTeacher} style={{
-                    padding: '7px 16px', background: 'var(--accent)', color: 'white',
+                    padding: '7px 16px', background: 'var(--accent-solid)', color: 'white',
                     border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
                     cursor: 'pointer', fontFamily: 'inherit',
                   }}>
@@ -599,7 +599,7 @@ export default function ConfigClient({
               {backupMsg && <div className="alert" style={{ padding: '8px 12px', borderRadius: '8px', fontSize: '12px', marginBottom: '12px', color: 'var(--text-muted)' }}>{backupMsg}</div>}
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 <button onClick={exportBackupJson} disabled={backupBusy}
-                  style={{ padding: '8px 14px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', opacity: backupBusy ? 0.6 : 1 }}>
+                  style={{ padding: '8px 14px', background: 'var(--accent-solid)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', opacity: backupBusy ? 0.6 : 1 }}>
                   <i className="ti ti-download" style={{ marginRight: '6px' }} aria-hidden="true"></i>
                   Respaldo completo (JSON)
                 </button>

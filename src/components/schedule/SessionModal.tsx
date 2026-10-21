@@ -682,7 +682,7 @@ export default function SessionModal({
               onClick={onSave}
               disabled={saving}
               style={{
-                padding: '8px 16px', background: 'var(--accent)', color: 'white',
+                padding: '8px 16px', background: 'var(--accent-solid)', color: 'white',
                 border: 'none', borderRadius: '8px', fontSize: '13px',
                 fontWeight: 500, cursor: saving ? 'wait' : 'pointer',
                 opacity: saving ? 0.7 : 1, fontFamily: 'inherit',

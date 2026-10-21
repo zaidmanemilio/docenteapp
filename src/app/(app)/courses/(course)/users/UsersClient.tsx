@@ -331,7 +331,7 @@ export default function UsersClient({
         <h2 style={{ fontSize: '20px', fontWeight: 600 }}>Usuarios y permisos</h2>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button onClick={() => { setShowNewUser(true); setCreateError('') }} style={{
-            padding: '7px 14px', background: 'var(--accent)', border: 'none',
+            padding: '7px 14px', background: 'var(--accent-solid)', border: 'none',
             borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit',
             color: 'white', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px',
           }}>
@@ -488,7 +488,7 @@ export default function UsersClient({
                     <option value="edit">Edición (edit)</option>
                   </select>
                   <button onClick={applyBulk} disabled={bulkBusy || bulkSelected.size === 0}
-                    style={{ padding: '6px 14px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: (bulkBusy || bulkSelected.size === 0) ? 0.5 : 1 }}>
+                    style={{ padding: '6px 14px', background: 'var(--accent-solid)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: (bulkBusy || bulkSelected.size === 0) ? 0.5 : 1 }}>
                     {bulkBusy ? 'Aplicando...' : 'Aplicar'}
                   </button>
                 </>
@@ -610,7 +610,7 @@ export default function UsersClient({
             </div>
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
               <button onClick={() => setShowNewUser(false)} disabled={creating} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)' }}>Cancelar</button>
-              <button onClick={submitNewUser} disabled={creating} style={{ padding: '8px 16px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', opacity: creating ? 0.6 : 1 }}>{creating ? 'Creando...' : 'Crear usuario'}</button>
+              <button onClick={submitNewUser} disabled={creating} style={{ padding: '8px 16px', background: 'var(--accent-solid)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', opacity: creating ? 0.6 : 1 }}>{creating ? 'Creando...' : 'Crear usuario'}</button>
             </div>
           </div>
         </div>
@@ -655,7 +655,7 @@ export default function UsersClient({
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
               <button onClick={() => setShowImport(false)} disabled={importing} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)' }}>Cerrar</button>
               <button onClick={commitImport} disabled={importing || importRows.length === 0 || (importPreview != null && importPreview.length > 0)}
-                style={{ padding: '8px 16px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', opacity: (importing || importRows.length === 0 || (importPreview != null && importPreview.length > 0)) ? 0.5 : 1 }}>
+                style={{ padding: '8px 16px', background: 'var(--accent-solid)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', opacity: (importing || importRows.length === 0 || (importPreview != null && importPreview.length > 0)) ? 0.5 : 1 }}>
                 {importing ? 'Importando...' : 'Importar'}
               </button>
             </div>
@@ -706,7 +706,7 @@ export default function UsersClient({
             </div>
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
               <button onClick={() => setEditUser(null)} disabled={savingUser} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)' }}>Cancelar</button>
-              <button onClick={saveEditUser} disabled={savingUser} style={{ padding: '8px 16px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', opacity: savingUser ? 0.6 : 1 }}>{savingUser ? 'Guardando...' : 'Guardar cambios'}</button>
+              <button onClick={saveEditUser} disabled={savingUser} style={{ padding: '8px 16px', background: 'var(--accent-solid)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', opacity: savingUser ? 0.6 : 1 }}>{savingUser ? 'Guardando...' : 'Guardar cambios'}</button>
             </div>
           </div>
         </div>

@@ -2,7 +2,7 @@
 // src/app/(app)/courses/[courseId]/schedule/page.tsx
 // Fix: permisos granulares por curso, no solo por rol global
 
-import { useState, useCallback } from 'react'
+import React, { useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Commission, Profile, AdditionalLink } from '@/types'
 import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS } from '@/types'
@@ -141,6 +141,23 @@ export default function ScheduleClient({
     if (filterModal !== 'all' && s.modality    !== filterModal)  return false
     return true
   })
+  // ── Eje temporal ──────────────────────────────────────────────────────
+  // Un cronograma es tiempo, pero la tabla era una lista plana: sin meses,
+  // sin "hoy", sin diferencia entre lo dado y lo que viene.
+  const hoyISO = new Date().toISOString().slice(0, 10)
+  const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio',
+                 'agosto','septiembre','octubre','noviembre','diciembre']
+  function etiquetaMes(fecha: string) {
+    const [a, m] = fecha.split('-')
+    return `${MESES[parseInt(m, 10) - 1]} ${a}`
+  }
+
+  // Contadores del encabezado: el encuentro 0 es la ficha del curso, no una
+  // clase, así que no entra en el total.
+  const clasesReales = sessions.filter(s => s.class_number !== 0)
+  const totalClases  = clasesReales.length
+  const dictados     = clasesReales.filter(s => s.status === 'dada').length
+
   // El encuentro 0 es la ficha del curso y va siempre primero.
   // Antes el orden lo daba la consulta (ORDER BY date), y como la ficha no
   // tiene fecha, Postgres la mandaba al final: los nulos van últimos.
@@ -411,12 +428,19 @@ export default function ScheduleClient({
     <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <div>
-          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '2px' }}>{courseName}</p>
-          <h2 style={{ fontSize: '20px', fontWeight: 600 }}>Cronograma</h2>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 'var(--space-4)', flexWrap: 'wrap', marginBottom: 'var(--space-6)' }}>
+        <div className="page-head" style={{ marginBottom: 0 }}>
+          <h2 className="page-title">Cronograma</h2>
+          {/* Línea de información real en vez del copete con el nombre del
+              curso. De paso da el contador de resultados que la app no
+              tenía: cuántos encuentros hay y cuántos se dictaron. */}
+          <p className="page-meta">
+            {courseName} · <strong>{totalClases}</strong> {totalClases === 1 ? 'encuentro' : 'encuentros'}
+            {dictados > 0 && <> · <strong>{dictados}</strong> {dictados === 1 ? 'dado' : 'dados'}</>}
+            {filtered.length !== sessions.length && <> · mostrando <strong>{filtered.length}</strong></>}
+          </p>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div className="filter-row">
           {canEdit && (
             <button onClick={() => { setBulkMode(!bulkMode); clearSelection() }} style={{
               padding: '7px 14px',
@@ -456,7 +480,7 @@ export default function ScheduleClient({
           )}
           {canEdit && (
             <button onClick={openAdd} style={{
-              padding: '7px 16px', background: 'var(--accent)', color: 'white',
+              padding: '7px 16px', background: 'var(--accent-solid)', color: 'white',
               border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
               cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
             }}>
@@ -579,13 +603,31 @@ export default function ScheduleClient({
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(s => {
+                {(() => {
+                  // La próxima es la primera con fecha de hoy en adelante.
+                  const idxProxima = filtered.findIndex(x => x.date && x.date >= hoyISO)
+                  let mesPrevio = ''
+                  return filtered.map((s, idx) => {
                   const com = commissions.find(c => c.id === s.commission_scope)
+                  const esProxima = idx === idxProxima
+                  const esPasada  = !!s.date && s.date < hoyISO
+                  const mes       = s.date ? etiquetaMes(s.date) : ''
+                  const abreMes   = !!mes && mes !== mesPrevio
+                  if (mes) mesPrevio = mes
                   const hasReview  = s.review_what_worked || s.review_what_didnt || s.review_change_next
                   const showZoomLink = s.modality === 'virtual' && !s.canva_url && zoomUrl
 
                   return (
-                    <tr key={s.id} style={{ borderBottom: '1px solid var(--border)', background: selected.has(s.id as string) ? 'var(--chip-accent-bg)' : 'var(--surface)' }}>
+                    <React.Fragment key={s.id}>
+                    {abreMes && (
+                      <tr className="month-row">
+                        <th colSpan={99} scope="colgroup">{mes}</th>
+                      </tr>
+                    )}
+                    <tr
+                      className={`session-row${esPasada ? ' is-past' : ''}${esProxima ? ' is-next' : ''}`}
+                      style={{ borderBottom: '1px solid var(--border)', background: selected.has(s.id as string) ? 'var(--chip-accent-bg)' : 'var(--surface)' }}
+                    >
                       {bulkMode && (
                         <td style={{ padding: '10px 12px' }}>
                           <input type="checkbox" checked={selected.has(s.id as string)}
@@ -654,13 +696,15 @@ export default function ScheduleClient({
                       <td style={{ padding: '10px 12px' }}>
   <button onClick={() => openEdit(s)}
     title="Ver y editar clase"
-    style={{ background: 'var(--accent)', border: 'none', borderRadius: '6px', padding: '5px 10px', cursor: 'pointer', color: 'white', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+    style={{ background: 'var(--accent-solid)', border: 'none', borderRadius: '6px', padding: '5px 10px', cursor: 'pointer', color: 'white', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
     <i className="ti ti-player-play-filled" aria-hidden="true"></i>
   </button>
                       </td>
                     </tr>
+                    </React.Fragment>
                   )
-                })}
+                  })
+                })()}
               </tbody>
             </table>
           </div>

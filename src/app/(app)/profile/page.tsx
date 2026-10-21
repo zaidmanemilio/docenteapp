@@ -124,7 +124,7 @@ export default function ProfilePage() {
             El email solo lo puede cambiar un administrador.
           </p>
         </div>
-        <button onClick={saveName} disabled={savingName} style={{ padding: '8px 16px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', opacity: savingName ? 0.6 : 1 }}>
+        <button onClick={saveName} disabled={savingName} style={{ padding: '8px 16px', background: 'var(--accent-solid)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', opacity: savingName ? 0.6 : 1 }}>
           {savingName ? 'Guardando...' : 'Guardar cambios'}
         </button>
       </div>
@@ -148,7 +148,7 @@ export default function ProfilePage() {
             <input type="password" style={inputStyle} value={newPw2} onChange={e => setNewPw2(e.target.value)} />
           </div>
         </div>
-        <button onClick={changePassword} disabled={savingPw} style={{ padding: '8px 16px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', opacity: savingPw ? 0.6 : 1 }}>
+        <button onClick={changePassword} disabled={savingPw} style={{ padding: '8px 16px', background: 'var(--accent-solid)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', opacity: savingPw ? 0.6 : 1 }}>
           {savingPw ? 'Cambiando...' : 'Cambiar contraseña'}
         </button>
       </div>

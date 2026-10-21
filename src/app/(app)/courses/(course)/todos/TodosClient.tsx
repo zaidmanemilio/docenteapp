@@ -114,7 +114,7 @@ export default function TodosClient({
         </div>
         {canEdit && (
           <button onClick={() => { setEditTodo({ priority: 'medium', status: 'open' }); setIsNew(true) }}
-            style={{ padding: '8px 16px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            style={{ padding: '8px 16px', background: 'var(--accent-solid)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <i className="ti ti-plus" aria-hidden="true"></i> Nueva tarea
           </button>
         )}
@@ -258,7 +258,7 @@ export default function TodosClient({
               ) : <div></div>}
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button onClick={() => setEditTodo(null)} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)' }}>Cancelar</button>
-                <button onClick={save} disabled={saving} style={{ padding: '8px 16px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: saving ? 'wait' : 'pointer', opacity: saving ? 0.7 : 1, fontFamily: 'inherit' }}>
+                <button onClick={save} disabled={saving} style={{ padding: '8px 16px', background: 'var(--accent-solid)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: saving ? 'wait' : 'pointer', opacity: saving ? 0.7 : 1, fontFamily: 'inherit' }}>
                   {saving ? 'Guardando...' : isNew ? 'Crear tarea' : 'Guardar'}
                 </button>
               </div>

@@ -51,6 +51,31 @@
   --badge-orange-bg:  #ffedd5; --badge-orange-fg:  #c2410c; --badge-orange-bd:  transparent;
   --badge-neutral-bg: #f3f4f6; --badge-neutral-fg: #6b7280; --badge-neutral-bd: transparent;
 
+  /* ── ESCALA TIPOGRÁFICA ──────────────────────────────────────────────
+     Antes había 17 tamaños distintos y el 77% del texto caía entre 11 y
+     13px: todo hablaba al mismo volumen, así que nada se leía como
+     importante. Esta escala tiene saltos evidentes y pocos peldaños. */
+  --text-xs:   11px;   /* solo metadatos y badges */
+  --text-sm:   13px;   /* secundario */
+  --text-base: 14px;   /* cuerpo */
+  --text-lg:   16px;
+  --text-xl:   20px;   /* títulos de sección */
+  --text-2xl:  26px;
+  --text-3xl:  34px;   /* título de pantalla */
+  --text-4xl:  44px;   /* cifras de display */
+
+  /* ── ESPACIO ─────────────────────────────────────────────────────────
+     Antes convivían 13 valores (incluido 7px usado 43 veces). Base de 4. */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px;
+  --space-4: 16px; --space-6: 24px; --space-8: 32px; --space-12: 48px;
+
+  /* Acento SÓLIDO para fondos de botón.
+     --accent (#818cf8 en oscuro) da 2.98:1 con texto blanco: falla AA y se
+     lee como deshabilitado. Este da 6.29:1. --accent queda para texto e
+     íconos sobre superficies oscuras, donde sí pasa. */
+  --accent-solid: #4f46e5;
+  --accent-solid-hover: #4338ca;
+
   /* Botón "dar acceso" / chip violeta claro usado en users/calendar */
   --chip-accent-bg: #eef2ff; --chip-accent-fg: #4338ca; --chip-accent-bd: #c7d2fe;
 }
@@ -97,6 +122,9 @@
   --badge-orange-bg:  #7c2d1266; --badge-orange-fg:  #fdba74; --badge-orange-bd:  #9a341299;
   --badge-neutral-bg: #33415566; --badge-neutral-fg: #cbd5e1; --badge-neutral-bd: #47556999;
 
+  --accent-solid: #4f46e5;        /* blanco encima = 6.29:1 */
+  --accent-solid-hover: #5b55eb;
+
   --chip-accent-bg: #312e8166; --chip-accent-fg: #c7d2fe; --chip-accent-bd: #4338ca99;
 }
 
@@ -104,9 +132,21 @@
 
 body {
   font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: var(--text-base);
   background: var(--bg);
   color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
 }
+
+/* Las partes que no dibujamos también son parte del diseño: selección,
+   cursor de texto y cifras. Dejarlas en el default del navegador es lo que
+   delata que una pantalla fue ensamblada y no construida. */
+::selection { background: color-mix(in srgb, var(--accent) 32%, transparent); color: var(--text-primary); }
+:root { caret-color: var(--accent); accent-color: var(--accent-solid); }
+
+/* Cifras de ancho fijo: en una tabla de cronograma los números de clase y
+   las fechas tienen que alinearse en columna. */
+table, .tabular { font-variant-numeric: tabular-nums; }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -171,12 +211,11 @@ body {
   display: flex; align-items: flex-start; gap: 8px;
   padding: 8px 12px; border-radius: 8px;
   font-size: 12px; border: 1px solid transparent;
-  border-left-width: 3px;
 }
-.alert-success { background: var(--badge-success-bg); color: var(--badge-success-fg); border-color: var(--badge-success-bd); border-left-color: var(--badge-success-fg); }
-.alert-warning { background: var(--badge-warning-bg); color: var(--badge-warning-fg); border-color: var(--badge-warning-bd); border-left-color: var(--badge-warning-fg); }
-.alert-danger  { background: var(--badge-danger-bg);  color: var(--badge-danger-fg);  border-color: var(--badge-danger-bd);  border-left-color: var(--badge-danger-fg); }
-.alert-info    { background: var(--badge-info-bg);    color: var(--badge-info-fg);    border-color: var(--badge-info-bd);    border-left-color: var(--badge-info-fg); }
+.alert-success { background: var(--badge-success-bg); color: var(--badge-success-fg); border-color: var(--badge-success-bd); }
+.alert-warning { background: var(--badge-warning-bg); color: var(--badge-warning-fg); border-color: var(--badge-warning-bd); }
+.alert-danger  { background: var(--badge-danger-bg);  color: var(--badge-danger-fg);  border-color: var(--badge-danger-bd);  }
+.alert-info    { background: var(--badge-info-bg);    color: var(--badge-info-fg);    border-color: var(--badge-info-bd);    }
 
 /* Chip violeta (dar acceso) */
 .chip-accent { background: var(--chip-accent-bg); color: var(--chip-accent-fg); border: 1px solid var(--chip-accent-bd); }
@@ -501,4 +540,75 @@ button:disabled {
     min-height: 40px;
   }
   .filter-pill { min-height: 40px; }
+}
+
+/* ── ENCABEZADO DE PANTALLA ───────────────────────────────────────────────
+   Antes cada pantalla ponía un <p> chico con el nombre del curso ENCIMA del
+   <h2>. Eso es un "copete": una etiqueta que no dice nada y le roba el
+   primer renglón al título. Acá el título manda, y debajo va una línea de
+   información real (cuántos encuentros, cuántos dados), que además cubre el
+   contador de resultados que la app no tenía en ningún lado. */
+.page-head { margin-bottom: var(--space-6); }
+.page-title {
+  font-size: var(--text-3xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--text-primary);
+  margin: 0;
+  text-wrap: balance;
+}
+.page-meta {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+.page-meta strong { color: var(--text-secondary); font-weight: 600; }
+
+/* ── BOTONES ──────────────────────────────────────────────────────────────
+   Un único primario, con fondo sólido para que el texto blanco pase AA. */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  padding: 0 var(--space-4); min-height: 38px;
+  border-radius: 9px; border: 1px solid transparent;
+  font-family: inherit; font-size: var(--text-sm); font-weight: 600;
+  cursor: pointer; white-space: nowrap;
+  transition: background .14s ease, border-color .14s ease, color .14s ease;
+}
+.btn-primary { background: var(--accent-solid); color: #fff; }
+.btn-primary:hover { background: var(--accent-solid-hover); }
+.btn-ghost {
+  background: var(--surface); color: var(--text-secondary);
+  border-color: var(--border);
+}
+.btn-ghost:hover { background: var(--hover-bg); border-color: var(--text-muted); color: var(--text-primary); }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+
+/* Piso táctil. Tiene que ir DESPUÉS de .btn: misma especificidad, así que
+   decide el orden de aparición, y la regla general de `button` de más
+   arriba pierde contra la clase. */
+@media (pointer: coarse) {
+  .btn { min-height: 44px; }
+}
+
+/* ── EJE TEMPORAL DEL CRONOGRAMA ─────────────────────────────────────────
+   Un cronograma es tiempo. La tabla no lo mostraba: sin meses, sin "hoy",
+   sin diferencia entre lo dado y lo que viene. */
+.month-row th {
+  position: sticky; top: 0; z-index: 2;
+  background: var(--bg);
+  font-size: var(--text-xs); font-weight: 600;
+  text-transform: uppercase; letter-spacing: .09em;
+  color: var(--text-muted);
+  padding: var(--space-4) var(--space-3) var(--space-2);
+  border-bottom: 1px solid var(--border);
+}
+.session-row.is-past > td { opacity: .55; }
+.session-row.is-next > td { border-top: 2px solid var(--accent); }
+.session-row.is-next > td:first-child { position: relative; }
+.session-row.is-next > td:first-child::before {
+  content: 'PRÓXIMA';
+  position: absolute; top: -9px; left: var(--space-3);
+  font-size: 9px; font-weight: 700; letter-spacing: .1em;
+  color: var(--accent); background: var(--bg); padding: 0 6px;
 }

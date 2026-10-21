@@ -238,7 +238,7 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
               <div style={{ marginTop: '20px', textAlign: 'right' }}>
                 <button
                   onClick={() => rawData.length > 0 ? setStep(2) : alert('Primero subí un archivo.')}
-                  style={{ padding: '8px 20px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  style={{ padding: '8px 20px', background: 'var(--accent-solid)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 >
                   Siguiente <i className="ti ti-arrow-right" aria-hidden="true"></i>
                 </button>
@@ -281,7 +281,7 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
                 <button onClick={() => setStep(1)} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                   <i className="ti ti-arrow-left" aria-hidden="true"></i> Atrás
                 </button>
-                <button onClick={buildPreview} style={{ padding: '8px 20px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <button onClick={buildPreview} style={{ padding: '8px 20px', background: 'var(--accent-solid)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                   Previsualizar <i className="ti ti-arrow-right" aria-hidden="true"></i>
                 </button>
               </div>
@@ -332,7 +332,7 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
                 <button onClick={() => setStep(2)} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                   <i className="ti ti-arrow-left" aria-hidden="true"></i> Atrás
                 </button>
-                <button onClick={confirmImport} disabled={importing} style={{ padding: '8px 20px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: importing ? 'wait' : 'pointer', opacity: importing ? 0.7 : 1, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <button onClick={confirmImport} disabled={importing} style={{ padding: '8px 20px', background: 'var(--accent-solid)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: importing ? 'wait' : 'pointer', opacity: importing ? 0.7 : 1, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                   {importing ? 'Importando...' : `Importar ${preview.filter(r=>!r._errors.length).length} encuentros`}
                   <i className="ti ti-check" aria-hidden="true"></i>
                 </button>
@@ -347,7 +347,7 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
               <h3 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>¡Importación exitosa!</h3>
               <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Se importaron <strong>{importedCount}</strong> encuentros al cronograma.</p>
               <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                <a href={`/courses/schedule?c=${courseId}`} style={{ padding: '10px 20px', background: 'var(--accent)', color: 'white', textDecoration: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <a href={`/courses/schedule?c=${courseId}`} style={{ padding: '10px 20px', background: 'var(--accent-solid)', color: 'white', textDecoration: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                   <i className="ti ti-calendar-event" aria-hidden="true"></i> Ver cronograma
                 </a>
                 <button onClick={() => { setStep(1); setRawData([]); setFileName(''); setPreview([]) }} style={{ padding: '10px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)' }}>

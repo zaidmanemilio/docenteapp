@@ -56,7 +56,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin}>
           <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
+            <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
               Email
             </label>
             <input
@@ -79,7 +79,7 @@ export default function LoginPage() {
           </div>
 
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
+            <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
               Contraseña
             </label>
             <input
@@ -111,7 +111,7 @@ export default function LoginPage() {
             style={{
               width: '100%',
               padding: '10px',
-              background: 'var(--accent)',
+              background: 'var(--accent-solid)',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
@@ -126,7 +126,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p style={{ fontSize: '11px', color: '#555575', textAlign: 'center', marginTop: '16px' }}>
+        <p style={{ fontSize: '11px', color: 'var(--text-muted)', textAlign: 'center', marginTop: '16px' }}>
           ¿Olvidaste tu contraseña? Pedile al administrador que te reenvíe el acceso.
         </p>
       </div>

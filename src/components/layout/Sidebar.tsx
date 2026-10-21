@@ -179,7 +179,7 @@ const visibleCourses = levelFilter === 'all'
 
         {/* Lista de cursos */}
         <div style={{ padding: '12px 16px 6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-  <p style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#555575', margin: 0 }}>
+  <p style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', margin: 0 }}>
     Mis cursos
   </p>
   <select
@@ -220,7 +220,7 @@ const visibleCourses = levelFilter === 'all'
     </div>
   ))}
   {filteredCourses.length === 0 && (
-    <p style={{ fontSize: '11px', color: '#555575', padding: '6px 10px' }}>
+    <p style={{ fontSize: '11px', color: 'var(--text-muted)', padding: '6px 10px' }}>
       Sin cursos de {levelFilter === 'grado' ? 'Grado' : 'Posgrado'}.
     </p>
   )}
@@ -232,7 +232,7 @@ const visibleCourses = levelFilter === 'all'
       onClick={() => router.push('/courses/new')}
       style={{
         padding: '7px 10px', borderRadius: '8px', cursor: 'pointer',
-        color: pathname === '/courses/new' ? 'var(--accent-light)' : '#555575',
+        color: pathname === '/courses/new' ? 'var(--accent-light)' : 'var(--text-muted)',
         background: pathname === '/courses/new' ? 'rgba(99,102,241,0.18)' : 'transparent',
         fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px',
         borderTop: '1px solid var(--sidebar-border)', paddingTop: '10px',
@@ -347,7 +347,7 @@ const visibleCourses = levelFilter === 'all'
               </p>
               <span style={{ fontSize: '10px', color: 'var(--sidebar-text)' }}>{roleLabel}</span>
             </div>
-            <i className="ti ti-selector" style={{ color: '#555575', fontSize: '15px', flexShrink: 0 }} aria-hidden="true"></i>
+            <i className="ti ti-selector" style={{ color: 'var(--text-muted)', fontSize: '15px', flexShrink: 0 }} aria-hidden="true"></i>
           </div>
         </div>
       </nav>
