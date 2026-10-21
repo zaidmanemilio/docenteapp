@@ -6,6 +6,7 @@ import { useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Commission, AdditionalLink } from '@/types'
 import SessionModal, { type ExtendedSession } from '@/components/schedule/SessionModal'
+import { useDialog } from '@/components/ui/Dialog'
 import {
   type CalendarView, ViewSwitch, MonthNav, MonthGrid, fmtMonthLabel,
   filterWeek, weekRangeLabel,
@@ -95,6 +96,8 @@ export default function CalendarClient({
     setSessions((data || []).filter(s => s.class_number !== 0))
   }, [courseId, supabase])
 
+  const dialog = useDialog()
+
   const canEdit  = coursePermission === 'full' || coursePermission === 'edit'
   const canDelete = coursePermission === 'full'
 
@@ -158,10 +161,17 @@ export default function CalendarClient({
 
   async function handleSave() {
     if (!editSession) return
-    if (!canEdit) { alert('No tenés permiso para editar encuentros en este curso.'); return }
-    if (!editSession.title) { alert('El título es obligatorio.'); return }
+    if (!canEdit) {
+      await dialog.alert({ title: 'Sin permiso', message: 'No tenés permiso para editar encuentros en este curso.', tone: 'danger' })
+      return
+    }
+    if (!editSession.title) {
+      await dialog.alert({ title: 'Falta el título', message: 'Todo encuentro necesita un título para poder guardarse.' })
+      return
+    }
     if (editSession.class_number !== 0 && !editSession.date) {
-      alert('La fecha es obligatoria.'); return
+      await dialog.alert({ title: 'Falta la fecha', message: 'Solo el encuentro 0 puede quedar sin fecha.' })
+      return
     }
     setSaving(true)
     const { id, created_at, updated_at, ...payload } = editSession as ExtendedSession & { created_at: string; updated_at: string }
@@ -175,7 +185,7 @@ export default function CalendarClient({
       .eq('id', id)
     setSaving(false)
     if (error) {
-      alert(`No se pudo guardar el encuentro:\n\n${error.message}`)
+      await dialog.alert({ title: 'No se pudo guardar', message: error.message, tone: 'danger' })
       return
     }
     setEditSession(null)
@@ -184,8 +194,17 @@ export default function CalendarClient({
 
   async function handleDelete() {
     if (!editSession?.id) return
-    if (!canDelete) { alert('No tenés permiso para eliminar encuentros.'); return }
-    if (!confirm('¿Eliminar este encuentro?')) return
+    if (!canDelete) {
+      await dialog.alert({ title: 'Sin permiso', message: 'No tenés permiso para eliminar encuentros en este curso.', tone: 'danger' })
+      return
+    }
+    const ok = await dialog.confirm({
+      title: 'Eliminar este encuentro',
+      message: `"${editSession.title}" se elimina de forma definitiva, junto con sus notas y links.`,
+      confirmLabel: 'Eliminar',
+      tone: 'danger',
+    })
+    if (!ok) return
     await supabase.from('sessions').delete().eq('id', editSession.id)
     setEditSession(null)
     load()
@@ -196,9 +215,12 @@ export default function CalendarClient({
     <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
 
       <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-        <div>
-          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '2px' }}>{courseName}</p>
-          <h2 style={{ fontSize: '20px', fontWeight: 600 }}>Agenda</h2>
+        <div className="page-head" style={{ marginBottom: 0 }}>
+          <h1 className="page-title">Agenda</h1>
+          <p className="page-meta">
+            {courseName} · <strong>{filtered.length}</strong>{' '}
+            {filtered.length === 1 ? 'encuentro' : 'encuentros'}
+          </p>
         </div>
         <ViewSwitch value={view} onChange={setView} />
       </div>

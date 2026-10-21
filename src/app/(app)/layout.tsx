@@ -8,6 +8,7 @@ import { Suspense } from 'react'
 import { SessionProvider, useSession } from '@/lib/session-context'
 import Sidebar from '@/components/layout/Sidebar'
 import PageLoading from '@/components/layout/PageLoading'
+import { DialogProvider } from '@/components/ui/Dialog'
 
 function AppShell({ children }: { children: React.ReactNode }) {
   const { profile, courses, pinnedCourseId } = useSession()
@@ -27,9 +28,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   // límite de Suspense cuando la página se genera de forma estática.
   return (
     <SessionProvider>
-      <Suspense fallback={<PageLoading />}>
-        <AppShell>{children}</AppShell>
-      </Suspense>
+      <DialogProvider>
+        <Suspense fallback={<PageLoading />}>
+          <AppShell>{children}</AppShell>
+        </Suspense>
+      </DialogProvider>
     </SessionProvider>
   )
 }

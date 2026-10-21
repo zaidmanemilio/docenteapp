@@ -8,6 +8,7 @@ import type { Commission, Profile, AdditionalLink } from '@/types'
 import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS } from '@/types'
 import type { SessionType } from '@/types'
 import SessionModal, { type ExtendedSession } from '@/components/schedule/SessionModal'
+import { useDialog } from '@/components/ui/Dialog'
 import { buildCourseIcs, icsFileName } from '@/lib/ical'
 
 // ─── Tipos y constantes ───────────────────────────────────────────────────────
@@ -104,6 +105,8 @@ export default function ScheduleClient({
   const [selected,     setSelected]     = useState<Set<string>>(new Set())
   const [bulkSaving,   setBulkSaving]   = useState(false)
 
+  const dialog = useDialog()
+
   // ─── Fetch ───────────────────────────────────────────────────────────────
   // Tras guardar/borrar solo hace falta releer los encuentros: el curso, las
   // comisiones, los docentes y el permiso los resolvió el servidor.
@@ -193,17 +196,17 @@ export default function ScheduleClient({
     if (!editSession) return
     // Verificar permiso antes de guardar (no solo ocultar botón)
     if (!canEdit) {
-      alert('No tenés permiso para editar encuentros en este curso.')
+      await dialog.alert({ title: 'Sin permiso', message: 'No tenés permiso para editar encuentros en este curso.', tone: 'danger' })
       return
     }
     // El encuentro 0 es la ficha del curso, no una clase: no lleva fecha.
     const esFicha = editSession.class_number === 0
     if (!editSession.title) {
-      alert('El título es obligatorio.')
+      await dialog.alert({ title: 'Falta el título', message: 'Todo encuentro necesita un título para poder guardarse.' })
       return
     }
     if (!esFicha && !editSession.date) {
-      alert('La fecha es obligatoria.')
+      await dialog.alert({ title: 'Falta la fecha', message: 'Solo el encuentro 0 puede quedar sin fecha.' })
       return
     }
     setSaving(true)
@@ -228,7 +231,7 @@ export default function ScheduleClient({
 
     setSaving(false)
     if (error) {
-      alert(`No se pudo guardar el encuentro:\n\n${error.message}`)
+      await dialog.alert({ title: 'No se pudo guardar', message: error.message, tone: 'danger' })
       return // el modal queda abierto para no perder lo cargado
     }
     setEditSession(null)
@@ -241,20 +244,23 @@ export default function ScheduleClient({
   // por uno era inviable.
   async function renumerar() {
     if (!canEdit) {
-      alert('No tenés permiso para editar encuentros en este curso.')
+      await dialog.alert({ title: 'Sin permiso', message: 'No tenés permiso para editar encuentros en este curso.', tone: 'danger' })
       return
     }
-    const resp = prompt(
-      'Renumerar los encuentros por orden de fecha.\n\n' +
-      '¿Desde qué número querés empezar?\n' +
-      '  0 = el primero es el encuentro 0 (ej. "ESTRUCTURA DEL CURSO")\n' +
-      '  1 = numeración clásica desde 1',
-      '0',
-    )
+    const resp = await dialog.prompt({
+      title: 'Renumerar por orden de fecha',
+      message: 'Elegí con qué número arranca el primero:\n'
+        + '0 — el primero es el encuentro 0 (ej. "ESTRUCTURA DEL CURSO")\n'
+        + '1 — numeración clásica desde 1',
+      label: 'Empezar desde',
+      defaultValue: '0',
+      inputType: 'number',
+      confirmLabel: 'Ver resultado',
+    })
     if (resp === null) return
     const desde = parseInt(resp, 10)
     if (Number.isNaN(desde) || desde < 0) {
-      alert('Ingresá 0 o 1.')
+      await dialog.alert({ title: 'Número inválido', message: 'Ingresá 0 o 1.' })
       return
     }
 
@@ -268,7 +274,12 @@ export default function ScheduleClient({
     const preview = orden
       .map((s, i) => `${desde + i}. ${s.title}`)
       .join('\n')
-    if (!confirm(`Va a quedar así:\n\n${preview}\n\n¿Confirmás?`)) return
+    const ok = await dialog.confirm({
+      title: 'Va a quedar así',
+      message: preview,
+      confirmLabel: `Renumerar ${orden.length} encuentros`,
+    })
+    if (!ok) return
 
     setSaving(true)
     const errores: string[] = []
@@ -282,7 +293,11 @@ export default function ScheduleClient({
     setSaving(false)
 
     if (errores.length > 0) {
-      alert(`No se pudieron renumerar ${errores.length} encuentro(s):\n\n${errores.join('\n')}`)
+      await dialog.alert({
+        title: `No se pudieron renumerar ${errores.length} encuentro(s)`,
+        message: errores.join('\n'),
+        tone: 'danger',
+      })
     }
     load()
   }
@@ -291,7 +306,7 @@ export default function ScheduleClient({
   // Se excluyen el encuentro 0 (es la ficha del curso, no una clase) y los
   // cancelados. Los horarios se convierten a UTC usando la zona del curso, así
   // el calendario los muestra en la hora local de quien lo importe.
-  function exportarCalendario() {
+  async function exportarCalendario() {
     const ics = buildCourseIcs(
       sessions.map(s => ({
         id: String(s.id),
@@ -310,7 +325,10 @@ export default function ScheduleClient({
 
     const cuantos = (ics.match(/BEGIN:VEVENT/g) || []).length
     if (cuantos === 0) {
-      alert('No hay clases para exportar.\n\nSe excluyen el encuentro 0 y los encuentros cancelados.')
+      await dialog.alert({
+        title: 'No hay clases para exportar',
+        message: 'Se excluyen el encuentro 0 y los encuentros cancelados.',
+      })
       return
     }
 
@@ -331,18 +349,20 @@ export default function ScheduleClient({
   async function replicarHorario() {
     if (!editSession?.start_time) return
     if (!canEdit) {
-      alert('No tenés permiso para editar encuentros en este curso.')
+      await dialog.alert({ title: 'Sin permiso', message: 'No tenés permiso para editar encuentros en este curso.', tone: 'danger' })
       return
     }
     const ini = editSession.start_time
     const fin = editSession.end_time || ''
     const otros = sessions.filter(s => s.id !== editSession.id)
 
-    if (!confirm(
-      `Se va a poner el horario ${ini}${fin ? ' a ' + fin : ''} en los ` +
-      `${otros.length + 1} encuentros del curso.\n\n` +
-      'Después podés ajustar los que hagan excepción. ¿Confirmás?'
-    )) return
+    const okReplicar = await dialog.confirm({
+      title: 'Replicar este horario',
+      message: `Se va a poner ${ini}${fin ? ' a ' + fin : ''} en los ${otros.length + 1} `
+        + 'encuentros del curso.\n\nDespués podés ajustar los que hagan excepción.',
+      confirmLabel: 'Replicar en todos',
+    })
+    if (!okReplicar) return
 
     setSaving(true)
     const { error } = await supabase
@@ -352,7 +372,7 @@ export default function ScheduleClient({
     setSaving(false)
 
     if (error) {
-      alert(`No se pudo replicar el horario:\n\n${error.message}`)
+      await dialog.alert({ title: 'No se pudo replicar el horario', message: error.message, tone: 'danger' })
       return
     }
     setEditSession(null)
@@ -363,10 +383,16 @@ export default function ScheduleClient({
     if (!editSession?.id) return
     // Verificar permiso de borrado
     if (!canDelete) {
-      alert('No tenés permiso para eliminar encuentros en este curso.')
+      await dialog.alert({ title: 'Sin permiso', message: 'No tenés permiso para eliminar encuentros en este curso.', tone: 'danger' })
       return
     }
-    if (!confirm('¿Eliminar este encuentro?')) return
+    const okBorrar = await dialog.confirm({
+      title: 'Eliminar este encuentro',
+      message: `"${editSession.title}" se elimina de forma definitiva, junto con sus notas y links.`,
+      confirmLabel: 'Eliminar',
+      tone: 'danger',
+    })
+    if (!okBorrar) return
     await supabase.from('sessions').delete().eq('id', editSession.id)
     setEditSession(null)
     load()
@@ -403,7 +429,12 @@ export default function ScheduleClient({
 
   async function bulkChangeResponsible() {
     if (!canEdit) return
-    const resp = prompt('Nuevo responsable para las clases seleccionadas:')
+    const resp = await dialog.prompt({
+      title: 'Cambiar responsable',
+      message: `Se aplica a los ${selected.size} encuentros seleccionados.`,
+      label: 'Responsable',
+      placeholder: 'Nombre y apellido',
+    })
     if (!resp) return
     setBulkSaving(true)
     await supabase.from('sessions').update({ responsible: resp }).in('id', [...selected])
@@ -414,7 +445,13 @@ export default function ScheduleClient({
 
   async function bulkDelete() {
     if (!selected.size || !canDelete) return
-    if (!confirm(`¿Eliminar ${selected.size} encuentro${selected.size > 1 ? 's' : ''}? Esta acción no se puede deshacer.`)) return
+    const okBulk = await dialog.confirm({
+      title: `Eliminar ${selected.size} encuentro${selected.size > 1 ? 's' : ''}`,
+      message: 'Esta acción no se puede deshacer.',
+      confirmLabel: 'Eliminar',
+      tone: 'danger',
+    })
+    if (!okBulk) return
     setBulkSaving(true)
     await supabase.from('sessions').delete().in('id', [...selected])
     setBulkSaving(false)

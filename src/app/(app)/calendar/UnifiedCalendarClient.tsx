@@ -177,10 +177,12 @@ export default function UnifiedCalendarClient({
 
       {/* Header */}
       <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-        <div>
-          <h2 style={{ fontSize: '20px', fontWeight: 600 }}>Calendario unificado</h2>
-          <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
-            Todos tus cursos en una sola vista.
+        <div className="page-head" style={{ marginBottom: 0 }}>
+          <h1 className="page-title">Calendario</h1>
+          <p className="page-meta">
+            <strong>{courses.length}</strong> {courses.length === 1 ? 'curso' : 'cursos'}
+            {' · '}<strong>{filtered.length}</strong> {filtered.length === 1 ? 'encuentro' : 'encuentros'}
+            {filterCourse !== 'all' && <> · filtrando por un curso</>}
           </p>
         </div>
         <ViewSwitch value={view} onChange={setView} />

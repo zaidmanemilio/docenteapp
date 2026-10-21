@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useDialog } from '@/components/ui/Dialog'
 
 interface Course {
   id: string; name: string; year: number; status: string
@@ -16,6 +17,24 @@ export default function ArchivedPage() {
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
   const [duplicating, setDuplicating] = useState<string | null>(null)
+
+  const dialog = useDialog()
+
+  // Reutilizar un curso pedía tres diálogos del navegador seguidos (nombre,
+  // año, y un confirm por el cronograma). Son tres decisiones del MISMO acto:
+  // van en un solo formulario, donde además se ven juntas antes de aceptar.
+  const [dupForm, setDupForm] = useState<null | {
+    course: Course; name: string; year: string; copySessions: boolean
+  }>(null)
+
+  function openDuplicate(course: Course) {
+    setDupForm({
+      course,
+      name: `${course.name.replace(/\d{4}/, '').trim()} ${new Date().getFullYear() + 1}`.trim(),
+      year: String(new Date().getFullYear() + 1),
+      copySessions: true,
+    })
+  }
 
   async function load() {
     const { data } = await supabase
@@ -33,13 +52,20 @@ export default function ArchivedPage() {
     router.refresh()
   }
 
-  async function duplicate(course: Course) {
-    const newName = prompt('Nombre del nuevo curso:', `${course.name.replace(/\d{4}/, '')} ${new Date().getFullYear() + 1}`.trim())
-    if (!newName) return
-    const newYear = parseInt(prompt('Año del nuevo curso:', String(new Date().getFullYear() + 1)) || '')
-    if (!newYear) return
-    const copySessions = confirm('¿Copiar el cronograma de encuentros?\n\nSi aceptás, se copian todas las clases con estado "Pendiente" y sin notas ni reviews.')
-
+  async function duplicate() {
+    if (!dupForm) return
+    const { course, copySessions } = dupForm
+    const newName = dupForm.name.trim()
+    const newYear = parseInt(dupForm.year, 10)
+    if (!newName) {
+      await dialog.alert({ title: 'Falta el nombre', message: 'El curso nuevo necesita un nombre.' })
+      return
+    }
+    if (!newYear || newYear < 2000 || newYear > 2100) {
+      await dialog.alert({ title: 'Año inválido', message: 'Ingresá un año entre 2000 y 2100.' })
+      return
+    }
+    setDupForm(null)
     setDuplicating(course.id)
 
     // Crear nuevo curso
@@ -57,8 +83,8 @@ export default function ArchivedPage() {
       .select().single()
 
     if (error || !newCourse) {
-      alert('Error al duplicar: ' + error?.message)
       setDuplicating(null)
+      await dialog.alert({ title: 'No se pudo duplicar', message: error?.message || 'Error desconocido.', tone: 'danger' })
       return
     }
 
@@ -123,7 +149,6 @@ export default function ArchivedPage() {
     }
 
     setDuplicating(null)
-    alert(`Curso "${newName}" creado correctamente.`)
     router.push(`/courses/dashboard?c=${newCourse.id}`)
     router.refresh()
   }
@@ -133,10 +158,12 @@ export default function ArchivedPage() {
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
 
-      <div style={{ marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '20px', fontWeight: 600 }}>Cursos archivados</h2>
-        <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
-          Los cursos archivados no aparecen en el menú principal. Podés restaurarlos o duplicarlos para un nuevo año.
+      <div className="page-head">
+        <h1 className="page-title">Cursos archivados</h1>
+        <p className="page-meta">
+          <strong>{courses.length}</strong>{' '}
+          {courses.length === 1 ? 'curso archivado' : 'cursos archivados'} · no aparecen
+          en el menú lateral y se pueden restaurar o reutilizar para otro año
         </p>
       </div>
 
@@ -172,7 +199,7 @@ export default function ArchivedPage() {
                 }}>
                   <i className="ti ti-restore" aria-hidden="true"></i> Restaurar
                 </button>
-                <button onClick={() => duplicate(c)} disabled={duplicating === c.id} style={{
+                <button onClick={() => openDuplicate(c)} disabled={duplicating === c.id} style={{
                   padding: '7px 14px', background: 'var(--chip-accent-bg)', color: 'var(--chip-accent-fg)',
                   border: '1px solid var(--chip-accent-bd)', borderRadius: '8px', fontSize: '12px',
                   cursor: duplicating === c.id ? 'wait' : 'pointer', fontFamily: 'inherit',
@@ -184,6 +211,56 @@ export default function ArchivedPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {dupForm && (
+        <div
+          className="modal-overlay"
+          onMouseDown={e => { if (e.target === e.currentTarget) setDupForm(null) }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}
+        >
+          <div className="modal-panel" role="dialog" aria-modal="true" aria-label="Reutilizar curso"
+            style={{ background: 'var(--surface)', borderRadius: '12px', width: '460px', maxWidth: '100%', border: '1px solid var(--border)', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
+            <div style={{ padding: 'var(--space-6) var(--space-6) var(--space-6)' }}>
+              <h3 style={{ margin: 0, fontSize: 'var(--text-lg)', fontWeight: 600, letterSpacing: '-0.01em' }}>
+                Reutilizar &quot;{dupForm.course.name}&quot;
+              </h3>
+              <p style={{ margin: 'var(--space-2) 0 0', fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
+                Se crea un curso nuevo en borrador. El archivado no se modifica.
+              </p>
+
+              <div style={{ display: 'grid', gap: 'var(--space-4)', marginTop: 'var(--space-6)' }}>
+                <div>
+                  <label className="field-label" htmlFor="dup-name">Nombre del curso nuevo</label>
+                  <input id="dup-name" className="field-input" value={dupForm.name}
+                    onChange={e => setDupForm({ ...dupForm, name: e.target.value })} />
+                </div>
+
+                <div>
+                  <label className="field-label" htmlFor="dup-year">Año</label>
+                  <input id="dup-year" className="field-input" type="number" style={{ width: '120px' }}
+                    value={dupForm.year} onChange={e => setDupForm({ ...dupForm, year: e.target.value })} />
+                </div>
+
+                <label style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'flex-start', fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+                  <input type="checkbox" checked={dupForm.copySessions}
+                    onChange={e => setDupForm({ ...dupForm, copySessions: e.target.checked })}
+                    style={{ marginTop: '2px', flexShrink: 0 }} />
+                  <span>
+                    Copiar el cronograma de encuentros
+                    <span style={{ display: 'block', fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
+                      Las clases se copian como &quot;Pendiente&quot;, sin notas ni reviews.
+                    </span>
+                  </span>
+                </label>
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-2)', padding: 'var(--space-4) var(--space-6)', borderTop: '1px solid var(--border)', background: 'var(--bg)', borderRadius: '0 0 12px 12px' }}>
+              <button className="btn btn-ghost" onClick={() => setDupForm(null)}>Cancelar</button>
+              <button className="btn btn-primary" onClick={duplicate}>Crear curso</button>
+            </div>
+          </div>
         </div>
       )}
     </div>

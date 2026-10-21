@@ -10,6 +10,7 @@ import { useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Todo, Profile } from '@/types'
 import { TODO_PRIORITY_LABELS } from '@/types'
+import { useDialog } from '@/components/ui/Dialog'
 
 const PRIO_CLS: Record<string, string> = {
   high:   'badge-danger',
@@ -45,6 +46,8 @@ export default function TodosClient({
   const [isNew, setIsNew] = useState(false)
   const [saving, setSaving] = useState(false)
 
+  const dialog = useDialog()
+
   // Relee solo lo que puede haber cambiado tras una alta/baja/edición.
   // El perfil y el nombre del curso vienen del servidor y no cambian acá.
   const load = useCallback(async () => {
@@ -73,7 +76,10 @@ export default function TodosClient({
   }
 
   async function save() {
-    if (!editTodo?.title) { alert('El título es obligatorio.'); return }
+    if (!editTodo?.title) {
+      await dialog.alert({ title: 'Falta el título', message: 'Toda tarea necesita un título para poder guardarse.' })
+      return
+    }
     setSaving(true)
     const payload = {
       course_id: courseId,
@@ -98,7 +104,13 @@ export default function TodosClient({
 
   async function deleteTodo() {
     if (!editTodo?.id) return
-    if (!confirm('¿Eliminar esta tarea?')) return
+    const ok = await dialog.confirm({
+      title: 'Eliminar esta tarea',
+      message: `"${editTodo.title}" se elimina de forma definitiva.`,
+      confirmLabel: 'Eliminar',
+      tone: 'danger',
+    })
+    if (!ok) return
     await supabase.from('todos').delete().eq('id', editTodo.id)
     setEditTodo(null)
     load()
@@ -108,9 +120,12 @@ export default function TodosClient({
     <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
 
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '8px' }}>
-        <div>
-          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '2px' }}>{courseName}</p>
-          <h2 style={{ fontSize: '20px', fontWeight: 600 }}>Tareas pendientes</h2>
+        <div className="page-head" style={{ marginBottom: 0 }}>
+          <h1 className="page-title">Tareas</h1>
+          <p className="page-meta">
+            {courseName} · <strong>{todos.filter(t => t.status === 'open').length}</strong> abiertas
+            {' · '}<strong>{todos.filter(t => t.status === 'closed').length}</strong> cerradas
+          </p>
         </div>
         {canEdit && (
           <button onClick={() => { setEditTodo({ priority: 'medium', status: 'open' }); setIsNew(true) }}

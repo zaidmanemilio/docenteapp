@@ -72,9 +72,9 @@ export default function DashboardPage() {
   if (sessions.length === 0) {
     return (
       <div style={{ flex:1, overflow:'auto', padding:'24px' }}>
-        <div style={{ marginBottom:'20px' }}>
-          <p style={{ fontSize:'12px', color:'var(--text-muted)', marginBottom:'2px' }}>{course.name}</p>
-          <h2 style={{ fontSize:'20px', fontWeight:600 }}>Dashboard</h2>
+        <div className="page-head">
+          <h1 className="page-title">Panel</h1>
+          <p className="page-meta">{course.name} · {course.year} · sin encuentros cargados</p>
         </div>
 
         <div style={{
@@ -158,9 +158,13 @@ export default function DashboardPage() {
   return (
     <div style={{ flex:1, overflow:'auto', padding:'24px' }}>
 
-      <div style={{ marginBottom:'20px' }}>
-        <p style={{ fontSize:'12px', color:'var(--text-muted)', marginBottom:'2px' }}>{course.name}</p>
-        <h2 style={{ fontSize:'20px', fontWeight:600 }}>Dashboard</h2>
+      <div className="page-head">
+        <h1 className="page-title">Panel</h1>
+        <p className="page-meta">
+          {course.name} · {course.year} · <strong>{dadas}</strong> de{' '}
+          <strong>{total}</strong> {total === 1 ? 'encuentro dictado' : 'encuentros dictados'}
+          {' '}({pct}%)
+        </p>
       </div>
 
       {/* KPIs */}

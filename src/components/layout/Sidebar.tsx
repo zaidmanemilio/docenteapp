@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useCourseId } from '@/lib/use-course'
 import { useSession } from '@/lib/session-context'
 import type { Profile, Course } from '@/types'
+import { roleLabel } from '@/lib/permissions'
 
 interface SidebarProps {
   profile: Profile
@@ -71,8 +72,13 @@ const visibleCourses = levelFilter === 'all'
     ? [...visibleCourses].sort((a, b) =>
         (a.id === pinnedId ? -1 : 0) - (b.id === pinnedId ? -1 : 0))
     : visibleCourses
-  const roleLabel = profile.global_role === 'admin' ? 'Administrador'
-    : profile.global_role === 'teacher' ? 'Docente' : 'Invitado'
+  // Un solo vocabulario para los roles en toda la app (ver lib/permissions).
+  const rolTexto = roleLabel(profile.global_role)
+
+  // Sin ningún curso asignado, las pantallas de curso no tienen a qué apuntar.
+  // Antes navigate() hacía `return` en silencio: se tocaba "Cronograma" y no
+  // pasaba absolutamente nada. Ahora esos ítems se ven inertes y dicen por qué.
+  const sinCursos = courses.length === 0
 
   function navigate(section: string) {
     if (!activeCourseId) {
@@ -220,8 +226,14 @@ const visibleCourses = levelFilter === 'all'
     </div>
   ))}
   {filteredCourses.length === 0 && (
-    <p style={{ fontSize: '11px', color: 'var(--text-muted)', padding: '6px 10px' }}>
-      Sin cursos de {levelFilter === 'grado' ? 'Grado' : 'Posgrado'}.
+    <p style={{ fontSize: '11px', color: 'var(--text-muted)', padding: '6px 10px', lineHeight: 1.5 }}>
+      {/* Antes decía "Sin cursos de Posgrado" también con el filtro en
+          "Todos", porque el texto solo distinguía grado de todo lo demás. */}
+      {courses.length === 0
+        ? 'Todavía no tenés cursos asignados.'
+        : levelFilter === 'all'
+          ? 'Sin cursos para mostrar.'
+          : `Sin cursos de ${levelFilter === 'grado' ? 'Grado' : 'Posgrado'}. Cambiá el filtro para ver los demás.`}
     </p>
   )}
 </div>
@@ -255,10 +267,14 @@ const visibleCourses = levelFilter === 'all'
               return (
                 <div
                   key={item.key}
-                  onClick={() => navigate(item.key)}
+                  onClick={() => { if (!sinCursos) navigate(item.key) }}
+                  aria-disabled={sinCursos || undefined}
+                  title={sinCursos ? 'Necesitás un curso asignado para entrar acá.' : undefined}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '8px',
-                    padding: '7px 10px', borderRadius: '8px', cursor: 'pointer',
+                    padding: '7px 10px', borderRadius: '8px',
+                    cursor: sinCursos ? 'not-allowed' : 'pointer',
+                    opacity: sinCursos ? 0.4 : 1,
                     color: isActive ? 'var(--accent-light)' : 'var(--sidebar-text)',
                     background: isActive ? 'rgba(99,102,241,0.18)' : 'transparent',
                     fontSize: '13px', marginBottom: '1px',
@@ -345,7 +361,7 @@ const visibleCourses = levelFilter === 'all'
               <p style={{ fontSize: '12px', color: 'var(--sidebar-active)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {profile.full_name}
               </p>
-              <span style={{ fontSize: '10px', color: 'var(--sidebar-text)' }}>{roleLabel}</span>
+              <span style={{ fontSize: '10px', color: 'var(--sidebar-text)' }}>{rolTexto}</span>
             </div>
             <i className="ti ti-selector" style={{ color: 'var(--text-muted)', fontSize: '15px', flexShrink: 0 }} aria-hidden="true"></i>
           </div>

@@ -97,7 +97,9 @@ export default function ProfilePage() {
 
   return (
     <div style={{ flex: 1, padding: '24px', maxWidth: '640px' }}>
-      <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '4px' }}>Mi perfil</h2>
+      <div className="page-head">
+        <h1 className="page-title">Mi perfil</h1>
+      </div>
       <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '20px' }}>
         Editá tus datos personales y tu contraseña.
       </p>

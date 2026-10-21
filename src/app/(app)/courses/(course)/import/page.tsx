@@ -6,6 +6,7 @@ import { useCourseId } from '@/lib/use-course'
 import { createClient } from '@/lib/supabase/client'
 import type { SessionType, SessionModality, SessionStatus } from '@/types'
 import { readCsvFile } from '@/lib/csv-encoding'
+import { useDialog } from '@/components/ui/Dialog'
 
 const FIELD_DEFS = [
   { key: 'date',            label: 'Fecha',          required: true },
@@ -68,6 +69,7 @@ interface PreviewRow {
 export default function ImportPage() {
   const courseId = useCourseId()
   const supabase = createClient()
+  const dialog = useDialog()
 
   const [step, setStep] = useState(1)
   const [rawData, setRawData] = useState<Record<string, string>[]>([])
@@ -166,7 +168,10 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
 
     const { error } = await supabase.from('sessions').insert(toInsert)
     setImporting(false)
-    if (error) { alert('Error al importar: ' + error.message); return }
+    if (error) {
+      await dialog.alert({ title: 'No se pudo importar', message: error.message, tone: 'danger' })
+      return
+    }
     setImportedCount(toInsert.length)
     setStep(4)
   }
@@ -183,9 +188,11 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
 
-      <div style={{ marginBottom: '20px' }}>
-        <h2 style={{ fontSize: '20px', fontWeight: 600 }}>Importar cronograma</h2>
-        <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>Cargá tu cronograma desde un archivo CSV o Excel.</p>
+      <div className="page-head">
+        <h1 className="page-title">Importar cronograma</h1>
+        <p className="page-meta">
+          Desde un CSV o Excel · paso <strong>{step}</strong> de 4
+        </p>
       </div>
 
       {/* Step indicators */}
@@ -237,7 +244,9 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
 
               <div style={{ marginTop: '20px', textAlign: 'right' }}>
                 <button
-                  onClick={() => rawData.length > 0 ? setStep(2) : alert('Primero subí un archivo.')}
+                  onClick={() => rawData.length > 0
+                    ? setStep(2)
+                    : dialog.alert({ title: 'Falta el archivo', message: 'Subí primero el CSV con el cronograma.' })}
                   style={{ padding: '8px 20px', background: 'var(--accent-solid)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 >
                   Siguiente <i className="ti ti-arrow-right" aria-hidden="true"></i>

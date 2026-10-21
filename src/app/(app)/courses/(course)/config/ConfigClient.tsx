@@ -9,6 +9,9 @@ import { createClient } from '@/lib/supabase/client'
 import type { Course, Commission, Profile } from '@/types'
 import { buildCourseBackup, downloadJson, downloadCsv, sessionsToCsv, todosToCsv } from '@/lib/backup/course-backup'
 import { validateBackup, restoreCourseFromBackup } from '@/lib/backup/course-restore'
+import { useDialog } from '@/components/ui/Dialog'
+import { PERM_ORDER, PERM_LABEL, PERM_HINT } from '@/lib/permissions'
+import { PermBadge } from '@/components/ui/Badges'
 
 interface Permission {
   id: string
@@ -88,16 +91,28 @@ export default function ConfigClient({
 
 
   const isAdmin = profile.global_role === 'admin'
+  const dialog = useDialog()
 
   // --- Archivar curso ---
+  // Había DOS archiveCourse() declaradas en este archivo. La segunda tapaba a
+  // la primera, así que el estado `archiving` nunca se encendía y el botón de
+  // abajo no mostraba "Archivando…" ni se deshabilitaba. Queda una sola.
   const [archiving, setArchiving] = useState(false)
   async function archiveCourse() {
     if (!course) return
-    if (!confirm('¿Confirma que desea archivar el curso? Dejará de aparecer en el menú lateral. Podrás restaurarlo o reutilizarlo desde "Cursos archivados".')) return
+    const ok = await dialog.confirm({
+      title: 'Archivar el curso',
+      message: 'Deja de aparecer en el menú lateral. No se borra nada: podés restaurarlo o reutilizarlo desde "Cursos archivados".',
+      confirmLabel: 'Archivar',
+    })
+    if (!ok) return
     setArchiving(true)
     const { error } = await supabase.from('courses').update({ status: 'archived' }).eq('id', courseId)
     setArchiving(false)
-    if (error) { alert('No se pudo archivar: ' + error.message); return }
+    if (error) {
+      await dialog.alert({ title: 'No se pudo archivar', message: error.message, tone: 'danger' })
+      return
+    }
     router.push('/')
     router.refresh()
   }
@@ -153,7 +168,12 @@ export default function ConfigClient({
     if (!check.ok || !check.backup) { setRestoreErr(check.error || 'Respaldo inválido.'); return }
 
     const origName = (check.backup.course.name as string) || 'curso'
-    if (!confirm(`Esto creará un curso NUEVO a partir del respaldo de "${origName}" (no modifica ningún curso existente). ¿Continuar?`)) return
+    const okRestore = await dialog.confirm({
+      title: 'Restaurar como curso nuevo',
+      message: `Se crea un curso NUEVO a partir del respaldo de "${origName}". Ningún curso existente se modifica.`,
+      confirmLabel: 'Crear curso',
+    })
+    if (!okRestore) return
 
     setRestoreBusy(true)
     const result = await restoreCourseFromBackup(supabase, check.backup)
@@ -190,36 +210,47 @@ export default function ConfigClient({
     router.refresh()
   }
 
-  async function archiveCourse() {
-    if (!confirm('¿Archivar este curso? No va a aparecer en el menú principal. Podés restaurarlo desde "Cursos archivados".')) return
-    await supabase.from('courses').update({ status: 'archived' }).eq('id', courseId)
-    router.push('/')
-    router.refresh()
-  }
-
   async function addCommission() {
-    const name = prompt('Nombre de la nueva comisión:')
+    const name = await dialog.prompt({
+      title: 'Nueva comisión',
+      label: 'Nombre',
+      placeholder: 'Ej. Comisión A — martes',
+      confirmLabel: 'Crear',
+    })
     if (!name) return
     await supabase.from('commissions').insert({ course_id: courseId, name, description: '' })
     load()
   }
 
   async function editCommission(c: Commission) {
-    const name = prompt('Nombre:', c.name)
+    const name = await dialog.prompt({
+      title: 'Renombrar comisión',
+      label: 'Nombre',
+      defaultValue: c.name,
+    })
     if (!name || name === c.name) return
     await supabase.from('commissions').update({ name }).eq('id', c.id)
     load()
   }
 
   async function deleteCommission(id: string) {
-    if (!confirm('¿Eliminar esta comisión?')) return
+    const ok = await dialog.confirm({
+      title: 'Eliminar esta comisión',
+      message: 'Los encuentros asignados a ella quedan sin comisión.',
+      confirmLabel: 'Eliminar',
+      tone: 'danger',
+    })
+    if (!ok) return
     await supabase.from('commissions').delete().eq('id', id)
     load()
   }
 
   // Agregar docente — usa select de usuarios reales
   async function handleAddTeacher() {
-    if (!newTeacherUserId) { alert('Seleccioná un usuario.'); return }
+    if (!newTeacherUserId) {
+      await dialog.alert({ title: 'Falta el usuario', message: 'Elegí a quién le querés dar acceso al curso.' })
+      return
+    }
     const { error } = await supabase.from('user_course_permissions').upsert({
       user_id:       newTeacherUserId,
       course_id:     courseId,
@@ -228,7 +259,7 @@ export default function ConfigClient({
     }, { onConflict: 'user_id,course_id,commission_id' })
 
     if (error) {
-      alert('Error al agregar: ' + error.message)
+      await dialog.alert({ title: 'No se pudo agregar', message: error.message, tone: 'danger' })
       return
     }
     // Resetear formulario y recargar
@@ -245,7 +276,13 @@ export default function ConfigClient({
   }
 
   async function removePermission(id: string) {
-    if (!confirm('¿Quitar este permiso?')) return
+    const ok = await dialog.confirm({
+      title: 'Quitar el acceso',
+      message: 'La persona deja de ver este curso. Podés volver a darle acceso cuando quieras.',
+      confirmLabel: 'Quitar acceso',
+      tone: 'danger',
+    })
+    if (!ok) return
     await supabase.from('user_course_permissions').delete().eq('id', id)
     load()
   }
@@ -268,9 +305,15 @@ export default function ConfigClient({
     <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
 
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <div>
-          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '2px' }}>{course.name}</p>
-          <h2 style={{ fontSize: '20px', fontWeight: 600 }}>Configuración del curso</h2>
+        <div className="page-head" style={{ marginBottom: 0 }}>
+          <h1 className="page-title">Configuración</h1>
+          <p className="page-meta">
+            {course.name} · {course.year}
+            {' · '}<strong>{commissions.length}</strong>{' '}
+            {commissions.length === 1 ? 'comisión' : 'comisiones'}
+            {' · '}<strong>{permissions.length}</strong>{' '}
+            {permissions.length === 1 ? 'persona con acceso' : 'personas con acceso'}
+          </p>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           {isAdmin && (
@@ -472,14 +515,20 @@ export default function ConfigClient({
         {tab === 'teachers' && (
           <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '24px' }}>
             <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
-              Docentes con acceso a este curso. <strong>full</strong> permite eliminar encuentros, <strong>edit</strong> permite editar, <strong>read</strong> es solo lectura.
+              Quién tiene acceso a este curso y con qué alcance.
+              {PERM_ORDER.map((k, i) => (
+                <span key={k}>
+                  {i === 0 ? ' ' : ' '}
+                  <strong>{PERM_LABEL[k]}</strong>: {PERM_HINT[k].replace(/\.$/, '')}{i < PERM_ORDER.length - 1 ? ';' : '.'}
+                </span>
+              ))}
             </p>
 
             <div className="table-scroll">
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', marginBottom: '16px' }}>
                 <thead>
                   <tr style={{ background: 'var(--hover-bg)' }}>
-                    {['Docente','Comisión','Permiso',''].map(h => (
+                    {['Persona','Comisión','Permiso',''].map(h => (
                       <th key={h} style={{ textAlign: 'left', padding: '7px 10px', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>{h}</th>
                     ))}
                   </tr>
@@ -488,8 +537,6 @@ export default function ConfigClient({
                   {permissions.map(p => {
                     const u = p.profiles as { full_name: string; global_role: string } | null
                     const com = p.commission_id ? commissions.find(c => c.id === p.commission_id) : null
-                    const permCls: Record<string, string> = { full: 'badge-accent', edit: 'badge-info', read: 'badge-neutral' }
-                    const pc = permCls[p.permission] || permCls.read
                     return (
                       <tr key={p.id} style={{ borderBottom: '1px solid var(--border)' }}>
                         <td style={{ padding: '9px 10px', fontWeight: 500 }}>{u?.full_name || '—'}</td>
@@ -499,15 +546,14 @@ export default function ConfigClient({
                         <td style={{ padding: '9px 10px' }}>
                           {isAdmin ? (
                             <select value={p.permission} onChange={e => changePermission(p.id, e.target.value)}
+                              aria-label="Permiso en el curso"
                               style={{ padding: '3px 7px', border: '1px solid var(--input-border)', borderRadius: '6px', fontSize: '12px', fontFamily: 'inherit' }}>
-                              <option value="full">full</option>
-                              <option value="edit">edit</option>
-                              <option value="read">read</option>
+                              {PERM_ORDER.map(k => (
+                                <option key={k} value={k}>{PERM_LABEL[k]}</option>
+                              ))}
                             </select>
                           ) : (
-                            <span className={`badge ${pc}`}>
-                              {p.permission}
-                            </span>
+                            <PermBadge permission={p.permission} />
                           )}
                         </td>
                         <td style={{ padding: '9px 10px' }}>
@@ -564,10 +610,13 @@ export default function ConfigClient({
                   <div>
                     <label style={labelStyle}>Permiso</label>
                     <select value={newTeacherPerm} onChange={e => setNewTeacherPerm(e.target.value)} style={inputStyle}>
-                      <option value="full">full</option>
-                      <option value="edit">edit</option>
-                      <option value="read">read</option>
+                      {PERM_ORDER.map(k => (
+                        <option key={k} value={k}>{PERM_LABEL[k]}</option>
+                      ))}
                     </select>
+                    <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                      {PERM_HINT[newTeacherPerm]}
+                    </p>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>

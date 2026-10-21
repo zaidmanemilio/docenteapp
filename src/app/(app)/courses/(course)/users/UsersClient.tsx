@@ -7,6 +7,11 @@ import { createClient } from '@/lib/supabase/client'
 import { callEdgeFunction } from '@/lib/edge'
 import type { Profile, Commission } from '@/types'
 import { readCsvFile } from '@/lib/csv-encoding'
+import { useDialog } from '@/components/ui/Dialog'
+import {
+  PERM_ORDER, PERM_LABEL, PERM_HINT, ROLE_ORDER, ROLE_LABEL, ROLE_HINT, roleLabel,
+} from '@/lib/permissions'
+import { RoleBadge, PermBadge } from '@/components/ui/Badges'
 
 interface Permission {
   id: string
@@ -86,6 +91,8 @@ export default function UsersClient({
   const [bulkBusy,     setBulkBusy]     = useState(false)
   const [bulkMsg,      setBulkMsg]      = useState('')
 
+  const dialog = useDialog()
+
   // Se sigue usando para refrescar tras crear usuarios o cambiar permisos.
   const load = useCallback(async () => {
     const [allProfilesRes, permsRes] = await Promise.all([
@@ -117,12 +124,24 @@ export default function UsersClient({
     load()
   }
 
-  async function addPermission(userId: string) {
-    const perm = prompt('Permiso para este usuario en el curso (edit / read):', 'read')
-    if (!['edit','read'].includes(perm || '')) { alert('Permiso inválido. Usá "edit" o "read".'); return }
-    await supabase.from('user_course_permissions').upsert({
-      user_id: userId, course_id: courseId, commission_id: null, permission: perm
+  // Dar acceso a este curso. Antes era un prompt() que pedía escribir
+  // "edit" o "read" a mano: el usuario tenía que conocer el vocabulario de la
+  // base y cualquier otra cosa que escribiera era un error. Ahora el permiso
+  // se elige de una lista con su explicación al lado.
+  const [grantTo, setGrantTo] = useState<Profile | null>(null)
+  const [grantPerm, setGrantPerm] = useState<string>('read')
+
+  async function confirmGrant() {
+    if (!grantTo) return
+    const { error } = await supabase.from('user_course_permissions').upsert({
+      user_id: grantTo.id, course_id: courseId, commission_id: null, permission: grantPerm,
     }, { onConflict: 'user_id,course_id,commission_id' })
+    setGrantTo(null)
+    setGrantPerm('read')
+    if (error) {
+      await dialog.alert({ title: 'No se pudo dar acceso', message: error.message, tone: 'danger' })
+      return
+    }
     load()
   }
 
@@ -149,7 +168,7 @@ export default function UsersClient({
       .upsert(rows, { onConflict: 'user_id,course_id,commission_id' })
     setBulkBusy(false)
     if (error) { setBulkMsg(`Error: ${error.message}`); return }
-    setBulkMsg(`Permiso "${bulkPerm}" aplicado a ${rows.length} usuario(s) en este curso.`)
+    setBulkMsg(`${PERM_LABEL[bulkPerm]} aplicado a ${rows.length} usuario(s) en este curso.`)
     setBulkSelected(new Set())
     load()
   }
@@ -160,7 +179,13 @@ export default function UsersClient({
   }
 
   async function removePerm(id: string) {
-    if (!confirm('¿Quitar este permiso?')) return
+    const ok = await dialog.confirm({
+      title: 'Quitar el acceso',
+      message: 'La persona deja de ver este curso. Podés volver a darle acceso cuando quieras.',
+      confirmLabel: 'Quitar acceso',
+      tone: 'danger',
+    })
+    if (!ok) return
     await supabase.from('user_course_permissions').delete().eq('id', id)
     load()
   }
@@ -328,7 +353,15 @@ export default function UsersClient({
     <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
 
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h2 style={{ fontSize: '20px', fontWeight: 600 }}>Usuarios y permisos</h2>
+        <div className="page-head" style={{ marginBottom: 0 }}>
+          <h1 className="page-title">Usuarios y permisos</h1>
+          <p className="page-meta">
+            <strong>{allProfiles.length}</strong>{' '}
+            {allProfiles.length === 1 ? 'persona en la plataforma' : 'personas en la plataforma'}
+            {' · '}<strong>{new Set(permissions.map(p => p.user_id)).size}</strong>{' '}
+            con acceso a este curso
+          </p>
+        </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button onClick={() => { setShowNewUser(true); setCreateError('') }} style={{
             padding: '7px 14px', background: 'var(--accent-solid)', border: 'none',
@@ -402,7 +435,7 @@ export default function UsersClient({
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: 'var(--hover-bg)' }}>
-                    {['Usuario','Comisión','Permiso',''].map(h => (
+                    {['Persona','Comisión','Permiso',''].map(h => (
                       <th key={h} style={{ textAlign: 'left', padding: '8px 16px', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>{h}</th>
                     ))}
                   </tr>
@@ -422,7 +455,7 @@ export default function UsersClient({
                             )}
                             <div>
                               <div style={{ fontSize: '13px', fontWeight: 500 }}>{u?.full_name || p.user_id}</div>
-                              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{u?.global_role === 'admin' ? 'Administrador' : u?.global_role === 'teacher' ? 'Docente' : 'Invitado'}</div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{roleLabel(u?.global_role)}</div>
                             </div>
                           </div>
                         </td>
@@ -432,9 +465,9 @@ export default function UsersClient({
                         <td style={{ padding: '10px 16px' }}>
                           <select value={p.permission} onChange={e => changePerm(p.id, e.target.value)}
                             style={{ padding: '4px 8px', border: '1px solid var(--input-border)', borderRadius: '6px', fontSize: '12px', fontFamily: 'inherit' }}>
-                            <option value="full">full</option>
-                            <option value="edit">edit</option>
-                            <option value="read">read</option>
+                            {PERM_ORDER.map(k => (
+                              <option key={k} value={k}>{PERM_LABEL[k]}</option>
+                            ))}
                           </select>
                         </td>
                         <td style={{ padding: '10px 16px' }}>
@@ -484,8 +517,8 @@ export default function UsersClient({
                   <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{bulkSelected.size} seleccionado(s) · permiso en <strong>este curso</strong>:</span>
                   <select value={bulkPerm} onChange={e => setBulkPerm(e.target.value as 'read'|'edit')}
                     style={{ padding: '6px 10px', border: '1px solid var(--input-border)', borderRadius: '8px', fontSize: '12px', fontFamily: 'inherit' }}>
-                    <option value="read">Lectura (read)</option>
-                    <option value="edit">Edición (edit)</option>
+                    <option value="read">{PERM_LABEL.read}</option>
+                    <option value="edit">{PERM_LABEL.edit}</option>
                   </select>
                   <button onClick={applyBulk} disabled={bulkBusy || bulkSelected.size === 0}
                     style={{ padding: '6px 14px', background: 'var(--accent-solid)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: (bulkBusy || bulkSelected.size === 0) ? 0.5 : 1 }}>
@@ -506,7 +539,6 @@ export default function UsersClient({
             </div>
           ) : filteredProfiles.map(u => {
             const userPerms = permissions.filter(p => p.user_id === u.id)
-            const permCls: Record<string, string> = { full: 'badge-accent', edit: 'badge-info', read: 'badge-neutral' }
             return (
               <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
                 {bulkMode && (
@@ -516,10 +548,15 @@ export default function UsersClient({
                 <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: getColor(u.id), color: 'white', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   {getInitials(u.full_name)}
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 500, fontSize: '13px' }}>{u.full_name}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                    <span style={{ fontWeight: 500, fontSize: '13px' }}>{u.full_name}</span>
+                    {/* El badge solo aparece cuando el rol es la excepción.
+                        Ponerle "Docente" a los 46 docentes no informa nada. */}
+                    {u.global_role !== 'teacher' && <RoleBadge role={u.global_role} />}
+                  </div>
                   <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                    {u.email ? u.email : (u.global_role === 'admin' ? 'Administrador' : u.global_role === 'teacher' ? 'Docente' : 'Invitado')}
+                    {u.email || roleLabel(u.global_role)}
                   </div>
                 </div>
                 <button onClick={() => openEditUser(u)} title="Editar usuario" style={{
@@ -532,7 +569,7 @@ export default function UsersClient({
                   {userPerms.length === 0 ? (
                     <>
                       <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Sin acceso a este curso</span>
-                      <button onClick={() => addPermission(u.id)} className="chip-accent" style={{
+                      <button onClick={() => { setGrantTo(u); setGrantPerm('read') }} className="chip-accent" style={{
                         marginLeft: '8px', padding: '3px 10px', fontSize: '11px', borderRadius: '6px', cursor: 'pointer', fontFamily: 'inherit',
                       }}>
                         + Dar acceso
@@ -540,10 +577,11 @@ export default function UsersClient({
                     </>
                   ) : userPerms.map(p => {
                     const com = p.commission_id ? commissions.find(c => c.id === p.commission_id) : null
-                    const pc = permCls[p.permission] || permCls.read
                     return (
-                      <span key={p.id} className={`badge ${pc}`} style={{ fontSize: '10px' }}>
-                        {com?.name || 'Todas'} · {p.permission}
+                      <span key={p.id} title={PERM_HINT[p.permission]}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{com?.name || 'Todas'}</span>
+                        <PermBadge permission={p.permission} />
                       </span>
                     )
                   })}
@@ -601,10 +639,13 @@ export default function UsersClient({
                 <label style={{ flex: 1, fontSize: '12px', color: 'var(--text-muted)' }}>Rol global
                   <select value={newUser.global_role} onChange={e => setNewUser({ ...newUser, global_role: e.target.value })}
                     style={{ width: '100%', marginTop: '4px', padding: '8px 10px', border: '1px solid var(--input-border)', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit' }}>
-                    <option value="teacher">Sin rol global</option>
-                    <option value="guest">Lectura global</option>
-                    <option value="admin">Administrador</option>
+                    {ROLE_ORDER.map(k => (
+                      <option key={k} value={k}>{ROLE_LABEL[k]}</option>
+                    ))}
                   </select>
+                  <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    {ROLE_HINT[newUser.global_role]}
+                  </span>
                 </label>
               </div>
             </div>
@@ -698,15 +739,54 @@ export default function UsersClient({
               <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Rol global
                 <select value={editUser.global_role} onChange={e => setEditUser({ ...editUser, global_role: e.target.value })}
                   style={{ width: '100%', marginTop: '4px', padding: '8px 10px', border: '1px solid var(--input-border)', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit' }}>
-                  <option value="teacher">Docente (sin acceso global, solo cursos asignados)</option>
-                  <option value="guest">Invitado / Lectura global (ve todos los cursos, solo lee)</option>
-                  <option value="admin">Administrador (control total)</option>
+                  {ROLE_ORDER.map(k => (
+                    <option key={k} value={k}>{ROLE_LABEL[k]}</option>
+                  ))}
                 </select>
+                <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  {ROLE_HINT[editUser.global_role]}
+                </span>
               </label>
             </div>
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
               <button onClick={() => setEditUser(null)} disabled={savingUser} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)' }}>Cancelar</button>
               <button onClick={saveEditUser} disabled={savingUser} style={{ padding: '8px 16px', background: 'var(--accent-solid)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', opacity: savingUser ? 0.6 : 1 }}>{savingUser ? 'Guardando...' : 'Guardar cambios'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dar acceso a este curso */}
+      {grantTo && (
+        <div
+          className="modal-overlay"
+          onMouseDown={e => { if (e.target === e.currentTarget) setGrantTo(null) }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}
+        >
+          <div className="modal-panel" role="dialog" aria-modal="true" aria-label="Dar acceso al curso"
+            style={{ background: 'var(--surface)', borderRadius: '12px', width: '420px', maxWidth: '100%', border: '1px solid var(--border)', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
+            <div style={{ padding: 'var(--space-6) var(--space-6) var(--space-6)' }}>
+              <h3 style={{ margin: 0, fontSize: 'var(--text-lg)', fontWeight: 600, letterSpacing: '-0.01em' }}>
+                Dar acceso a {grantTo.full_name}
+              </h3>
+              <p style={{ margin: 'var(--space-2) 0 0', fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
+                Rol global: {roleLabel(grantTo.global_role)}. Este permiso vale solo para este curso.
+              </p>
+              <div style={{ marginTop: 'var(--space-6)' }}>
+                <label className="field-label" htmlFor="grant-perm">Permiso en el curso</label>
+                <select id="grant-perm" className="field-input" value={grantPerm} onChange={e => setGrantPerm(e.target.value)}>
+                  {PERM_ORDER.map(k => (
+                    <option key={k} value={k}>{PERM_LABEL[k]}</option>
+                  ))}
+                </select>
+                <p style={{ margin: 'var(--space-2) 0 0', fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
+                  {PERM_HINT[grantPerm]}
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-2)', padding: 'var(--space-4) var(--space-6)', borderTop: '1px solid var(--border)', background: 'var(--bg)', borderRadius: '0 0 12px 12px' }}>
+              <button className="btn btn-ghost" onClick={() => setGrantTo(null)}>Cancelar</button>
+              <button className="btn btn-primary" onClick={confirmGrant}>Dar acceso</button>
             </div>
           </div>
         </div>

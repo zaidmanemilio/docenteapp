@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useCourseId } from '@/lib/use-course'
 import RichText from '@/components/ui/RichText'
 import { createClient } from '@/lib/supabase/client'
+import { PermBadge } from '@/components/ui/Badges'
 
 interface CourseData {
   id: string
@@ -114,8 +115,8 @@ export default function PresentationPage() {
             </span>
             <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{course.year}</span>
           </div>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>{course.name}</h1>
-          {course.full_name && <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>{course.full_name}</p>}
+          <h1 className="page-title">{course.name}</h1>
+          {course.full_name && <p className="page-meta">{course.full_name}</p>}
         </div>
         <a href={`/courses/config?c=${courseId}`} style={{
           display: 'flex', alignItems: 'center', gap: '6px',
@@ -171,19 +172,12 @@ export default function PresentationPage() {
             {permissions.map((p, i) => {
               const com = p.commission_id ? commissions.find(c => c.id === p.commission_id) : null
               const name = (p.profiles as { full_name: string } | null)?.full_name || 'Usuario'
-              const permLabels: Record<string, string> = { full: 'Full', edit: 'Edición', read: 'Lectura' }
               return (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0', borderBottom: '1px solid #f3f4f6' }}>
                   <i className="ti ti-user" style={{ color: 'var(--text-muted)', fontSize: '15px' }} aria-hidden="true"></i>
                   <span style={{ fontSize: '13px', fontWeight: 500, flex: 1 }}>{name}</span>
                   <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{com ? com.name : 'Todas'}</span>
-                  <span style={{
-                    fontSize: '10px', fontWeight: 600, padding: '1px 7px', borderRadius: '99px',
-                    background: p.permission === 'full' ? 'var(--badge-accent-bg)' : p.permission === 'edit' ? 'var(--badge-info-bg)' : 'var(--badge-neutral-bg)',
-                    color: p.permission === 'full' ? 'var(--badge-accent-fg)' : p.permission === 'edit' ? 'var(--badge-info-fg)' : 'var(--badge-neutral-fg)',
-                  }}>
-                    {permLabels[p.permission] || p.permission}
-                  </span>
+                  <PermBadge permission={p.permission} />
                 </div>
               )
             })}

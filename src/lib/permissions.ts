@@ -44,3 +44,75 @@ export function canEdit(p: EffectivePermission): boolean {
 export function canDelete(p: EffectivePermission): boolean {
   return p === 'full'
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// VOCABULARIO ÚNICO
+// ─────────────────────────────────────────────────────────────────────────────
+// La app nombraba lo mismo de cinco maneras distintas según la pantalla:
+//
+//   global_role 'teacher' →  "Docente" (sidebar)
+//                            "Sin rol global" (editar usuario)
+//                            "Docente (sin acceso global, solo cursos…)" (alta)
+//   global_role 'guest'   →  "Invitado" / "Lectura global" / "Invitado / Lectura global"
+//   permission            →  "full"/"edit"/"read" crudos en Configuración,
+//                            "Full"/"Edición"/"Lectura" en Presentación,
+//                            "Lectura (read)" en Usuarios.
+//
+// Dos problemas concretos: "Invitado" ya significa otra cosa en esta app (hay
+// un TIPO de clase llamado "Invitado"), y mostrar "full"/"edit"/"read" obliga
+// al usuario a aprender el vocabulario de la base de datos.
+//
+// Desde acá sale un solo nombre para cada valor, con su explicación. Si hay
+// que renombrar algo, se renombra en un solo lugar.
+
+export type GlobalRole = 'admin' | 'guest' | 'teacher'
+
+/** Nombre del rol global. Es lo que se puede hacer en TODA la plataforma. */
+export const ROLE_LABEL: Record<string, string> = {
+  admin:   'Administrador',
+  guest:   'Observador',
+  teacher: 'Docente',
+}
+
+/** Una línea que explica el alcance del rol. Va al lado del nombre, no en su lugar. */
+export const ROLE_HINT: Record<string, string> = {
+  admin:   'Acceso total a todos los cursos y a la gestión de usuarios.',
+  guest:   'Ve todos los cursos, en modo lectura.',
+  teacher: 'Solo los cursos que se le asignen, con el permiso que se le dé en cada uno.',
+}
+
+export const ROLE_BADGE: Record<string, string> = {
+  admin:   'badge-accent',
+  guest:   'badge-info',
+  teacher: 'badge-neutral',
+}
+
+/** Nombre del permiso sobre UN curso. */
+export const PERM_LABEL: Record<string, string> = {
+  full: 'Coordinación',
+  edit: 'Edición',
+  read: 'Lectura',
+}
+
+export const PERM_HINT: Record<string, string> = {
+  full: 'Edita y además puede eliminar encuentros y configurar el curso.',
+  edit: 'Edita encuentros y tareas; no puede eliminar.',
+  read: 'Solo consulta.',
+}
+
+export const PERM_BADGE: Record<string, string> = {
+  full: 'badge-accent',
+  edit: 'badge-info',
+  read: 'badge-neutral',
+}
+
+/** Orden en el que se ofrecen los permisos en los desplegables. */
+export const PERM_ORDER: ('full' | 'edit' | 'read')[] = ['full', 'edit', 'read']
+export const ROLE_ORDER: GlobalRole[] = ['teacher', 'guest', 'admin']
+
+export function roleLabel(r: string | null | undefined): string {
+  return ROLE_LABEL[r || ''] || 'Docente'
+}
+export function permLabel(p: string | null | undefined): string {
+  return PERM_LABEL[p || ''] || 'Sin acceso'
+}

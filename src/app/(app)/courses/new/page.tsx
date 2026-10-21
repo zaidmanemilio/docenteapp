@@ -5,12 +5,15 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useDialog } from '@/components/ui/Dialog'
 
 type CommissionMode = 'single' | 'multi'
 
 export default function NewCoursePage() {
   const router = useRouter()
   const supabase = createClient()
+
+  const dialog = useDialog()
 
   const [saving,          setSaving]          = useState(false)
   const [commissionMode,  setCommissionMode]  = useState<CommissionMode>('single')
@@ -34,7 +37,10 @@ export default function NewCoursePage() {
   }
 
   async function handleCreate() {
-    if (!form.name.trim()) { alert('El nombre del curso es obligatorio.'); return }
+    if (!form.name.trim()) {
+      await dialog.alert({ title: 'Falta el nombre', message: 'El curso necesita un nombre para poder crearse.' })
+      return
+    }
     setSaving(true)
 
     const { data: courseData, error: courseErr } = await supabase
@@ -55,8 +61,8 @@ export default function NewCoursePage() {
       .single()
 
     if (courseErr || !courseData) {
-      alert('Error al crear el curso: ' + courseErr?.message)
       setSaving(false)
+      await dialog.alert({ title: 'No se pudo crear el curso', message: courseErr?.message || 'Error desconocido.', tone: 'danger' })
       return
     }
 
