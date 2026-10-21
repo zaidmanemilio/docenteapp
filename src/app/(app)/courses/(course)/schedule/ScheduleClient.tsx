@@ -8,35 +8,23 @@ import type { Commission, Profile, AdditionalLink } from '@/types'
 import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS } from '@/types'
 import type { SessionType } from '@/types'
 import SessionModal, { type ExtendedSession } from '@/components/schedule/SessionModal'
+import SessionCard from '@/components/schedule/SessionCard'
+import SessionLinks from '@/components/schedule/SessionLinks'
+import { TYPE_COLORS, TYPE_BADGE } from '@/components/schedule/SessionCard'
+import {
+  type CalendarView, ViewSwitch, MonthNav, MonthGrid, fmtMonthLabel,
+  filterWeek, weekRangeLabel,
+} from '@/components/calendar/CalendarViews'
 import { useDialog } from '@/components/ui/Dialog'
 import { buildCourseIcs, icsFileName } from '@/lib/ical'
 
 // ─── Tipos y constantes ───────────────────────────────────────────────────────
-
-const TYPE_BADGE: Record<string, string> = {
-  teorica:      'badge-info',
-  practica:     'badge-teal',
-  taller:       'badge-warning',
-  invitado:     'badge-pink',
-  parcial:      'badge-danger',
-  recuperatorio:'badge-orange',
-  exposicion:   'badge-accent',
-  proyecto:     'badge-success',
-}
 
 const STATUS_BADGE: Record<string, string> = {
   dada:         'badge-success',
   pendiente:    'badge-neutral',
   reprogramada: 'badge-warning',
   cancelada:    'badge-danger',
-}
-
-const LINK_FIELDS = ['canva_url', 'partial_file_url', 'guest_bio_url', 'workshop_brief_url']
-const LINK_ICONS: Record<string, string> = {
-  canva_url:         'ti-presentation',
-  partial_file_url:  'ti-file-text',
-  guest_bio_url:     'ti-user-circle',
-  workshop_brief_url:'ti-clipboard-list',
 }
 
 const EMPTY_SESSION: Omit<ExtendedSession, 'id' | 'created_at' | 'updated_at'> = {
@@ -54,16 +42,6 @@ function fmtDate(d: string) {
   if (!d) return ''
   const [y, m, day] = d.split('-')
   return `${day}/${m}/${y}`
-}
-
-function getSessionUrl(s: ExtendedSession, field: string): string {
-  switch (field) {
-    case 'canva_url':         return s.canva_url || ''
-    case 'partial_file_url':  return s.partial_file_url || ''
-    case 'guest_bio_url':     return s.guest_bio_url || ''
-    case 'workshop_brief_url':return s.workshop_brief_url || ''
-    default: return ''
-  }
 }
 
 // ─── Componente ───────────────────────────────────────────────────────────────
@@ -100,6 +78,14 @@ export default function ScheduleClient({
   const [isNew,        setIsNew]        = useState(false)
   const [addLinks,     setAddLinks]     = useState<AdditionalLink[]>([])
   const [saving,       setSaving]       = useState(false)
+
+  // Vista activa. Esta pantalla absorbió a la vieja "Agenda": antes eran dos
+  // ítems del menú con los mismos datos, y la lista —que es la que se usa— no
+  // mostraba links, ni notas, ni el encuentro 0.
+  const [view,         setView]         = useState<CalendarView>('list')
+  const ahora = new Date()
+  const [monthCursor,  setMonthCursor]  = useState({ year: ahora.getFullYear(), month: ahora.getMonth() })
+  const [weekRef,      setWeekRef]      = useState(() => new Date())
 
   const [bulkMode,     setBulkMode]     = useState(false)
   const [selected,     setSelected]     = useState<Set<string>>(new Set())
@@ -171,6 +157,68 @@ export default function ScheduleClient({
   const clasesReales = sessions.filter(s => s.class_number !== 0)
   const totalClases  = clasesReales.length
   const dictados     = clasesReales.filter(s => s.status === 'dada').length
+
+  // ── Datos para las vistas de calendario ───────────────────────────────
+  // El encuentro 0 es la ficha del curso y no tiene fecha: encabeza la agenda
+  // pero no puede ubicarse en una semana ni en una grilla mensual.
+  const fichaCurso = filtered.find(s => s.class_number === 0) || null
+  const conFecha = filtered.filter(
+    (s): s is ExtendedSession & { date: string } => !!s.date,
+  )
+
+  function porMes(lista: (ExtendedSession & { date: string })[]) {
+    const grupos: Record<string, (ExtendedSession & { date: string })[]> = {}
+    for (const s of lista) (grupos[s.date.slice(0, 7)] ||= []).push(s)
+    return grupos
+  }
+
+  const agendaPorMes = porMes(conFecha)
+  const semana       = filterWeek(conFecha, weekRef)
+  const semanaPorMes = porMes(semana)
+
+  const mesVisible = `${monthCursor.year}-${String(monthCursor.month + 1).padStart(2, '0')}`
+  const eventosDelMes = conFecha
+    .filter(s => s.date.slice(0, 7) === mesVisible)
+    .map(s => ({
+      id: s.id as string,
+      date: s.date,
+      title: s.title,
+      color: TYPE_COLORS[s.type] || 'var(--text-muted)',
+      time: s.start_time || undefined,
+      muted: s.status === 'cancelada',
+      flagPast: s.date < hoyISO && s.status === 'pendiente',
+    }))
+
+  // La próxima clase: la primera de hoy en adelante.
+  const idProxima = conFecha.find(s => s.date >= hoyISO)?.id
+
+  // Horarios que se pisan el mismo día. Ya lo detectaba la Agenda; ahora que
+  // es una sola pantalla, el aviso vale para todas las vistas.
+  const superpuestos = new Set<string>()
+  for (let i = 0; i < conFecha.length; i++) {
+    for (let j = i + 1; j < conFecha.length; j++) {
+      const a = conFecha[i], b = conFecha[j]
+      if (a.date !== b.date) continue
+      if (!a.start_time || !b.start_time || !a.end_time || !b.end_time) continue
+      if (a.start_time < b.end_time && b.start_time < a.end_time) {
+        superpuestos.add(a.id as string)
+        superpuestos.add(b.id as string)
+      }
+    }
+  }
+
+  function mesAnterior()  { setMonthCursor(c => c.month === 0  ? { year: c.year - 1, month: 11 } : { year: c.year, month: c.month - 1 }) }
+  function mesSiguiente() { setMonthCursor(c => c.month === 11 ? { year: c.year + 1, month: 0  } : { year: c.year, month: c.month + 1 }) }
+  function mesHoy()       { const t = new Date(); setMonthCursor({ year: t.getFullYear(), month: t.getMonth() }) }
+  function semanaAnterior()  { setWeekRef(r => new Date(r.getFullYear(), r.getMonth(), r.getDate() - 7)) }
+  function semanaSiguiente() { setWeekRef(r => new Date(r.getFullYear(), r.getMonth(), r.getDate() + 7)) }
+  function semanaHoy()       { setWeekRef(new Date()) }
+
+  /** La grilla mensual devuelve un id; el modal necesita el encuentro. */
+  function openEditById(id: string) {
+    const s = sessions.find(x => x.id === id)
+    if (s) openEdit(s)
+  }
 
   // ─── Handlers modal ───────────────────────────────────────────────────────
   function openAdd() {
@@ -479,7 +527,13 @@ export default function ScheduleClient({
         </div>
         <div className="filter-row">
           {canEdit && (
-            <button onClick={() => { setBulkMode(!bulkMode); clearSelection() }} style={{
+            <button onClick={() => {
+              // En la grilla mensual no hay dónde poner las casillas, así que
+              // activar edición masiva lleva a la agenda en vez de no hacer nada.
+              if (!bulkMode && view === 'month') setView('list')
+              setBulkMode(!bulkMode)
+              clearSelection()
+            }} style={{
               padding: '7px 14px',
               background: bulkMode ? 'var(--chip-accent-bg)' : 'var(--surface)',
               border: `1px solid ${bulkMode ? 'var(--accent)' : 'var(--border)'}`,
@@ -621,12 +675,112 @@ export default function ScheduleClient({
         </div>
       </div>
 
-      {/* Tabla */}
+      {/* Barra de vista: cómo se mira el mismo cronograma. */}
+      <div className="view-bar">
+        <ViewSwitch value={view} onChange={setView} options={['list', 'week', 'month', 'table']} />
+        {view === 'month' && (
+          <MonthNav label={fmtMonthLabel(monthCursor.year, monthCursor.month)}
+            onPrev={mesAnterior} onNext={mesSiguiente} onToday={mesHoy} />
+        )}
+        {view === 'week' && (
+          <MonthNav label={weekRangeLabel(weekRef)}
+            onPrev={semanaAnterior} onNext={semanaSiguiente} onToday={semanaHoy} />
+        )}
+        {zoomUrl && (
+          <a href={zoomUrl} target="_blank" rel="noopener noreferrer"
+            className="btn btn-ghost view-bar-end" style={{ textDecoration: 'none' }}>
+            <i className="ti ti-video" aria-hidden="true"></i>
+            Zoom del curso
+          </a>
+        )}
+      </div>
+
+      {superpuestos.size > 0 && (
+        <div className="alert alert-warning" style={{ marginBottom: 'var(--space-4)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+          <i className="ti ti-alert-triangle" aria-hidden="true"></i>
+          <span>Hay encuentros que se pisan en el mismo día y horario. Están marcados.</span>
+        </div>
+      )}
+
+      {/* ── Vacío ── */}
       {filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '48px', color: 'var(--text-muted)' }}>
           <i className="ti ti-calendar-off" style={{ fontSize: '40px', opacity: 0.4, display: 'block', marginBottom: '12px' }} aria-hidden="true"></i>
           <p>No hay encuentros con los filtros seleccionados.</p>
         </div>
+
+      /* ── Vista Mes ── */
+      ) : view === 'month' ? (
+        eventosDelMes.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '48px', color: 'var(--text-muted)' }}>
+            <i className="ti ti-calendar-off" style={{ fontSize: '40px', opacity: 0.4, display: 'block', marginBottom: '12px' }} aria-hidden="true"></i>
+            <p>Sin encuentros en {fmtMonthLabel(monthCursor.year, monthCursor.month).toLowerCase()}.</p>
+          </div>
+        ) : (
+          <MonthGrid year={monthCursor.year} month0={monthCursor.month}
+            events={eventosDelMes} today={hoyISO} onEventClick={openEditById} />
+        )
+
+      /* ── Vistas Agenda y Semana ── */
+      ) : view !== 'table' ? (
+        (() => {
+          const grupos = view === 'week' ? semanaPorMes : agendaPorMes
+          // La ficha del curso encabeza la agenda completa; en una semana
+          // concreta no tiene sentido, porque no tiene fecha.
+          const ficha = view === 'list' ? fichaCurso : null
+          if (Object.keys(grupos).length === 0 && !ficha) {
+            return (
+              <div style={{ textAlign: 'center', padding: '48px', color: 'var(--text-muted)' }}>
+                <i className="ti ti-calendar-off" style={{ fontSize: '40px', opacity: 0.4, display: 'block', marginBottom: '12px' }} aria-hidden="true"></i>
+                <p>{view === 'week' ? 'Sin encuentros esta semana.' : 'Sin encuentros para mostrar.'}</p>
+              </div>
+            )
+          }
+          return (
+            <>
+              {ficha && (
+                <div style={{ marginBottom: 'var(--space-6)' }}>
+                  <SessionCard
+                    session={ficha}
+                    commissions={commissions}
+                    zoomUrl={zoomUrl}
+                    hoy={hoyISO}
+                    canEdit={canEdit}
+                    onOpen={() => openEdit(ficha)}
+                    bulkMode={bulkMode}
+                    seleccionada={selected.has(ficha.id as string)}
+                    onToggleSelect={() => toggleSelect(ficha.id as string)}
+                  />
+                </div>
+              )}
+              {Object.entries(grupos).map(([mes, encuentros]) => (
+                <div key={mes} style={{ marginBottom: 'var(--space-6)' }}>
+                  <h3 className="month-head">{etiquetaMes(`${mes}-01`)}</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                    {encuentros.map(s => (
+                      <SessionCard
+                        key={s.id}
+                        session={s}
+                        commissions={commissions}
+                        zoomUrl={zoomUrl}
+                        hoy={hoyISO}
+                        esProxima={s.id === idProxima}
+                        esSuperpuesta={superpuestos.has(s.id as string)}
+                        canEdit={canEdit}
+                        onOpen={() => openEdit(s)}
+                        bulkMode={bulkMode}
+                        seleccionada={selected.has(s.id as string)}
+                        onToggleSelect={() => toggleSelect(s.id as string)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </>
+          )
+        })()
+
+      /* ── Vista Tabla ── */
       ) : (
         <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden' }}>
           <div className="table-scroll">
@@ -652,7 +806,6 @@ export default function ScheduleClient({
                   const abreMes   = !!mes && mes !== mesPrevio
                   if (mes) mesPrevio = mes
                   const hasReview  = s.review_what_worked || s.review_what_didnt || s.review_change_next
-                  const showZoomLink = s.modality === 'virtual' && !s.canva_url && zoomUrl
 
                   return (
                     <React.Fragment key={s.id}>
@@ -694,41 +847,7 @@ export default function ScheduleClient({
                       )}
                       <td style={{ padding: '10px 12px' }}><Badge text={SESSION_STATUS_LABELS[s.status] || s.status} cls={STATUS_BADGE[s.status]} /></td>
                       <td style={{ padding: '10px 12px' }}>
-                        <div style={{ display: 'flex', gap: '4px' }}>
-                          {LINK_FIELDS.map(field => {
-                            if (field === 'partial_file_url'   && !['parcial','recuperatorio'].includes(s.type)) return null
-                            if (field === 'guest_bio_url'      && s.type !== 'invitado') return null
-                            if (field === 'workshop_brief_url' && s.type !== 'taller')   return null
-                            const url = getSessionUrl(s, field)
-                            return url ? (
-  <a key={field} href={url} target="_blank" rel="noopener noreferrer"
-    title={
-      field === 'canva_url' ? 'Canva / Presentación' :
-      field === 'partial_file_url' ? 'Archivo del parcial' :
-      field === 'guest_bio_url' ? 'Bio del invitado' :
-      field === 'workshop_brief_url' ? 'Brief / Consigna' : field
-    }
-    style={{ width: '24px', height: '24px', borderRadius: '4px', background: 'var(--chip-accent-bg)', border: '1px solid var(--chip-accent-bd)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontSize: '13px', textDecoration: 'none' }}>
-    <i className={`ti ${LINK_ICONS[field]}`} aria-hidden="true"></i>
-  </a>                          ) : (
-                              <span key={field} style={{ width: '24px', height: '24px', borderRadius: '4px', background: 'var(--hover-bg)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
-                                <i className={`ti ${LINK_ICONS[field]}`} aria-hidden="true"></i>
-                              </span>
-                            )
-                          })}
-                          {showZoomLink && (
-                            <a href={zoomUrl} target="_blank" rel="noopener noreferrer" title="Zoom del curso"
-                              style={{ width: '24px', height: '24px', borderRadius: '4px', background: 'var(--chip-accent-bg)', border: '1px solid var(--chip-accent-bd)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontSize: '13px' }}>
-                              <i className="ti ti-video" aria-hidden="true"></i>
-                            </a>
-                          )}
-  {(s.additional_links || []).map((link, idx) => (
-    <a key={idx} href={link.url} target="_blank" rel="noopener noreferrer"
-      title={link.label || `Link ${idx + 1}`}
-      style={{ width: '24px', height: '24px', borderRadius: '4px', background: 'var(--chip-accent-bg)', border: '1px solid var(--chip-accent-bd)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontSize: '13px', textDecoration: 'none' }}>
-      <i className="ti ti-link" aria-hidden="true"></i>
-    </a>
-  ))}                      </div>
+                        <SessionLinks session={s} zoomUrl={zoomUrl} huecos />
                       </td>
                       <td style={{ padding: '10px 12px' }}>
   <button onClick={() => openEdit(s)}

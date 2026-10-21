@@ -20,8 +20,10 @@ interface SidebarProps {
 const NAV_ITEMS = [
   { key: 'dashboard',    label: 'Dashboard',          icon: 'ti-layout-dashboard' },
   { key: 'presentation', label: 'Presentación',        icon: 'ti-id-badge'         },
-  { key: 'schedule',     label: 'Cronograma',          icon: 'ti-calendar-event'   },
-  { key: 'calendar',     label: 'Agenda',              icon: 'ti-calendar-month'   },
+  // Cronograma y Agenda eran dos entradas para los mismos datos. Quedó una:
+  // la pantalla abre en vista de agenda y adentro se cambia a semana, mes o
+  // tabla. /courses/calendar sigue existiendo, pero solo para redirigir.
+  { key: 'schedule',     label: 'Cronograma',          icon: 'ti-calendar-month'   },
   { key: 'import',       label: 'Importar',            icon: 'ti-upload'           },
   { key: 'todos',        label: 'Tareas pendientes',   icon: 'ti-checks'           },
   { key: 'config',       label: 'Configuración',       icon: 'ti-settings'         },

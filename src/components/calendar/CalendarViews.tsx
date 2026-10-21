@@ -11,7 +11,7 @@
 //   - filterWeek / weekRangeLabel: helpers para la vista Semana (lista de la semana)
 
 
-export type CalendarView = 'list' | 'week' | 'month'
+export type CalendarView = 'list' | 'week' | 'month' | 'table'
 
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 const WEEKDAYS = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom']
@@ -79,20 +79,31 @@ export function weekRangeLabel(ref: Date): string {
 /* ------------------------------------------------------------------ */
 
 const VIEW_LABELS: Record<CalendarView, { label: string; icon: string }> = {
-  list:  { label: 'Lista',  icon: 'ti-list' },
+  list:  { label: 'Agenda', icon: 'ti-list' },
   week:  { label: 'Semana', icon: 'ti-calendar-week' },
   month: { label: 'Mes',    icon: 'ti-calendar-month' },
+  table: { label: 'Tabla',  icon: 'ti-table' },
 }
 
-export function ViewSwitch({ value, onChange }: { value: CalendarView; onChange: (v: CalendarView) => void }) {
+const DEFAULT_VIEWS: CalendarView[] = ['list', 'week', 'month']
+
+export function ViewSwitch({
+  value, onChange, options = DEFAULT_VIEWS,
+}: {
+  value: CalendarView
+  onChange: (v: CalendarView) => void
+  /** Qué vistas ofrecer. El calendario unificado no tiene Tabla. */
+  options?: CalendarView[]
+}) {
   return (
-    <div style={{ display: 'inline-flex', background: 'var(--hover-bg)', border: '1px solid var(--border)', borderRadius: '8px', padding: '2px', gap: '2px' }}>
-      {(Object.keys(VIEW_LABELS) as CalendarView[]).map(v => {
+    <div role="group" aria-label="Vista" style={{ display: 'inline-flex', background: 'var(--hover-bg)', border: '1px solid var(--border)', borderRadius: '8px', padding: '2px', gap: '2px' }}>
+      {options.map(v => {
         const active = value === v
         return (
           <button
             key={v}
             onClick={() => onChange(v)}
+            aria-pressed={active}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '6px',
               padding: '5px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 600,

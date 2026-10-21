@@ -168,7 +168,7 @@ export default function UnifiedCalendarClient({
 
   function goToCourseBySession(id: string) {
     const s = sessions.find(x => x.id === id)
-    if (s) router.push(`/courses/calendar?c=${s.course_id}`)
+    if (s) router.push(`/courses/schedule?c=${s.course_id}`)
   }
 
 
@@ -284,7 +284,7 @@ export default function UnifiedCalendarClient({
                 return (
                   <div
                     key={s.id}
-                    onClick={() => router.push(`/courses/calendar?c=${s.course_id}`)}
+                    onClick={() => router.push(`/courses/schedule?c=${s.course_id}`)}
                     style={{
                       background: 'var(--surface)',
                       border: `1px solid ${isOverlap ? 'var(--warning)' : isToday ? 'var(--accent)' : isPast ? 'var(--danger)' : 'var(--border)'}`,
