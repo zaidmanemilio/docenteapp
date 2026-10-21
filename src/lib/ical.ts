@@ -18,7 +18,8 @@ export interface IcalSession {
   id: string
   class_number?: number | null
   title: string
-  date: string          // YYYY-MM-DD
+  /** YYYY-MM-DD. Puede faltar: el encuentro 0 no lleva fecha y se descarta. */
+  date?: string | null
   start_time?: string | null  // HH:MM
   end_time?: string | null    // HH:MM
   status?: string | null
@@ -132,7 +133,7 @@ export function buildCourseIcs(sessions: IcalSession[], opts: IcalOptions): stri
     .filter(s => s.class_number !== 0)
     .filter(s => s.status !== 'cancelada')
     .filter(s => !!s.date)
-    .sort((a, b) => (a.date).localeCompare(b.date) || (a.start_time || '').localeCompare(b.start_time || ''))
+    .sort((a, b) => (a.date || '').localeCompare(b.date || '') || (a.start_time || '').localeCompare(b.start_time || ''))
 
   const lines: string[] = [
     'BEGIN:VCALENDAR',
@@ -154,14 +155,18 @@ export function buildCourseIcs(sessions: IcalSession[], opts: IcalOptions): stri
     if (s.responsible) desc.push(`Responsable: ${s.responsible}`)
     if (link) desc.push(`Videollamada: ${link}`)
 
+    // El filtro de arriba ya descartó los encuentros sin fecha, pero el
+    // compilador no puede seguir esa inferencia hasta acá.
+    const fecha = s.date as string
+
     lines.push('BEGIN:VEVENT')
     lines.push(`UID:${s.id}@docenteapp`)
     lines.push(`DTSTAMP:${stamp}`)
 
     if (s.start_time) {
-      const ini = wallTimeToUtc(s.date, s.start_time, timezone)
+      const ini = wallTimeToUtc(fecha, s.start_time, timezone)
       const fin = s.end_time
-        ? wallTimeToUtc(s.date, s.end_time, timezone)
+        ? wallTimeToUtc(fecha, s.end_time, timezone)
         : (ini ? new Date(ini.getTime() + durMin * 60000) : null)
       if (ini && fin) {
         // Si la hora de fin es menor que la de inicio, la clase cruza la
@@ -174,9 +179,9 @@ export function buildCourseIcs(sessions: IcalSession[], opts: IcalOptions): stri
       }
     } else {
       // Sin horario cargado: evento de día completo.
-      const next = new Date(`${s.date}T00:00:00Z`)
+      const next = new Date(`${fecha}T00:00:00Z`)
       next.setUTCDate(next.getUTCDate() + 1)
-      lines.push(`DTSTART;VALUE=DATE:${fmtDate(s.date)}`)
+      lines.push(`DTSTART;VALUE=DATE:${fmtDate(fecha)}`)
       lines.push(`DTEND;VALUE=DATE:${fmtDate(next.toISOString().slice(0, 10))}`)
     }
 
