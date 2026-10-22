@@ -22,7 +22,7 @@ export default function HomePage() {
   const isAdmin = profile.global_role === 'admin'
 
   useEffect(() => {
-    if (target) router.replace(`/courses/dashboard?c=${target.id}`)
+    if (target) router.replace(`/courses/presentation?c=${target.id}`)
   }, [target, router])
 
   if (target) return null

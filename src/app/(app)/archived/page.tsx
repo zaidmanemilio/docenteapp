@@ -149,7 +149,7 @@ export default function ArchivedPage() {
     }
 
     setDuplicating(null)
-    router.push(`/courses/dashboard?c=${newCourse.id}`)
+    router.push(`/courses/presentation?c=${newCourse.id}`)
     router.refresh()
   }
 

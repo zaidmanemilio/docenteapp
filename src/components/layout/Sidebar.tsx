@@ -18,7 +18,6 @@ interface SidebarProps {
 }
 
 const NAV_ITEMS = [
-  { key: 'dashboard',    label: 'Dashboard',          icon: 'ti-layout-dashboard' },
   { key: 'presentation', label: 'Presentación',        icon: 'ti-id-badge'         },
   // Cronograma y Agenda eran dos entradas para los mismos datos. Quedó una:
   // la pantalla abre en vista de agenda y adentro se cambia a semana, mes o
@@ -26,6 +25,7 @@ const NAV_ITEMS = [
   { key: 'schedule',     label: 'Cronograma',          icon: 'ti-calendar-month'   },
   { key: 'import',       label: 'Importar',            icon: 'ti-upload'           },
   { key: 'todos',        label: 'Tareas pendientes',   icon: 'ti-checks'           },
+  { key: 'dashboard',    label: 'Panel',               icon: 'ti-layout-dashboard' },
   { key: 'config',       label: 'Configuración',       icon: 'ti-settings'         },
   { key: 'users',        label: 'Usuarios y permisos', icon: 'ti-users', adminOnly: true },
 ]
@@ -91,8 +91,12 @@ const visibleCourses = levelFilter === 'all'
     router.push(`/courses/${section}?c=${activeCourseId}`)
   }
 
+  // Al elegir un curso se abre su Presentación. Antes abría el Panel, que
+  // son cuatro contadores: no dice qué hay que hacer ni ayuda a decidir
+  // nada. La Presentación es la ficha del curso, que es lo que uno busca
+  // cuando entra.
   function selectCourse(cid: string) {
-    router.push(`/courses/dashboard?c=${cid}`)
+    router.push(`/courses/presentation?c=${cid}`)
   }
 
   // Fijar / desfijar. La preferencia se guarda en los metadatos del usuario de

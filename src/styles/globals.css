@@ -759,3 +759,10 @@ button:disabled {
 @media (max-width: 760px) {
   .view-bar-end { margin-left: 0; }
 }
+
+/* Etiqueta de un grupo de filtros ("Estado", "Responsable"). */
+.filter-label {
+  font-size: var(--text-xs); font-weight: 600;
+  text-transform: uppercase; letter-spacing: .06em;
+  color: var(--text-muted);
+}

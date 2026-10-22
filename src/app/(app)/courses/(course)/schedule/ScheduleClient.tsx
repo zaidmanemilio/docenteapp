@@ -6,7 +6,6 @@ import React, { useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Commission, Profile, AdditionalLink } from '@/types'
 import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS } from '@/types'
-import type { SessionType } from '@/types'
 import SessionModal, { type ExtendedSession } from '@/components/schedule/SessionModal'
 import SessionCard from '@/components/schedule/SessionCard'
 import SessionLinks from '@/components/schedule/SessionLinks'
@@ -68,11 +67,12 @@ export default function ScheduleClient({
   const [commissions]                   = useState<Commission[]>(initialCommissions)
   const [courseTeachers]                = useState<string[]>(initialCourseTeachers)
 
+  // Solo dos filtros. Había cinco (estado, tipo, comisión, modalidad,
+  // responsable) y ocupaban tres renglones arriba del contenido: cuatro de
+  // ellos filtraban por cosas que ya se ven de un vistazo en cada encuentro,
+  // y en un curso de quince clases no hay nada que acotar.
   const [filterStatus, setFilterStatus] = useState('all')
-  const [filterType,   setFilterType]   = useState('all')
-  const [filterCom,    setFilterCom]    = useState('all')
   const [filterResp,   setFilterResp]   = useState('all')
-  const [filterModal,  setFilterModal]  = useState('all')
 
   const [editSession,  setEditSession]  = useState<ExtendedSession | null>(null)
   const [isNew,        setIsNew]        = useState(false)
@@ -114,20 +114,12 @@ export default function ScheduleClient({
   const isAdmin = profile.global_role === 'admin'
   const canDelete = coursePermission === 'full' || isAdmin
 
-  // ─── Filtros dinámicos ────────────────────────────────────────────────────
-  const existingTypes      = [...new Set(sessions.map(s => s.type))]
-  const existingModalities = [...new Set(sessions.map(s => s.modality))]
-  const responsables       = [...new Set(sessions.map(s => s.responsible))].filter(Boolean)
+  // ─── Filtros ──────────────────────────────────────────────────────────────
+  const responsables = [...new Set(sessions.map(s => s.responsible))].filter(Boolean)
 
   const filtered = sessions.filter(s => {
     if (filterStatus !== 'all' && s.status !== filterStatus) return false
-    if (filterType   !== 'all' && s.type   !== filterType)   return false
-    if (filterCom !== 'all') {
-      if (filterCom === '__all__' && s.commission_scope !== 'all') return false
-      if (filterCom !== '__all__' && s.commission_scope !== 'all' && s.commission_scope !== filterCom) return false
-    }
-    if (filterResp  !== 'all' && s.responsible !== filterResp)  return false
-    if (filterModal !== 'all' && s.modality    !== filterModal)  return false
+    if (filterResp   !== 'all' && s.responsible !== filterResp) return false
     return true
   })
   // El encuentro 0 es la ficha del curso y va siempre primero.
@@ -623,56 +615,26 @@ export default function ScheduleClient({
         </div>
       )}
 
-      {/* Filtros dinámicos */}
-      <div style={{ marginBottom: '16px' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px', alignItems: 'center' }}>
-          <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Estado</span>
-          {[['all','Todas'],['pendiente','Pendiente'],['dada','Dada'],['reprogramada','Reprog.'],['cancelada','Cancelada']].map(([v, l]) => (
-            <button key={v} className={`filter-pill${filterStatus===v?' active':''}`} onClick={() => setFilterStatus(v)}>{l}</button>
-          ))}
-        </div>
+      {/* Filtros */}
+      <div className="filter-row" style={{ marginBottom: 'var(--space-4)', alignItems: 'center' }}>
+        <span className="filter-label">Estado</span>
+        {[['all','Todas'],['pendiente','Pendiente'],['dada','Dada'],['reprogramada','Reprog.'],['cancelada','Cancelada']].map(([v, l]) => (
+          <button key={v} className={`filter-pill${filterStatus === v ? ' active' : ''}`}
+            aria-pressed={filterStatus === v}
+            onClick={() => setFilterStatus(v)}>{l}</button>
+        ))}
 
-        {existingTypes.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px', alignItems: 'center' }}>
-            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Tipo</span>
-            <button className={`filter-pill${filterType==='all'?' active':''}`} onClick={() => setFilterType('all')}>Todos</button>
-            {existingTypes.map(t => (
-              <button key={t} className={`filter-pill${filterType===t?' active':''}`} onClick={() => setFilterType(t)}>
-                {SESSION_TYPE_LABELS[t as SessionType] || t}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
-          {commissions.length > 1 && <>
-            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Comisión</span>
-            <button className={`filter-pill${filterCom==='all'?' active':''}`} onClick={() => setFilterCom('all')}>Todas</button>
-            {commissions.map(c => (
-              <button key={c.id} className={`filter-pill${filterCom===c.id?' active':''}`} onClick={() => setFilterCom(c.id)}>{c.name}</button>
-            ))}
-            <button className={`filter-pill${filterCom==='__all__'?' active':''}`} onClick={() => setFilterCom('__all__')}>Comunes</button>
-            <span style={{ width: '8px' }}></span>
-          </>}
-          {existingModalities.length > 1 && <>
-            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Modalidad</span>
-            <button className={`filter-pill${filterModal==='all'?' active':''}`} onClick={() => setFilterModal('all')}>Todas</button>
-            {existingModalities.map(m => (
-              <button key={m} className={`filter-pill${filterModal===m?' active':''}`} onClick={() => setFilterModal(m)}>
-                {m === 'presencial' ? 'Presencial' : 'Virtual'}
-              </button>
-            ))}
-            <span style={{ width: '8px' }}></span>
-          </>}
-          {responsables.length > 0 && <>
-            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Responsable</span>
+        {responsables.length > 1 && (
+          <>
+            <span className="filter-label" style={{ marginLeft: 'var(--space-3)' }}>Responsable</span>
             <select value={filterResp} onChange={e => setFilterResp(e.target.value)}
-              style={{ padding: '4px 8px', borderRadius: '99px', fontSize: '12px', border: '1px solid var(--input-border)', background: 'var(--surface)', cursor: 'pointer' }}>
+              aria-label="Filtrar por responsable del dictado"
+              style={{ padding: '5px 10px', borderRadius: '99px', fontSize: 'var(--text-xs)', border: '1px solid var(--input-border)', background: 'var(--surface)', color: 'var(--text-secondary)', fontFamily: 'inherit', cursor: 'pointer' }}>
               <option value="all">Todos</option>
               {responsables.map(r => <option key={r} value={r}>{r}</option>)}
             </select>
-          </>}
-        </div>
+          </>
+        )}
       </div>
 
       {/* Barra de vista: cómo se mira el mismo cronograma. */}
