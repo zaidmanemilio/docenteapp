@@ -8,6 +8,7 @@ import {
   type CalendarView, ViewSwitch, MonthNav, MonthGrid, fmtMonthLabel,
   filterWeek, weekRangeLabel,
 } from '@/components/calendar/CalendarViews'
+import { colorDeCurso } from '@/lib/course-color'
 
 interface Session {
   id: string
@@ -45,7 +46,6 @@ const STATUS_COLORS: Record<string, string> = {
   dada: '#059669', pendiente: '#6b7280', reprogramada: '#d97706', cancelada: '#dc2626',
 }
 
-const COURSE_COLORS = ['#6366f1','#0d9488','#be185d','#d97706','#059669','#7c3aed','#f97316']
 
 function fmtMonth(ym: string) {
   const [y, m] = ym.split('-')
@@ -131,7 +131,9 @@ export default function UnifiedCalendarClient({
 
   // Índice de color por curso
   const courseColorMap: Record<string, string> = {}
-  courses.forEach((c, i) => { courseColorMap[c.id] = COURSE_COLORS[i % COURSE_COLORS.length] })
+  // Derivado del id, no del orden de la lista: así el punto del menú
+  // superior, el riel del curso y este calendario dan siempre el mismo color.
+  courses.forEach(c => { courseColorMap[c.id] = colorDeCurso(c.id) })
 
   const filtered = sessions.filter(s => {
     if (filterStatus !== 'all' && s.status !== filterStatus) return false

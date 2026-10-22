@@ -8,6 +8,7 @@ import { DM_Sans } from 'next/font/google'
 // forma parte del bundle y siempre está disponible al pintar.
 import '@tabler/icons-webfont/dist/tabler-icons.min.css'
 import '../styles/globals.css'
+import { SCRIPT_TEMA } from '@/lib/theme'
 
 // La tipografía se auto-hospeda en el build en lugar de pedirla a Google en
 // tiempo de ejecución. Antes globals.css tenía un @import a fonts.googleapis:
@@ -39,8 +40,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" data-theme="dark" className={dmSans.variable}>
+    // data-theme lo pone el script de abajo antes de pintar. Si se dejara
+    // escrito acá, el tema claro aparecería con un flash oscuro en cada
+    // carga, que en un sitio estático se nota.
+    <html lang="es" className={dmSans.variable} suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: SCRIPT_TEMA }} />
         {/* La primera consulta a Supabase paga DNS + TLS antes de empezar.
             Abriendo la conexión desde el HTML, ese costo se solapa con la
             descarga del JavaScript en vez de sumarse después. */}

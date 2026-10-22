@@ -6,7 +6,7 @@
 // que pueda mirar la cookie antes de responder.
 import { Suspense } from 'react'
 import { SessionProvider, useSession } from '@/lib/session-context'
-import Sidebar from '@/components/layout/Sidebar'
+import TopNav from '@/components/layout/TopNav'
 import PageLoading from '@/components/layout/PageLoading'
 import { DialogProvider } from '@/components/ui/Dialog'
 
@@ -15,7 +15,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="app-shell">
-      <Sidebar profile={profile} courses={courses} pinnedCourseId={pinnedCourseId} />
+      <TopNav profile={profile} courses={courses} pinnedCourseId={pinnedCourseId} />
       <main className="app-main">
         {children}
       </main>

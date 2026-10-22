@@ -15,28 +15,30 @@
   --accent-light: #818cf8;
   --accent-bg: #eef2ff;
 
-  /* --- Tokens semánticos (tema claro). --- */
-  --bg: #f8f9fb;
+  /* --- Tokens semánticos (tema claro). ---
+     Neutro cálido, no azulado: #f8f9fb tiraba a frío y hacía que todo
+     pareciera un panel de administración genérico. */
+  --bg: #fbfbfa;
   --sidebar: #1a1a2e;
   --surface: #ffffff;
   --surface-elevated: #ffffff;
-  --border: #e5e7eb;
-  --text-primary: #111827;
-  --text-secondary: #374151;
+  --border: #e8e8e6;
+  --text-primary: #18181b;
+  --text-secondary: #3f3f46;
   --text-muted: #6b7280;
   --accent-hover: #4f46e5;
   --success: #059669;
   --warning: #d97706;
   --danger: #dc2626;
   --input-bg: #ffffff;
-  --input-border: #e5e7eb;
-  --hover-bg: #f9fafb;
+  --input-border: #e2e2df;
+  --hover-bg: #f6f6f4;
 
   /* Componentes utilitarios (filter-pill, scrollbar, progress) */
   --pill-bg: #ffffff;
-  --pill-border: #e5e7eb;
-  --pill-text: #6b7280;
-  --track: #e5e7eb;
+  --pill-border: #e2e2df;
+  --pill-text: #52525b;
+  --track: #e8e8e6;
 
   /* --- Pares de badge/estado (tema claro = pastel actuales). --- */
   /* Cada familia: fondo tintado + texto del color + borde. En light el borde
@@ -86,34 +88,37 @@
 }
 
 /* --- Tema oscuro "Academic Operating System". --- */
+/* --- Tema oscuro. ---
+   Era azul pizarra (#0f172a y derivados). Pasa a gris neutro: el azul teñía
+   cada superficie y competía con los colores de estado y de tipo de clase,
+   que son los únicos que deberían tener color. */
 [data-theme="dark"] {
-  --bg: #0f172a;
-  --sidebar: #0b1220;            /* sidebar más profundo que el fondo */
-  --surface: #1e293b;
-  --surface-elevated: #273449;
-  --border: #334155;
-  --text-primary: #f1f5f9;
-  --text-secondary: #cbd5e1;
-  --text-muted: #94a3b8;
-  --accent: #818cf8;
-  --accent-hover: #a5b4fc;
-  --success: #34d399;
-  --warning: #fbbf24;
-  --danger: #f87171;
-  --input-bg: #1e293b;
-  --input-border: #3b4a61;
-  --hover-bg: #273449;
+  --bg: #121212;
+  --sidebar: #0e0e0e;
+  --surface: #181818;
+  --surface-elevated: #1f1f1f;
+  --border: #272727;
+  --text-primary: #f2f2f2;
+  --text-secondary: #d4d4d4;
+  --text-muted: #969696;        /* sobre --bg da 6.0:1 */
+  --accent: #93a8ff;
+  --accent-hover: #b7c4ff;
+  --success: #6fd9c0;
+  --warning: #e3b55f;
+  --danger: #f0a3a3;
+  --input-bg: #181818;
+  --input-border: #313131;
+  --hover-bg: #202020;
 
-  --pill-bg: #1e293b;
-  --pill-border: #334155;
-  --pill-text: #94a3b8;
-  --track: #334155;
+  --pill-bg: #181818;
+  --pill-border: #2a2a2a;
+  --pill-text: #b4b4b4;
+  --track: #272727;
 
-  /* Sidebar en dark: profundo, coherente con la jerarquía */
-  --sidebar-bg: #0b1220;
-  --sidebar-border: #1e293b;
-  --sidebar-text: #94a3b8;
-  --sidebar-active: #f1f5f9;
+  --sidebar-bg: #0e0e0e;
+  --sidebar-border: #1f1f1f;
+  --sidebar-text: #969696;
+  --sidebar-active: #f2f2f2;
 
   /* Badges soft-dark: fondo oscuro tintado + texto claro + borde sutil del color.
      Fondos con baja luminancia, sin pastel. */
@@ -132,7 +137,7 @@
   --danger-solid: #dc2626;
   --danger-solid-hover: #ef4444;
 
-  --chip-accent-bg: #312e8166; --chip-accent-fg: #c7d2fe; --chip-accent-bd: #4338ca99;
+  --chip-accent-bg: #23284a; --chip-accent-fg: #c3ceff; --chip-accent-bd: #3b4682;
 }
 
 * { box-sizing: border-box; }
@@ -294,7 +299,8 @@ select option { background-color: var(--surface); color: var(--text-primary); }
 
 .app-shell {
   display: flex;
-  height: 100vh;
+  flex-direction: column;   /* barra arriba, contenido abajo */
+  height: 100dvh;
   overflow: hidden;
 }
 
@@ -302,29 +308,11 @@ select option { background-color: var(--surface); color: var(--text-primary); }
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: auto;
   min-width: 0; /* clave: permite que el contenido se encoja en vez de desbordar */
 }
 
-.app-sidebar {
-  width: 220px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background: var(--sidebar-bg);
-  border-right: 1px solid var(--sidebar-border);
-}
-
-/* En escritorio no se ven ni el botón de menú, ni la capa oscura, ni el
-   botón de cerrar del drawer */
-.sidebar-toggle,
-.sidebar-backdrop,
-.sidebar-close {
-  display: none;
-}
-
-/* Botón de fijar curso (chincheta) en la lista del sidebar.
+/* Botón de fijar curso (chincheta) en la lista de cursos.
    Discreto mientras no se usa, para no competir con el nombre del curso, pero
    siempre presente una vez fijado. */
 .course-pin {
@@ -362,127 +350,6 @@ select option { background-color: var(--surface); color: var(--text-primary); }
 }
 
 /* Cabecera del sidebar: logo + botón de cerrar (este último solo en móvil) */
-.sidebar-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 18px 16px 14px;
-}
-
-@media (max-width: 768px) {
-  /* dvh = alto real del visor en móvil (descuenta la barra del navegador) */
-  .app-shell {
-    height: 100dvh;
-  }
-
-  /* El sidebar pasa a ser un panel deslizante (drawer) */
-  .app-sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    z-index: 60;
-    width: 264px;
-    max-width: 82vw;
-    transform: translateX(-100%);
-    transition: transform 0.22s ease;
-    box-shadow: 2px 0 18px rgba(0, 0, 0, 0.45);
-  }
-
-  .app-sidebar.is-open {
-    transform: translateX(0);
-  }
-
-  /* Botón de menú fijo arriba a la izquierda.
-     Antes era un cuadrado con el color del sidebar sobre un fondo casi
-     idéntico: se leía como un borde vacío. Ahora usa el color de acento,
-     dice "Menú" y tiene sombra, así se distingue del fondo sí o sí. */
-  .sidebar-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    position: fixed;
-    top: 8px;
-    left: 8px;
-    z-index: 55;
-    min-height: 44px;
-    padding: 0 16px 0 13px;
-    border-radius: 99px;
-    background: var(--accent);
-    border: none;
-    color: #fff;
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
-    -webkit-tap-highlight-color: transparent;
-  }
-  .sidebar-toggle i { font-size: 20px; }
-  .sidebar-toggle:active { transform: scale(0.96); }
-
-  /* Al abrir el drawer el botón se oculta: cerrar se hace desde el propio
-     panel o tocando la capa oscura. */
-  .sidebar-toggle.is-hidden { display: none; }
-
-  /* Botón de cerrar dentro del drawer */
-  .sidebar-close {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    min-height: 38px;
-    padding: 0 12px;
-    border-radius: 99px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid var(--sidebar-border);
-    color: var(--sidebar-active);
-    font-family: inherit;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    flex-shrink: 0;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .sidebar-close i { font-size: 15px; }
-  .sidebar-close:active { transform: scale(0.96); }
-
-  /* Capa oscura que cierra el drawer al tocarla */
-  .sidebar-backdrop.is-open {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 59;
-    background: rgba(0, 0, 0, 0.5);
-  }
-
-  /* Espacio arriba para que el botón no tape los títulos de cada pantalla.
-     El botón mide 44px + 8px de separación. */
-  .app-main {
-    padding-top: 60px;
-  }
-
-  /* El drawer ocupa toda la altura real y puede scrollear entero */
-  .app-sidebar { overflow-y: auto; }
-}
-
-/* ============================================================
-   RESPONSIVE — Fase 2: contenido
-   ------------------------------------------------------------
-   El esqueleto ya se adapta; acá se adapta lo que va adentro,
-   que es lo que hoy desborda o queda impracticable en celular.
-   ============================================================ */
-
-/* Cualquier tabla metida acá scrollea sola en lugar de estirar la página.
-   Sin esto, una tabla ancha empuja el layout y aparece scroll horizontal
-   en TODA la pantalla. */
-.table-scroll {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-.table-scroll > table { min-width: 560px; }
-
 @media (max-width: 768px) {
   /* Tipografía y aire: menos padding lateral para ganar ancho útil */
   .app-main > * { min-width: 0; }
@@ -765,4 +632,191 @@ button:disabled {
   font-size: var(--text-xs); font-weight: 600;
   text-transform: uppercase; letter-spacing: .06em;
   color: var(--text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MENÚ SUPERIOR
+   -----------------------------------------------------------------------
+   Reemplaza al sidebar lateral. Tres razones: el lateral se comía 220px de
+   ancho en una app que es sobre todo tablas y listas; mezclaba en una sola
+   columna tres cosas distintas (cambiar de curso, moverse dentro del curso,
+   la cuenta); y en celular obligaba a un cajón que tapaba el contenido.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.app-top {
+  position: sticky; top: 0; z-index: 30;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Fila 1: marca, curso, cuenta. */
+.top-row {
+  display: flex; align-items: center; gap: var(--space-3);
+  height: 56px; padding: 0 var(--space-6);
+  max-width: 1400px; margin: 0 auto;
+}
+.top-mark {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  font-size: var(--text-lg); font-weight: 700; letter-spacing: -.015em;
+  color: var(--text-primary); text-decoration: none; flex-shrink: 0;
+}
+.top-mark i { color: var(--accent-solid); font-size: 20px; }
+[data-theme="dark"] .top-mark i { color: var(--accent); }
+
+/* Fila 2: secciones del curso, con subrayado que crece desde el centro. */
+.top-tabs {
+  display: flex; gap: var(--space-6);
+  padding: 0 var(--space-6); max-width: 1400px; margin: 0 auto;
+  overflow-x: auto; scrollbar-width: none;
+}
+.top-tabs::-webkit-scrollbar { display: none; }
+.top-tab {
+  position: relative; background: none; border: 0; cursor: pointer;
+  font-family: inherit; font-size: var(--text-base); font-weight: 500;
+  color: var(--text-muted); padding: 15px 2px; white-space: nowrap;
+  transition: color .16s ease;
+}
+.top-tab::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+  background: var(--accent-solid); border-radius: 2px;
+  transform: scaleX(0); transition: transform .22s cubic-bezier(.2,.7,.3,1);
+}
+[data-theme="dark"] .top-tab::after { background: var(--accent); }
+.top-tab:hover { color: var(--text-primary); }
+.top-tab:hover::after { transform: scaleX(1); }
+.top-tab[aria-current='page'] { color: var(--text-primary); font-weight: 600; }
+.top-tab[aria-current='page']::after { transform: scaleX(1); }
+.top-tab[aria-disabled='true'] { opacity: .4; cursor: not-allowed; }
+.top-tab[aria-disabled='true']:hover { color: var(--text-muted); }
+.top-tab[aria-disabled='true']:hover::after { transform: scaleX(0); }
+
+/* Riel con el color del curso: dice en cuál estás sin leer nada. */
+.top-rail { height: 3px; }
+
+/* ── Selector de curso ────────────────────────────────────────────────
+   Se abre al apuntarle, sin hacer click. El `padding-top` del panel y el
+   hueco que deja arriba son deliberados: el puntero tiene que poder bajar
+   del botón al panel sin pasar por un vacío que lo cierre. */
+.course-menu { position: relative; flex-shrink: 1; min-width: 0; }
+.course-btn {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  max-width: 100%; height: 38px; padding: 0 var(--space-3);
+  border: 1px solid var(--border); border-radius: 9px;
+  background: var(--bg); color: var(--text-primary);
+  font-family: inherit; font-size: var(--text-sm); font-weight: 600;
+  cursor: pointer; transition: border-color .16s ease, background .16s ease;
+}
+.course-btn:hover { border-color: var(--text-muted); background: var(--hover-bg); }
+.course-btn .course-dot {
+  width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+}
+.course-btn .course-name {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.course-btn .ti-chevron-down { transition: transform .2s ease; font-size: 14px; }
+.course-menu:hover .course-btn .ti-chevron-down,
+.course-menu:focus-within .course-btn .ti-chevron-down { transform: rotate(180deg); }
+
+.course-panel {
+  position: absolute; top: 100%; left: 0; z-index: 40;
+  padding-top: var(--space-2);
+  opacity: 0; transform: translateY(-6px);
+  pointer-events: none;
+  transition: opacity .18s ease, transform .18s cubic-bezier(.2,.7,.3,1);
+}
+.course-menu:hover .course-panel,
+.course-menu:focus-within .course-panel {
+  opacity: 1; transform: translateY(0); pointer-events: auto;
+}
+.course-panel-inner {
+  min-width: 340px; max-width: min(92vw, 520px);
+  background: var(--surface-elevated);
+  border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: 0 12px 34px rgb(0 0 0 / .18);
+  padding: var(--space-2);
+  max-height: min(70vh, 540px); overflow-y: auto;
+}
+[data-theme="dark"] .course-panel-inner { box-shadow: 0 12px 34px rgb(0 0 0 / .5); }
+
+.course-group {
+  padding: var(--space-3) var(--space-3) var(--space-1);
+  font-size: var(--text-xs); font-weight: 600;
+  text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted);
+}
+.course-item {
+  display: flex; align-items: center; gap: var(--space-3);
+  width: 100%; padding: var(--space-2) var(--space-3);
+  border: 0; border-radius: 8px; background: none; cursor: pointer;
+  font-family: inherit; font-size: var(--text-sm); color: var(--text-secondary);
+  text-align: left; transition: background .14s ease, color .14s ease;
+}
+.course-item:hover { background: var(--hover-bg); color: var(--text-primary); }
+.course-item.is-current { background: var(--chip-accent-bg); color: var(--chip-accent-fg); font-weight: 600; }
+.course-item .course-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.course-item .course-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.course-item .course-year { font-size: var(--text-xs); color: var(--text-muted); flex-shrink: 0; }
+
+/* Fila de curso: el curso y su chincheta, uno al lado del otro. */
+.course-row { display: flex; align-items: center; gap: 2px; }
+.course-row .course-item { flex: 1; min-width: 0; }
+.course-pin-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; flex-shrink: 0;
+  border: 0; border-radius: 7px; background: none; cursor: pointer;
+  color: var(--text-muted); font-size: 14px;
+  opacity: 0; transition: opacity .14s ease, color .14s ease, background .14s ease;
+}
+.course-row:hover .course-pin-btn,
+.course-pin-btn:focus-visible,
+.course-pin-btn.is-pinned { opacity: 1; }
+.course-pin-btn:hover { background: var(--hover-bg); color: var(--text-primary); }
+.course-pin-btn.is-pinned { color: var(--accent); }
+@media (pointer: coarse) {
+  /* Sin puntero no hay hover que la revele: siempre visible. */
+  .course-pin-btn { opacity: 1; width: 44px; height: 44px; }
+}
+
+.course-sep { height: 1px; background: var(--border); margin: var(--space-2) var(--space-2); }
+
+/* ── Acciones de la derecha ─────────────────────────────────────────── */
+.top-actions { margin-left: auto; display: flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 9px;
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--text-secondary); cursor: pointer; font-size: 17px;
+  transition: border-color .16s ease, color .16s ease, background .16s ease;
+}
+.icon-btn:hover { border-color: var(--text-muted); color: var(--text-primary); background: var(--hover-bg); }
+.avatar-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 50%; border: 0;
+  color: #fff; font-family: inherit; font-size: var(--text-xs); font-weight: 700;
+  cursor: pointer;
+}
+.user-panel {
+  position: absolute; top: calc(100% + var(--space-2)); right: 0; z-index: 40;
+  min-width: 220px; background: var(--surface-elevated);
+  border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: 0 12px 34px rgb(0 0 0 / .18); padding: var(--space-2);
+}
+[data-theme="dark"] .user-panel { box-shadow: 0 12px 34px rgb(0 0 0 / .5); }
+.user-item {
+  display: flex; align-items: center; gap: var(--space-3);
+  width: 100%; padding: var(--space-2) var(--space-3);
+  border: 0; border-radius: 8px; background: none; cursor: pointer;
+  font-family: inherit; font-size: var(--text-sm); color: var(--text-secondary);
+  text-align: left;
+}
+.user-item:hover { background: var(--hover-bg); color: var(--text-primary); }
+
+/* ── Celular ──────────────────────────────────────────────────────────
+   El panel de cursos no puede abrirse al apuntar: no hay puntero. Pasa a
+   abrirse al tocar (:focus-within cubre el caso) y ocupa el ancho. */
+@media (max-width: 760px) {
+  .top-row { padding: 0 var(--space-4); gap: var(--space-2); }
+  .top-tabs { padding: 0 var(--space-4); gap: var(--space-4); }
+  .top-tab { font-size: var(--text-sm); padding: 13px 2px; }
+  .course-panel-inner { min-width: 0; width: calc(100vw - var(--space-8)); }
+  .top-mark span { display: none; }
 }
