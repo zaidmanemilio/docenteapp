@@ -3,37 +3,13 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { isChecklistComplete, normalizeChecklist } from '@/lib/moodle'
 import PageLoading from '@/components/layout/PageLoading'
 import Link from 'next/link'
 import { useCourseId } from '@/lib/use-course'
 import { TYPE_COLORS } from '@/components/schedule/SessionCard'
 import { SESSION_TYPE_LABELS } from '@/types'
 import type { SessionType } from '@/types'
-
-function KpiCard({ label, value, sub, variant = 'default' }: {
-  label: string; value: string | number; sub?: string
-  variant?: 'accent'|'success'|'warning'|'danger'|'default'
-}) {
-  const borders: Record<string, string> = { accent:'var(--accent)', success:'var(--badge-success-fg)', warning:'var(--badge-warning-fg)', danger:'var(--badge-danger-fg)', default:'var(--border)' }
-  const colors:  Record<string, string> = { accent:'var(--accent)', success:'var(--success)', warning:'var(--warning)', danger:'var(--danger)', default:'var(--text-primary)' }
-  return (
-    <div style={{ background:'var(--surface)', border:`1px solid ${borders[variant]}`, borderRadius:'12px', padding:'14px 16px' }}>
-      <div style={{ fontSize:'11px', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'6px' }}>{label}</div>
-      <div style={{ fontSize:'26px', fontWeight:600, color:colors[variant], lineHeight:1 }}>{value}</div>
-      {sub && <div style={{ fontSize:'11px', color:'var(--text-muted)', marginTop:'4px' }}>{sub}</div>}
-    </div>
-  )
-}
-
-function AlertRow({ text, icon, variant = 'warning' }: { text: string; icon: string; variant?: 'warning'|'danger'|'info'|'success' }) {
-  return (
-    <div className={`alert alert-${variant}`} style={{ alignItems:'center', marginBottom:'8px' }}>
-      <i className={`ti ${icon}`} style={{ fontSize:'15px', flexShrink:0 }} aria-hidden="true"></i>
-      <span>{text}</span>
-    </div>
-  )
-}
+import { FOCOS_PENDIENTES, contar, urlFoco } from '@/lib/session-focus'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 interface DashboardData { course: any; sessions: any[]; todos: any[] }
@@ -116,147 +92,130 @@ export default function DashboardPage() {
     )
   }
 
-  // ── Dashboard normal ───────────────────────────────────────────────────────
-  const total     = sessions.length
-  const dadas     = sessions.filter(s => s.status === 'dada').length
-  const pendientes= sessions.filter(s => s.status === 'pendiente').length
-  const reprog    = sessions.filter(s => s.status === 'reprogramada').length
-  const canceladas= sessions.filter(s => s.status === 'cancelada').length
-  const pct       = total ? Math.round((dadas / total) * 100) : 0
-
-  const sinCanva  = sessions.filter(s => !s.canva_url && !['parcial','recuperatorio','exposicion','proyecto'].includes(s.type) && s.status !== 'cancelada').length
-  const sinBrief  = sessions.filter(s => s.type === 'taller'      && !s.workshop_brief_url && s.status !== 'cancelada').length
-  const sinParcial= sessions.filter(s => ['parcial','recuperatorio'].includes(s.type) && !s.partial_file_url && s.status !== 'cancelada').length
-  const sinBio    = sessions.filter(s => s.type === 'invitado'    && !s.guest_bio_url    && s.status !== 'cancelada').length
-  const sinResp   = sessions.filter(s => !s.responsible           && s.status !== 'cancelada').length
-  const todosOpen = todos.filter(t => t.status === 'open').length
-  const dadasSinReview    = sessions.filter(s => s.status === 'dada' && !s.review_what_worked && !s.review_what_didnt && !s.review_change_next).length
-  // Clases dadas que aún no están completas en Moodle (los 3 ítems obligatorios).
-  const dadasSinMoodle    = sessions.filter(s => s.status === 'dada' && !isChecklistComplete(normalizeChecklist(s.moodle_checklist))).length
-  const fechaPasadaPend   = sessions.filter(s => s.status === 'pendiente' && s.date < today).length
-  const virtualSinZoom    = course.zoom_url ? 0 : sessions.filter(s => s.modality === 'virtual' && !s.canva_url && s.status !== 'cancelada').length
-
-  const typeCounts: Record<string, number> = {}
-  sessions.forEach(s => { typeCounts[s.type] = (typeCounts[s.type] || 0) + 1 })
-  // Etiquetas y colores de tipo: los mismos que usa el cronograma. Antes
-  // cada pantalla tenía su copia, y ya habían empezado a diferir.
-  const typeLabels = SESSION_TYPE_LABELS
-  const maxType = Math.max(...Object.values(typeCounts), 1)
+  // ── Panel ──────────────────────────────────────────────────────────────
+  //
+  // Antes esto eran siete contadores y una lista de alertas que decía
+  // "4 clases sin link a presentación" sin manera de ver cuáles: el número
+  // era un callejón sin salida. Ahora todo lo que muestra un número lleva al
+  // Cronograma mostrando exactamente esos encuentros (lib/session-focus).
+  const total      = sessions.length
+  const dadas      = sessions.filter(s => s.status === 'dada').length
+  const pendientes = sessions.filter(s => s.status === 'pendiente').length
+  const pct        = total ? Math.round((dadas / total) * 100) : 0
+  const todosOpen  = todos.filter(t => t.status === 'open').length
 
   const presencial = sessions.filter(s => s.modality === 'presencial').length
   const virtual    = sessions.filter(s => s.modality === 'virtual').length
 
-  const alerts = [
-    dadasSinReview   > 0 && { text:`${dadasSinReview} clase${dadasSinReview>1?'s':''} dada${dadasSinReview>1?'s':''} sin review post-clase`, icon:'ti-notes-off',         variant:'warning' },
-    dadasSinMoodle   > 0 && { text:`${dadasSinMoodle} clase${dadasSinMoodle>1?'s':''} dada${dadasSinMoodle>1?'s':''} sin publicar en Moodle`, icon:'ti-school',         variant:'info' as const },
-    fechaPasadaPend  > 0 && { text:`${fechaPasadaPend} clase${fechaPasadaPend>1?'s':''} con fecha pasada y estado Pendiente`, icon:'ti-calendar-x',     variant:'danger' },
-    sinCanva         > 0 && { text:`${sinCanva} clase${sinCanva>1?'s':''} sin link a presentación/Canva`, icon:'ti-brand-figma',       variant:'warning' },
-    sinBrief         > 0 && { text:`${sinBrief} taller${sinBrief>1?'es':''} sin brief/consigna`, icon:'ti-file-description',  variant:'warning' },
-    sinParcial       > 0 && { text:`${sinParcial} parcial/recuperatorio sin archivo cargado`, icon:'ti-file-alert',         variant:'warning' },
-    sinBio           > 0 && { text:`${sinBio} invitado${sinBio>1?'s':''} sin bio cargada`, icon:'ti-user-question',      variant:'warning' },
-    sinResp          > 0 && { text:`${sinResp} encuentro${sinResp>1?'s':''} sin responsable asignado`, icon:'ti-user-x',            variant:'warning' },
-    virtualSinZoom   > 0 && { text:`${virtualSinZoom} clase${virtualSinZoom>1?'s':''} virtual sin link de Zoom`, icon:'ti-video-off',        variant:'info' },
-    todosOpen        > 0 && { text:`${todosOpen} tarea${todosOpen>1?'s':''} pendiente${todosOpen>1?'s':''} abierta${todosOpen>1?'s':''}`, icon:'ti-clock-exclamation', variant:'warning' },
-  ].filter(Boolean) as { text: string; icon: string; variant: 'warning'|'danger'|'info'|'success' }[]
+  const typeCounts: Record<string, number> = {}
+  sessions.forEach(s => { typeCounts[s.type] = (typeCounts[s.type] || 0) + 1 })
+  const maxType = Math.max(...Object.values(typeCounts), 1)
+
+  // Cada pendiente se cuenta con la MISMA regla con la que después se filtra.
+  const pendientesOperativos = FOCOS_PENDIENTES
+    .map(f => ({ foco: f, cuantos: contar(f, sessions, today) }))
+    .filter(x => x.cuantos > 0)
 
   return (
     <div style={{ flex:1, overflow:'auto', padding:'24px' }}>
 
       <div className="page-head">
         <h1 className="page-title">Panel</h1>
-        <p className="page-meta">
-          {course.name} · {course.year} · <strong>{dadas}</strong> de{' '}
-          <strong>{total}</strong> {total === 1 ? 'encuentro dictado' : 'encuentros dictados'}
-          {' '}({pct}%)
-        </p>
+        <p className="page-meta">{course.name} · {course.year}</p>
       </div>
 
-      {/* KPIs */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(130px, 1fr))', gap:'12px', marginBottom:'20px' }}>
-        <KpiCard label="Total encuentros"  value={total}     sub={`de ${course.expected_sessions} esperados`} variant="accent"  />
-        <KpiCard label="Clases dadas"      value={dadas}     sub={`${pct}% del curso`}                        variant="success" />
-        <KpiCard label="Pendientes"        value={pendientes} sub="por dar" />
-        {reprog    > 0 && <KpiCard label="Reprogramadas"   value={reprog}    variant="warning" />}
-        {canceladas> 0 && <KpiCard label="Canceladas"      value={canceladas} variant="danger"  />}
-        <KpiCard label="Tareas abiertas"   value={todosOpen}  variant={todosOpen > 0 ? 'warning' : 'default'} />
-        <KpiCard label="Sin review"        value={dadasSinReview} sub="clases dadas" variant={dadasSinReview > 0 ? 'warning' : 'default'} />
+      {/* Tres números, los tres accionables. */}
+      <div className="kpi-row">
+        <Link className="kpi" href={urlFoco(courseId, 'dada')}>
+          <span className="kpi-label">Encuentros dados</span>
+          <span className="kpi-value tabular">
+            {dadas}<span className="kpi-of">/{total}</span>
+          </span>
+          <span className="kpi-sub">{pct}% del curso · ver los dados</span>
+        </Link>
+
+        <Link className={`kpi${pendientes > 0 ? ' is-open' : ''}`} href={urlFoco(courseId, 'pendiente')}>
+          <span className="kpi-label">Clases por dar</span>
+          <span className="kpi-value tabular">{pendientes}</span>
+          <span className="kpi-sub">ver el listado</span>
+        </Link>
+
+        <Link className={`kpi${todosOpen > 0 ? ' is-open' : ''}`} href={`/courses/todos?c=${courseId}`}>
+          <span className="kpi-label">Tareas abiertas</span>
+          <span className="kpi-value tabular">{todosOpen}</span>
+          <span className="kpi-sub">ir a Tareas</span>
+        </Link>
       </div>
 
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px', marginBottom:'16px' }}>
-        {/* Avance */}
-        <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:'12px', padding:'16px 20px' }}>
-          <h3 style={{ fontSize:'15px', fontWeight:600, marginBottom:'12px' }}>Avance del semestre</h3>
-          <div style={{ display:'flex', alignItems:'baseline', gap:'8px', marginBottom:'8px' }}>
-            <span style={{ fontSize:'32px', fontWeight:600, color:'var(--accent)' }}>{pct}%</span>
-            <span style={{ fontSize:'12px', color:'var(--text-muted)' }}>{dadas} de {total} clases</span>
+      {/* Dos fichas chicas: avance y modalidad. */}
+      <div className="mini-row">
+        <div className="mini">
+          <div className="mini-head">
+            <span className="mini-title">Avance</span>
+            <span className="tabular" style={{ fontSize:'var(--text-lg)', fontWeight:700, color:'var(--accent)' }}>{pct}%</span>
           </div>
           <div className="progress-bar"><div className="progress-fill" style={{ width:`${pct}%` }}></div></div>
-          <p style={{ fontSize:'11px', color:'var(--text-muted)', marginTop:'8px' }}>Faltan {pendientes} encuentros por dar</p>
-          {fechaPasadaPend > 0 && (
-            <p style={{ fontSize:'11px', color:'var(--danger)', marginTop:'4px', display:'flex', alignItems:'center', gap:'4px' }}>
-              <i className="ti ti-alert-circle" aria-hidden="true"></i> {fechaPasadaPend} con fecha pasada
-            </p>
-          )}
+          <p className="mini-foot">Faltan {pendientes} de {total}</p>
         </div>
 
-        {/* Modalidad */}
-        <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:'12px', padding:'16px 20px' }}>
-          <h3 style={{ fontSize:'15px', fontWeight:600, marginBottom:'12px' }}>Modalidad</h3>
-          <div style={{ display:'flex', gap:'16px' }}>
-            <div style={{ flex:1, textAlign:'center' }}>
-              <div style={{ fontSize:'28px', fontWeight:600, color:'var(--accent)' }}>{presencial}</div>
-              <div style={{ fontSize:'11px', color:'var(--text-muted)', marginTop:'2px' }}>Presencial</div>
-              <div className="progress-bar" style={{ marginTop:'6px' }}>
-                <div className="progress-fill" style={{ width: total ? `${Math.round(presencial/total*100)}%`:'0%' }}></div>
-              </div>
-            </div>
-            <div style={{ flex:1, textAlign:'center' }}>
-              <div style={{ fontSize:'28px', fontWeight:600, color:'var(--success)' }}>{virtual}</div>
-              <div style={{ fontSize:'11px', color:'var(--text-muted)', marginTop:'2px' }}>Virtual</div>
-              <div className="progress-bar" style={{ marginTop:'6px' }}>
-                <div className="progress-fill" style={{ width: total ? `${Math.round(virtual/total*100)}%`:'0%', background:'var(--success)' }}></div>
-              </div>
-            </div>
+        <div className="mini">
+          <div className="mini-head"><span className="mini-title">Modalidad</span></div>
+          {/* Clicables: la modalidad era un gráfico que no llevaba a ningún lado. */}
+          <div style={{ display:'flex', gap:'var(--space-2)' }}>
+            <Link className="mini-pill" href={urlFoco(courseId, 'presencial')}>
+              <span className="tabular">{presencial}</span> presenciales
+            </Link>
+            <Link className="mini-pill" href={urlFoco(courseId, 'virtual')}>
+              <span className="tabular">{virtual}</span> virtuales
+            </Link>
           </div>
           {course.zoom_url && (
-            <a href={course.zoom_url} target="_blank" rel="noopener noreferrer" className="chip-accent" style={{ display:'flex', alignItems:'center', gap:'6px', marginTop:'12px', padding:'6px 10px', borderRadius:'6px', fontSize:'12px', textDecoration:'none' }}>
+            <a href={course.zoom_url} target="_blank" rel="noopener noreferrer" className="mini-foot"
+              style={{ display:'inline-flex', alignItems:'center', gap:'4px', marginTop:'var(--space-3)', color:'var(--accent)' }}>
               <i className="ti ti-video" aria-hidden="true"></i> Zoom del curso
             </a>
           )}
         </div>
       </div>
 
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px' }}>
-        {/* Por tipo */}
-        <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:'12px', padding:'16px 20px' }}>
-          <h3 style={{ fontSize:'15px', fontWeight:600, marginBottom:'14px' }}>Encuentros por tipo</h3>
-          <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
-            {Object.entries(typeCounts).map(([type, count]) => (
-              <div key={type} style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-                <span style={{ fontSize:'12px', color:'var(--text-muted)', width:'90px', textAlign:'right', flexShrink:0 }}>{typeLabels[type as SessionType]||type}</span>
-                <div style={{ flex:1, height:'20px', background:'var(--hover-bg)', borderRadius:'4px', overflow:'hidden' }}>
-                  <div style={{ width:`${Math.round(count/maxType*100)}%`, height:'100%', background:TYPE_COLORS[type]||'var(--accent-solid)', borderRadius:'4px', display:'flex', alignItems:'center', paddingLeft:'8px' }}>
-                    <span style={{ fontSize:'11px', fontWeight:600, color:'white' }}>{count}</span>
-                  </div>
-                </div>
-              </div>
+      {/* Para resolver: cada fila dice qué pasa, cuántos son, y lleva a verlos. */}
+      <div className="card" style={{ marginBottom:'var(--space-4)' }}>
+        <h2 className="card-title">Para resolver</h2>
+        {pendientesOperativos.length === 0 ? (
+          <div style={{ textAlign:'center', padding:'var(--space-8) 0', color:'var(--success)' }}>
+            <i className="ti ti-circle-check" style={{ fontSize:'28px' }} aria-hidden="true"></i>
+            <p style={{ marginTop:'var(--space-2)', fontWeight:600 }}>No queda nada pendiente.</p>
+          </div>
+        ) : (
+          <div className="todo-list">
+            {pendientesOperativos.map(({ foco, cuantos }) => (
+              <Link key={foco.key} className={`todo-row tono-${foco.tono}`} href={urlFoco(courseId, foco.key)}>
+                <i className={`ti ${foco.icono}`} aria-hidden="true"></i>
+                <span className="todo-text">
+                  <span className="todo-title">{foco.titulo}</span>
+                  <span className="todo-help">{foco.ayuda}</span>
+                </span>
+                <span className="todo-count tabular">{cuantos}</span>
+                <i className="ti ti-chevron-right" aria-hidden="true"></i>
+              </Link>
             ))}
           </div>
-        </div>
+        )}
+      </div>
 
-        {/* Alertas */}
-        <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:'12px', padding:'16px 20px' }}>
-          <h3 style={{ fontSize:'15px', fontWeight:600, marginBottom:'14px' }}>Alertas operativas</h3>
-          {alerts.length === 0 ? (
-            <div style={{ textAlign:'center', padding:'24px 0', color:'var(--success)' }}>
-              <i className="ti ti-circle-check" style={{ fontSize:'28px' }} aria-hidden="true"></i>
-              <p style={{ marginTop:'8px', fontWeight:500 }}>¡Todo en orden!</p>
-            </div>
-          ) : (
-            <div style={{ maxHeight:'280px', overflowY:'auto' }}>
-              {alerts.map((a, i) => <AlertRow key={i} text={a.text} icon={a.icon} variant={a.variant} />)}
-            </div>
-          )}
+      {/* Por tipo, también clicable. */}
+      <div className="card">
+        <h2 className="card-title">Encuentros por tipo</h2>
+        <div style={{ display:'flex', flexDirection:'column', gap:'var(--space-2)' }}>
+          {Object.entries(typeCounts).map(([type, count]) => (
+            <Link key={type} href={urlFoco(courseId, `tipo:${type}`)} className="type-row">
+              <span className="type-name">{SESSION_TYPE_LABELS[type as SessionType] || type}</span>
+              <span className="type-track">
+                <span className="type-bar" style={{ width:`${Math.round(count/maxType*100)}%`, background:TYPE_COLORS[type]||'var(--accent-solid)' }}></span>
+              </span>
+              <span className="type-count tabular">{count}</span>
+            </Link>
+          ))}
         </div>
       </div>
     </div>

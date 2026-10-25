@@ -15,6 +15,8 @@ import {
   filterWeek, weekRangeLabel,
 } from '@/components/calendar/CalendarViews'
 import { useDialog } from '@/components/ui/Dialog'
+import { buscarFoco, FOCUS_PARAM } from '@/lib/session-focus'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { buildCourseIcs, icsFileName } from '@/lib/ical'
 
 // ─── Tipos y constantes ───────────────────────────────────────────────────────
@@ -74,6 +76,18 @@ export default function ScheduleClient({
   const [filterStatus, setFilterStatus] = useState('all')
   const [filterResp,   setFilterResp]   = useState('all')
 
+  // Foco: un recorte con nombre que llega por la URL (?f=sin-canva). Es lo
+  // que hace que los números del Panel lleven a la lista que los produjo.
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const foco = buscarFoco(searchParams.get(FOCUS_PARAM))
+
+  function quitarFoco() {
+    const p = new URLSearchParams(searchParams.toString())
+    p.delete(FOCUS_PARAM)
+    router.replace(`/courses/schedule?${p.toString()}`)
+  }
+
   const [editSession,  setEditSession]  = useState<ExtendedSession | null>(null)
   const [isNew,        setIsNew]        = useState(false)
   const [addLinks,     setAddLinks]     = useState<AdditionalLink[]>([])
@@ -114,10 +128,14 @@ export default function ScheduleClient({
   const isAdmin = profile.global_role === 'admin'
   const canDelete = coursePermission === 'full' || isAdmin
 
+  // Hoy, en ISO. Lo usan el foco, el eje temporal y la marca de "próxima".
+  const hoyISO = new Date().toISOString().slice(0, 10)
+
   // ─── Filtros ──────────────────────────────────────────────────────────────
   const responsables = [...new Set(sessions.map(s => s.responsible))].filter(Boolean)
 
   const filtered = sessions.filter(s => {
+    if (foco && !foco.aplica(s, hoyISO)) return false
     if (filterStatus !== 'all' && s.status !== filterStatus) return false
     if (filterResp   !== 'all' && s.responsible !== filterResp) return false
     return true
@@ -136,7 +154,6 @@ export default function ScheduleClient({
   // ── Eje temporal ──────────────────────────────────────────────────────
   // Un cronograma es tiempo, pero la tabla era una lista plana: sin meses,
   // sin "hoy", sin diferencia entre lo dado y lo que viene.
-  const hoyISO = new Date().toISOString().slice(0, 10)
   const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio',
                  'agosto','septiembre','octubre','noviembre','diciembre']
   function etiquetaMes(fecha: string) {
@@ -256,6 +273,10 @@ export default function ScheduleClient({
     // camino futuro vuelva a mandar texto vacío.
     const finalPayload = {
       ...payload,
+      // El encuentro 0 es la ficha del curso: no se dicta, así que no puede
+      // quedar "pendiente". Si no, un curso con todas sus clases dadas nunca
+      // llega al 100% en el Panel, porque la ficha arrastra el conteo.
+      status: esFicha ? 'dada' : payload.status,
       date: payload.date || null,
       additional_links: addLinks,
       course_id: courseId,
@@ -611,6 +632,19 @@ export default function ScheduleClient({
               </button>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Foco activo: de dónde viniste y cómo volver a ver todo. */}
+      {foco && (
+        <div className="focus-chip">
+          <i className={`ti ${foco.icono}`} aria-hidden="true"></i>
+          <span>
+            Mostrando <strong>{foco.etiqueta}</strong> · {filtered.length} de {sessions.length}
+          </span>
+          <button onClick={quitarFoco}>
+            <i className="ti ti-x" aria-hidden="true"></i> Ver todos
+          </button>
         </div>
       )}
 
