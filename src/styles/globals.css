@@ -298,8 +298,7 @@ select option { background-color: var(--surface); color: var(--text-primary); }
    ============================================================ */
 
 .app-shell {
-  display: flex;
-  flex-direction: column;   /* barra arriba, contenido abajo */
+  display: flex;            /* columna de navegación + contenido */
   height: 100dvh;
   overflow: hidden;
 }
@@ -635,101 +634,107 @@ button:disabled {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   MENÚ SUPERIOR
+   NAVEGACIÓN
    -----------------------------------------------------------------------
-   Reemplaza al sidebar lateral. Tres razones: el lateral se comía 220px de
-   ancho en una app que es sobre todo tablas y listas; mezclaba en una sola
-   columna tres cosas distintas (cambiar de curso, moverse dentro del curso,
-   la cuenta); y en celular obligaba a un cajón que tapaba el contenido.
+   Columna a la izquierda en pantalla grande, cajón en pantalla chica.
+   La versión de menú superior dejaba el contenido corriendo de borde a
+   borde: en un monitor ancho, una fila del cronograma medía dos mil
+   píxeles y el ojo tenía que cruzarla entera para leer una sola clase.
+   La columna recupera ese límite y además deja la lista de cursos y las
+   secciones visibles al mismo tiempo.
    ═══════════════════════════════════════════════════════════════════════ */
 
-.app-top {
-  position: sticky; top: 0; z-index: 30;
+.app-nav {
+  width: 244px; flex-shrink: 0;
+  display: flex; flex-direction: column;
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  overflow: visible;
 }
-
-/* Fila 1: marca, curso, cuenta. */
-.top-row {
-  display: flex; align-items: center; gap: var(--space-3);
-  height: 56px; padding: 0 var(--space-6);
-  max-width: 1400px; margin: 0 auto;
+.nav-head {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-2);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
 }
-.top-mark {
+.nav-mark {
   display: inline-flex; align-items: center; gap: var(--space-2);
   font-size: var(--text-lg); font-weight: 700; letter-spacing: -.015em;
-  color: var(--text-primary); text-decoration: none; flex-shrink: 0;
+  color: var(--text-primary); text-decoration: none;
 }
-.top-mark i { color: var(--accent-solid); font-size: 20px; }
-[data-theme="dark"] .top-mark i { color: var(--accent); }
+.nav-mark i { color: var(--accent-solid); font-size: 20px; }
+[data-theme="dark"] .nav-mark i { color: var(--accent); }
 
-/* Fila 2: secciones del curso, con subrayado que crece desde el centro. */
-.top-tabs {
-  display: flex; gap: var(--space-6);
-  padding: 0 var(--space-6); max-width: 1400px; margin: 0 auto;
-  overflow-x: auto; scrollbar-width: none;
+/* Lista de secciones del curso. El indicador es una barra a la izquierda
+   que crece desde el centro: el equivalente vertical del subrayado. */
+.nav-list { flex: 1; overflow-y: auto; padding: var(--space-2); display: flex; flex-direction: column; gap: 1px; }
+.nav-item {
+  position: relative; display: flex; align-items: center; gap: var(--space-3);
+  width: 100%; padding: var(--space-2) var(--space-3);
+  border: 0; border-radius: 8px; background: none; cursor: pointer;
+  font-family: inherit; font-size: var(--text-sm); font-weight: 500;
+  color: var(--text-muted); text-align: left;
+  transition: color .16s ease, background .16s ease;
 }
-.top-tabs::-webkit-scrollbar { display: none; }
-.top-tab {
-  position: relative; background: none; border: 0; cursor: pointer;
-  font-family: inherit; font-size: var(--text-base); font-weight: 500;
-  color: var(--text-muted); padding: 15px 2px; white-space: nowrap;
-  transition: color .16s ease;
+.nav-item i { font-size: 17px; width: 20px; flex-shrink: 0; }
+.nav-item::before {
+  content: ''; position: absolute; left: 0; top: 7px; bottom: 7px; width: 2px;
+  border-radius: 2px; background: var(--accent-solid);
+  transform: scaleY(0); transition: transform .2s cubic-bezier(.2,.7,.3,1);
 }
-.top-tab::after {
-  content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
-  background: var(--accent-solid); border-radius: 2px;
-  transform: scaleX(0); transition: transform .22s cubic-bezier(.2,.7,.3,1);
-}
-[data-theme="dark"] .top-tab::after { background: var(--accent); }
-.top-tab:hover { color: var(--text-primary); }
-.top-tab:hover::after { transform: scaleX(1); }
-.top-tab[aria-current='page'] { color: var(--text-primary); font-weight: 600; }
-.top-tab[aria-current='page']::after { transform: scaleX(1); }
-.top-tab[aria-disabled='true'] { opacity: .4; cursor: not-allowed; }
-.top-tab[aria-disabled='true']:hover { color: var(--text-muted); }
-.top-tab[aria-disabled='true']:hover::after { transform: scaleX(0); }
+[data-theme="dark"] .nav-item::before { background: var(--accent); }
+.nav-item:hover { color: var(--text-primary); background: var(--hover-bg); }
+.nav-item:hover::before { transform: scaleY(1); }
+.nav-item[aria-current='page'] { color: var(--text-primary); font-weight: 600; background: var(--hover-bg); }
+.nav-item[aria-current='page']::before { transform: scaleY(1); }
+.nav-item[aria-disabled='true'] { opacity: .4; cursor: not-allowed; }
+.nav-item[aria-disabled='true']:hover { color: var(--text-muted); background: none; }
+.nav-item[aria-disabled='true']:hover::before { transform: scaleY(0); }
 
-/* Riel con el color del curso: dice en cuál estás sin leer nada. */
-.top-rail { height: 3px; }
+.nav-sep { height: 1px; background: var(--border); margin: var(--space-2) var(--space-2); }
+.nav-group {
+  padding: var(--space-3) var(--space-3) var(--space-1);
+  font-size: var(--text-xs); font-weight: 600;
+  text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted);
+}
+
+/* Pie: tema y cuenta. */
+.nav-foot {
+  padding: var(--space-2); border-top: 1px solid var(--border);
+}
 
 /* ── Selector de curso ────────────────────────────────────────────────
-   Se abre al apuntarle, sin hacer click. El `padding-top` del panel y el
-   hueco que deja arriba son deliberados: el puntero tiene que poder bajar
-   del botón al panel sin pasar por un vacío que lo cierre. */
-.course-menu { position: relative; flex-shrink: 1; min-width: 0; }
+   Se abre al apuntarle, sin click. El panel sale hacia abajo y hacia la
+   derecha: la columna es angosta y los nombres de curso son largos. */
+.course-menu { position: relative; padding: 0 var(--space-3) var(--space-3); }
 .course-btn {
-  display: inline-flex; align-items: center; gap: var(--space-2);
-  max-width: 100%; height: 38px; padding: 0 var(--space-3);
-  border: 1px solid var(--border); border-radius: 9px;
+  display: flex; align-items: center; gap: var(--space-2);
+  width: 100%; min-height: 42px; padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border); border-left-width: 3px; border-radius: 9px;
   background: var(--bg); color: var(--text-primary);
   font-family: inherit; font-size: var(--text-sm); font-weight: 600;
-  cursor: pointer; transition: border-color .16s ease, background .16s ease;
+  text-align: left; cursor: pointer;
+  transition: border-color .16s ease, background .16s ease;
 }
-.course-btn:hover { border-color: var(--text-muted); background: var(--hover-bg); }
-.course-btn .course-dot {
-  width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
-}
+.course-btn:hover { background: var(--hover-bg); }
 .course-btn .course-name {
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.course-btn .ti-chevron-down { transition: transform .2s ease; font-size: 14px; }
+.course-btn .ti-chevron-down { transition: transform .2s ease; font-size: 14px; flex-shrink: 0; }
 .course-menu:hover .course-btn .ti-chevron-down,
 .course-menu:focus-within .course-btn .ti-chevron-down { transform: rotate(180deg); }
 
 .course-panel {
-  position: absolute; top: 100%; left: 0; z-index: 40;
+  position: absolute; top: calc(100% - var(--space-2)); left: var(--space-3); z-index: 40;
   padding-top: var(--space-2);
-  opacity: 0; transform: translateY(-6px);
-  pointer-events: none;
+  opacity: 0; transform: translateY(-6px); pointer-events: none;
   transition: opacity .18s ease, transform .18s cubic-bezier(.2,.7,.3,1);
 }
 .course-menu:hover .course-panel,
-.course-menu:focus-within .course-panel {
+.course-menu:focus-within .course-panel,
+.course-menu.is-expanded .course-panel {
   opacity: 1; transform: translateY(0); pointer-events: auto;
 }
 .course-panel-inner {
-  min-width: 340px; max-width: min(92vw, 520px);
+  min-width: 300px; max-width: min(88vw, 460px);
   background: var(--surface-elevated);
   border: 1px solid var(--border); border-radius: 12px;
   box-shadow: 0 12px 34px rgb(0 0 0 / .18);
@@ -752,11 +757,12 @@ button:disabled {
 }
 .course-item:hover { background: var(--hover-bg); color: var(--text-primary); }
 .course-item.is-current { background: var(--chip-accent-bg); color: var(--chip-accent-fg); font-weight: 600; }
-.course-item .course-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.course-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
 .course-item .course-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .course-item .course-year { font-size: var(--text-xs); color: var(--text-muted); flex-shrink: 0; }
 
-/* Fila de curso: el curso y su chincheta, uno al lado del otro. */
+/* Fila de curso: el curso y su chincheta, uno al lado del otro.
+   Dos botones hermanos, no uno adentro del otro. */
 .course-row { display: flex; align-items: center; gap: 2px; }
 .course-row .course-item { flex: 1; min-width: 0; }
 .course-pin-btn {
@@ -772,14 +778,12 @@ button:disabled {
 .course-pin-btn:hover { background: var(--hover-bg); color: var(--text-primary); }
 .course-pin-btn.is-pinned { color: var(--accent); }
 @media (pointer: coarse) {
-  /* Sin puntero no hay hover que la revele: siempre visible. */
   .course-pin-btn { opacity: 1; width: 44px; height: 44px; }
 }
 
 .course-sep { height: 1px; background: var(--border); margin: var(--space-2) var(--space-2); }
 
-/* ── Acciones de la derecha ─────────────────────────────────────────── */
-.top-actions { margin-left: auto; display: flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
+/* ── Controles sueltos ────────────────────────────────────────────── */
 .icon-btn {
   display: inline-flex; align-items: center; justify-content: center;
   width: 38px; height: 38px; border-radius: 9px;
@@ -790,12 +794,12 @@ button:disabled {
 .icon-btn:hover { border-color: var(--text-muted); color: var(--text-primary); background: var(--hover-bg); }
 .avatar-btn {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 38px; height: 38px; border-radius: 50%; border: 0;
+  width: 38px; height: 38px; border-radius: 50%; border: 0; flex-shrink: 0;
   color: #fff; font-family: inherit; font-size: var(--text-xs); font-weight: 700;
   cursor: pointer;
 }
 .user-panel {
-  position: absolute; top: calc(100% + var(--space-2)); right: 0; z-index: 40;
+  position: absolute; bottom: calc(100% + var(--space-2)); left: 0; z-index: 45;
   min-width: 220px; background: var(--surface-elevated);
   border: 1px solid var(--border); border-radius: 12px;
   box-shadow: 0 12px 34px rgb(0 0 0 / .18); padding: var(--space-2);
@@ -810,13 +814,64 @@ button:disabled {
 }
 .user-item:hover { background: var(--hover-bg); color: var(--text-primary); }
 
-/* ── Celular ──────────────────────────────────────────────────────────
-   El panel de cursos no puede abrirse al apuntar: no hay puntero. Pasa a
-   abrirse al tocar (:focus-within cubre el caso) y ocupa el ancho. */
-@media (max-width: 760px) {
-  .top-row { padding: 0 var(--space-4); gap: var(--space-2); }
-  .top-tabs { padding: 0 var(--space-4); gap: var(--space-4); }
-  .top-tab { font-size: var(--text-sm); padding: 13px 2px; }
-  .course-panel-inner { min-width: 0; width: calc(100vw - var(--space-8)); }
-  .top-mark span { display: none; }
+/* ── Barra superior: solo en pantalla chica ─────────────────────────── */
+.app-bar { display: none; }
+.nav-backdrop { display: none; }
+/* El botón de tema vive en la barra fina cuando esa barra existe; en la
+   columna solo hace falta en pantalla grande. */
+.solo-ancho { display: contents; }
+
+@media (max-width: 1023px) {
+  .app-shell { flex-direction: column; }
+
+  .app-bar {
+    display: flex; align-items: center; gap: var(--space-3);
+    height: 56px; padding: 0 var(--space-4); flex-shrink: 0;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+  }
+  .app-bar .bar-title {
+    flex: 1; min-width: 0; font-size: var(--text-base); font-weight: 600;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    display: flex; align-items: center; gap: var(--space-2);
+  }
+
+  .app-nav {
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 60;
+    width: 272px; max-width: 84vw;
+    transform: translateX(-100%);
+    transition: transform .22s cubic-bezier(.2,.7,.3,1);
+    box-shadow: 2px 0 24px rgb(0 0 0 / .35);
+  }
+  .app-nav.is-open { transform: translateX(0); }
+
+  .nav-backdrop {
+    display: block; position: fixed; inset: 0; z-index: 59;
+    background: rgb(0 0 0 / .5);
+    opacity: 0; pointer-events: none; transition: opacity .22s ease;
+  }
+  .nav-backdrop.is-open { opacity: 1; pointer-events: auto; }
+
+  /* En el cajón el panel de cursos no puede abrirse al apuntar: no hay
+     puntero. Se despliega en el lugar, empujando lo de abajo. */
+  .course-panel {
+    position: static; opacity: 1; transform: none; pointer-events: auto;
+    padding-top: var(--space-2); display: none;
+  }
+  .course-menu.is-expanded .course-panel { display: block; }
+  .course-menu.is-expanded .course-btn .ti-chevron-down { transform: rotate(180deg); }
+  .course-panel-inner {
+    min-width: 0; width: 100%; box-shadow: none;
+    background: var(--bg); max-height: 320px;
+  }
+
+  .solo-ancho { display: none; }
+}
+
+/* ── Ancho de lectura ─────────────────────────────────────────────────
+   Sin tope, en un monitor ancho una fila del cronograma mide dos mil
+   píxeles y hay que cruzarla entera para leer una clase. */
+.page-wrap {
+  flex: 1; min-height: 0; min-width: 0;
+  display: flex; flex-direction: column;
+  width: 100%; max-width: 1280px; margin: 0 auto;
 }

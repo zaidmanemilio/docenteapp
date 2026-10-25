@@ -1,13 +1,14 @@
 'use client'
-// src/components/layout/TopNav.tsx
+// src/components/layout/SideNav.tsx
 //
-// Reemplaza al sidebar lateral.
+// Columna de navegación a la izquierda en pantalla grande; cajón que se
+// abre desde una barra fina en pantalla chica.
 //
-// El lateral mezclaba tres cosas distintas en una sola columna de 220px:
-// en qué curso estás, dónde estás dentro del curso, y tu cuenta. Acá cada
-// una tiene su lugar: el curso a la izquierda, las secciones en su propia
-// fila, la cuenta a la derecha. Y la app recupera esos 220px de ancho, que
-// en pantallas de tablas y cronogramas se notan.
+// Conserva la forma del menú superior que reemplazó al sidebar viejo —el
+// selector de curso que se despliega al apuntarle, separado en Grado y
+// Posgrado, y el botón de tema— pero vuelve a la columna, porque con el
+// menú arriba el contenido corría de borde a borde: en un monitor ancho
+// una fila del cronograma medía dos mil píxeles.
 import { useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -19,26 +20,26 @@ import ThemeToggle from './ThemeToggle'
 import type { Profile, Course } from '@/types'
 
 const SECCIONES = [
-  { key: 'presentation', label: 'Presentación' },
-  { key: 'schedule',     label: 'Cronograma' },
-  { key: 'todos',        label: 'Tareas' },
-  { key: 'dashboard',    label: 'Panel' },
-  { key: 'import',       label: 'Importar' },
-  { key: 'config',       label: 'Configuración' },
-  { key: 'users',        label: 'Usuarios', adminOnly: true },
+  { key: 'presentation', label: 'Presentación', icon: 'ti-id-badge' },
+  { key: 'schedule',     label: 'Cronograma',   icon: 'ti-calendar-month' },
+  { key: 'todos',        label: 'Tareas',       icon: 'ti-checks' },
+  { key: 'dashboard',    label: 'Panel',        icon: 'ti-layout-dashboard' },
+  { key: 'import',       label: 'Importar',     icon: 'ti-upload' },
+  { key: 'config',       label: 'Configuración', icon: 'ti-settings' },
+  { key: 'users',        label: 'Usuarios',     icon: 'ti-users', adminOnly: true },
 ]
 
 function iniciales(nombre: string) {
   return nombre.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()
 }
 
-interface TopNavProps {
+interface SideNavProps {
   profile: Profile
   courses: Course[]
   pinnedCourseId?: string | null
 }
 
-export default function TopNav({ profile, courses, pinnedCourseId = null }: TopNavProps) {
+export default function SideNav({ profile, courses, pinnedCourseId = null }: SideNavProps) {
   const router = useRouter()
   const pathname = usePathname()
   const supabase = createClient()
@@ -48,6 +49,10 @@ export default function TopNav({ profile, courses, pinnedCourseId = null }: TopN
   const [pinnedId, setPinnedId] = useState<string | null>(pinnedCourseId)
   const [pinning, setPinning] = useState(false)
   const [userMenu, setUserMenu] = useState(false)
+  const [cajonAbierto, setCajonAbierto] = useState(false)
+  // Solo se usa en el cajón: ahí no hay puntero, así que el panel de
+  // cursos se abre tocando el botón en vez de al apuntarle.
+  const [cursosAbiertos, setCursosAbiertos] = useState(false)
   const userBox = useRef<HTMLDivElement>(null)
 
   const isAdmin = profile.global_role === 'admin'
@@ -57,14 +62,11 @@ export default function TopNav({ profile, courses, pinnedCourseId = null }: TopN
   const enCalendario = pathname === '/calendar'
 
   const cursoActivo = courses.find(c => c.id === activeCourseId) || courses[0] || null
-  const colorCurso = cursoActivo ? colorDeCurso(cursoActivo.id) : 'transparent'
+  const colorCurso = cursoActivo ? colorDeCurso(cursoActivo.id) : 'var(--border)'
 
-  // Grado y posgrado, como dos listas. Los cursos sin nivel cargado cuentan
-  // como grado, que es lo que hacía el filtro del sidebar.
   const posgrado = courses.filter(c => c.level === 'posgrado')
   const grado = courses.filter(c => c.level !== 'posgrado')
 
-  // Cerrar el menú de la cuenta al hacer click afuera o con Escape.
   useEffect(() => {
     if (!userMenu) return
     function fuera(e: MouseEvent) {
@@ -79,7 +81,20 @@ export default function TopNav({ profile, courses, pinnedCourseId = null }: TopN
     }
   }, [userMenu])
 
-  useEffect(() => { setUserMenu(false) }, [pathname])
+  // Al navegar se cierra todo: en celular el cajón quedaría tapando.
+  useEffect(() => {
+    setUserMenu(false)
+    setCajonAbierto(false)
+    setCursosAbiertos(false)
+  }, [pathname])
+
+  // Escape cierra el cajón.
+  useEffect(() => {
+    if (!cajonAbierto) return
+    function tecla(e: KeyboardEvent) { if (e.key === 'Escape') setCajonAbierto(false) }
+    document.addEventListener('keydown', tecla)
+    return () => document.removeEventListener('keydown', tecla)
+  }, [cajonAbierto])
 
   function irASeccion(key: string) {
     const destino = activeCourseId || courses[0]?.id
@@ -88,8 +103,8 @@ export default function TopNav({ profile, courses, pinnedCourseId = null }: TopN
   }
 
   function elegirCurso(id: string) {
-    // Se mantiene la sección en la que estás al cambiar de curso: si estabas
-    // mirando el Cronograma, seguís en el Cronograma del otro curso.
+    // Se mantiene la sección al cambiar de curso: si estabas mirando el
+    // Cronograma, seguís en el Cronograma del otro curso.
     const seccion = seccionActual || 'presentation'
     router.push(`/courses/${seccion}?c=${id}`)
   }
@@ -117,9 +132,6 @@ export default function TopNav({ profile, courses, pinnedCourseId = null }: TopN
       <>
         <div className="course-group">{titulo}</div>
         {lista.map(c => (
-          /* Dos botones hermanos, no uno adentro del otro: anidar un botón
-             dentro de otro es HTML inválido y deja la chincheta fuera del
-             recorrido con teclado. */
           <div key={c.id} className="course-row">
             <button
               className={`course-item${c.id === cursoActivo?.id ? ' is-current' : ''}`}
@@ -145,16 +157,53 @@ export default function TopNav({ profile, courses, pinnedCourseId = null }: TopN
   }
 
   return (
-    <header className="app-top">
-      <div className="top-row">
-        <a className="top-mark" href="/" onClick={e => { e.preventDefault(); router.push('/') }}>
-          <i className="ti ti-school" aria-hidden="true"></i>
-          <span>DocenteApp</span>
-        </a>
+    <>
+      {/* Barra fina: solo aparece abajo de 1024px (lo decide globals.css). */}
+      <div className="app-bar">
+        <button
+          className="icon-btn"
+          onClick={() => setCajonAbierto(true)}
+          aria-label="Abrir menú de navegación"
+          aria-expanded={cajonAbierto}
+          aria-controls="app-nav"
+        >
+          <i className="ti ti-menu-2" aria-hidden="true"></i>
+        </button>
+        <span className="bar-title">
+          {cursoActivo && (
+            <span className="course-dot" style={{ background: colorCurso }}></span>
+          )}
+          {cursoActivo ? cursoActivo.name : 'DocenteApp'}
+        </span>
+        <ThemeToggle />
+      </div>
 
-        {/* Selector de curso: se abre al apuntarle. */}
-        <div className="course-menu">
-          <button className="course-btn" aria-haspopup="menu">
+      <div
+        className={`nav-backdrop${cajonAbierto ? ' is-open' : ''}`}
+        onClick={() => setCajonAbierto(false)}
+        aria-hidden="true"
+      />
+
+      <nav id="app-nav" className={`app-nav${cajonAbierto ? ' is-open' : ''}`} aria-label="Navegación principal">
+        <div className="nav-head">
+          <a className="nav-mark" href="/" onClick={e => { e.preventDefault(); router.push('/') }}>
+            <i className="ti ti-school" aria-hidden="true"></i>
+            DocenteApp
+          </a>
+          {/* Arriba y a la derecha de donde esté la navegación. Con el menú
+              en columna, eso es el extremo de esta fila. */}
+          <span className="solo-ancho"><ThemeToggle /></span>
+        </div>
+
+        {/* Selector de curso. */}
+        <div className={`course-menu${cursosAbiertos ? ' is-expanded' : ''}`}>
+          <button
+            className="course-btn"
+            style={{ borderLeftColor: colorCurso }}
+            aria-haspopup="menu"
+            aria-expanded={cursosAbiertos}
+            onClick={() => setCursosAbiertos(o => !o)}
+          >
             {cursoActivo ? (
               <>
                 <span className="course-dot" style={{ background: colorCurso }}></span>
@@ -205,19 +254,44 @@ export default function TopNav({ profile, courses, pinnedCourseId = null }: TopN
           </div>
         </div>
 
-        <div className="top-actions">
-          <ThemeToggle />
+        {/* Secciones del curso. */}
+        <div className="nav-list">
+          {SECCIONES
+            .filter(s => !s.adminOnly || isAdmin)
+            .map(s => (
+              <button
+                key={s.key}
+                className="nav-item"
+                onClick={() => { if (!sinCursos) irASeccion(s.key) }}
+                aria-current={seccionActual === s.key && !enCalendario ? 'page' : undefined}
+                aria-disabled={sinCursos || undefined}
+                title={sinCursos ? 'Necesitás un curso asignado para entrar acá.' : undefined}
+              >
+                <i className={`ti ${s.icon}`} aria-hidden="true"></i>
+                {s.label}
+              </button>
+            ))}
+        </div>
 
-          <div ref={userBox} style={{ position: 'relative' }}>
+        {/* Pie: tema y cuenta. */}
+        <div className="nav-foot">
+          <div ref={userBox} style={{ position: 'relative', flex: 1, minWidth: 0 }}>
             <button
-              className="avatar-btn"
-              style={{ background: colorDeCurso(profile.id) }}
+              className="user-item"
               onClick={() => setUserMenu(o => !o)}
               aria-expanded={userMenu}
               aria-haspopup="menu"
-              aria-label={`Cuenta de ${profile.full_name}`}
             >
-              {iniciales(profile.full_name)}
+              <span
+                className="avatar-btn"
+                style={{ background: colorDeCurso(profile.id), width: '28px', height: '28px', fontSize: '10px', cursor: 'inherit' }}
+                aria-hidden="true"
+              >
+                {iniciales(profile.full_name)}
+              </span>
+              <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {profile.full_name}
+              </span>
             </button>
 
             {userMenu && (
@@ -239,28 +313,9 @@ export default function TopNav({ profile, courses, pinnedCourseId = null }: TopN
               </div>
             )}
           </div>
+
         </div>
-      </div>
-
-      {/* Secciones del curso. */}
-      <nav className="top-tabs" aria-label="Secciones del curso">
-        {SECCIONES
-          .filter(s => !s.adminOnly || isAdmin)
-          .map(s => (
-            <button
-              key={s.key}
-              className="top-tab"
-              onClick={() => { if (!sinCursos) irASeccion(s.key) }}
-              aria-current={seccionActual === s.key && !enCalendario ? 'page' : undefined}
-              aria-disabled={sinCursos || undefined}
-              title={sinCursos ? 'Necesitás un curso asignado para entrar acá.' : undefined}
-            >
-              {s.label}
-            </button>
-          ))}
       </nav>
-
-      <div className="top-rail" style={{ background: cursoActivo && !enCalendario ? colorCurso : 'transparent' }}></div>
-    </header>
+    </>
   )
 }

@@ -6,7 +6,7 @@
 // que pueda mirar la cookie antes de responder.
 import { Suspense } from 'react'
 import { SessionProvider, useSession } from '@/lib/session-context'
-import TopNav from '@/components/layout/TopNav'
+import SideNav from '@/components/layout/SideNav'
 import PageLoading from '@/components/layout/PageLoading'
 import { DialogProvider } from '@/components/ui/Dialog'
 
@@ -15,9 +15,11 @@ function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="app-shell">
-      <TopNav profile={profile} courses={courses} pinnedCourseId={pinnedCourseId} />
+      <SideNav profile={profile} courses={courses} pinnedCourseId={pinnedCourseId} />
       <main className="app-main">
-        {children}
+        {/* Tope de ancho de lectura: sin él, en un monitor ancho una fila
+            del cronograma corre de borde a borde. */}
+        <div className="page-wrap">{children}</div>
       </main>
     </div>
   )
