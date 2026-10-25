@@ -9,6 +9,9 @@ import {
   filterWeek, weekRangeLabel,
 } from '@/components/calendar/CalendarViews'
 import { colorDeCurso } from '@/lib/course-color'
+import { TYPE_COLORS, TYPE_BADGE } from '@/components/schedule/SessionCard'
+import { SESSION_TYPE_LABELS } from '@/types'
+import type { SessionType } from '@/types'
 
 interface Session {
   id: string
@@ -30,20 +33,11 @@ interface Course {
   name: string
 }
 
-const TYPE_COLORS: Record<string, string> = {
-  teorica: '#6366f1', practica: '#0d9488', taller: '#d97706',
-  invitado: '#be185d', parcial: '#dc2626', recuperatorio: '#f97316',
-  exposicion: '#7c3aed', proyecto: '#059669',
-}
-
-const TYPE_LABELS: Record<string, string> = {
-  teorica: 'Teórica', practica: 'Práctica', taller: 'Taller',
-  invitado: 'Invitado', parcial: 'Parcial', recuperatorio: 'Recuperatorio',
-  exposicion: 'Exposición', proyecto: 'Proyecto',
-}
-
+// Los colores y etiquetas de tipo salen del cronograma: eran una copia,
+// y la copia ya había quedado con un naranja distinto para recuperatorio.
 const STATUS_COLORS: Record<string, string> = {
-  dada: '#059669', pendiente: '#6b7280', reprogramada: '#d97706', cancelada: '#dc2626',
+  dada: 'var(--success)', pendiente: 'var(--text-muted)',
+  reprogramada: 'var(--warning)', cancelada: 'var(--danger)',
 }
 
 
@@ -193,14 +187,14 @@ export default function UnifiedCalendarClient({
       {/* Leyenda de cursos */}
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '16px' }}>
         {courses.map(c => (
-          <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 10px', background: 'var(--surface)', border: '1px solid #e5e7eb', borderRadius: '99px', fontSize: '12px', cursor: 'pointer', borderColor: filterCourse === c.id ? courseColorMap[c.id] : '#e5e7eb' }}
+          <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 10px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '99px', fontSize: '12px', cursor: 'pointer', borderColor: filterCourse === c.id ? courseColorMap[c.id] : 'var(--border)' }}
             onClick={() => setFilterCourse(filterCourse === c.id ? 'all' : c.id)}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: courseColorMap[c.id], flexShrink: 0 }}></span>
             <span style={{ color: filterCourse === c.id ? courseColorMap[c.id] : 'var(--text-secondary)', fontWeight: filterCourse === c.id ? 600 : 400 }}>{c.name}</span>
           </div>
         ))}
         {filterCourse !== 'all' && (
-          <button onClick={() => setFilterCourse('all')} style={{ padding: '4px 10px', background: 'none', border: '1px dashed #d1d5db', borderRadius: '99px', fontSize: '12px', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'inherit' }}>
+          <button onClick={() => setFilterCourse('all')} style={{ padding: '4px 10px', background: 'none', border: '1px dashed var(--input-border)', borderRadius: '99px', fontSize: '12px', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'inherit' }}>
             Ver todos
           </button>
         )}
@@ -316,8 +310,10 @@ export default function UnifiedCalendarClient({
                         <span style={{ fontSize: '11px', fontWeight: 600, color: courseColor, background: courseColor + '15', padding: '1px 8px', borderRadius: '99px' }}>
                           {s.course.name}
                         </span>
-                        <span style={{ fontSize: '10px', fontWeight: 600, padding: '1px 7px', borderRadius: '99px', background: (TYPE_COLORS[s.type] || 'var(--text-muted)') + '20', color: TYPE_COLORS[s.type] || 'var(--text-muted)' }}>
-                          {TYPE_LABELS[s.type] || s.type}
+                        {/* Antes pintaba el texto con el color del tipo
+                            sobre ese mismo color al 12%: 2,6:1 en oscuro. */}
+                        <span className={`badge ${TYPE_BADGE[s.type] || 'badge-neutral'}`}>
+                          {SESSION_TYPE_LABELS[s.type as SessionType] || s.type}
                         </span>
                       </div>
 
@@ -343,7 +339,7 @@ export default function UnifiedCalendarClient({
                           </span>
                         )}
                         {isSameDay && (
-                          <span style={{ fontSize: '11px', padding: '2px 8px', background: '#fff7ed', color: 'var(--badge-orange-fg)', borderRadius: '99px' }}>
+                          <span style={{ fontSize: '11px', padding: '2px 8px', background: 'var(--badge-orange-bg)', color: 'var(--badge-orange-fg)', borderRadius: '99px' }}>
                             📅 Mismo día que otro curso
                           </span>
                         )}
@@ -361,7 +357,7 @@ export default function UnifiedCalendarClient({
                     </div>
 
                     {/* Ir al curso */}
-                    <div style={{ color: '#d1d5db', fontSize: '16px', flexShrink: 0, alignSelf: 'center' }}>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '16px', flexShrink: 0, alignSelf: 'center' }}>
                       <i className="ti ti-chevron-right" aria-hidden="true"></i>
                     </div>
                   </div>

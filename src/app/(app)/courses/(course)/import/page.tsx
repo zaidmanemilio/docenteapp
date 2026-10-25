@@ -226,8 +226,8 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
               <div
                 onClick={() => document.getElementById('file-input')?.click()}
                 style={{ border: '2px dashed var(--border)', borderRadius: '12px', padding: '40px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.15s' }}
-                onMouseEnter={e => (e.currentTarget.style.borderColor = '#6366f1')}
-                onMouseLeave={e => (e.currentTarget.style.borderColor = '#e5e7eb')}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--input-border)')}
               >
                 <i className="ti ti-upload" style={{ fontSize: '36px', color: 'var(--text-muted)', display: 'block', marginBottom: '8px' }} aria-hidden="true"></i>
                 <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '4px' }}>Hacé clic para seleccionar archivo</p>

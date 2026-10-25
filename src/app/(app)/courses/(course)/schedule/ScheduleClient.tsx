@@ -529,7 +529,7 @@ export default function ScheduleClient({
               padding: '7px 14px',
               background: bulkMode ? 'var(--chip-accent-bg)' : 'var(--surface)',
               border: `1px solid ${bulkMode ? 'var(--accent)' : 'var(--border)'}`,
-              color: bulkMode ? '#4338ca' : '#6b7280',
+              color: bulkMode ? 'var(--chip-accent-fg)' : 'var(--text-muted)',
               borderRadius: '8px', fontSize: '13px',
               fontWeight: bulkMode ? 600 : 400,
               cursor: 'pointer', fontFamily: 'inherit',
@@ -573,41 +573,40 @@ export default function ScheduleClient({
         </div>
       </div>
 
-      {/* Barra edición masiva */}
+      {/* Barra edición masiva.
+          Era un bloque índigo casi negro con todos los colores escritos a
+          mano: en el tema claro quedaba como una mancha oscura en medio de
+          la página. Ahora usa los tokens y las clases de botón de siempre. */}
       {bulkMode && (
-        <div style={{
-          background: '#1e1b4b', borderRadius: '10px', padding: '12px 16px',
-          marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap',
-        }}>
-          <span style={{ fontSize: '13px', color: '#c7d2fe', fontWeight: 500 }}>
+        <div className="bulk-bar">
+          <span style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--chip-accent-fg)' }}>
             {selected.size} seleccionada{selected.size !== 1 ? 's' : ''}
           </span>
-          <button onClick={selectAll}      style={{ fontSize: '12px', color: '#a5b4fc', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>Seleccionar todas</button>
-          <button onClick={clearSelection} style={{ fontSize: '12px', color: '#a5b4fc', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>Limpiar</button>
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            <select onChange={e => e.target.value && bulkChangeStatus(e.target.value)} defaultValue=""
-              disabled={!selected.size || bulkSaving}
-              style={{ padding: '5px 8px', borderRadius: '6px', fontSize: '12px', border: '1px solid #4338ca', background: '#312e81', color: '#c7d2fe', fontFamily: 'inherit' }}>
-              <option value="">Cambiar estado...</option>
+          <button className="bulk-link" onClick={selectAll}>Seleccionar todas</button>
+          <button className="bulk-link" onClick={clearSelection}>Limpiar</button>
+
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+            <select className="bulk-control" aria-label="Cambiar estado de lo seleccionado"
+              onChange={e => e.target.value && bulkChangeStatus(e.target.value)} defaultValue=""
+              disabled={!selected.size || bulkSaving}>
+              <option value="">Cambiar estado…</option>
               <option value="pendiente">Pendiente</option>
               <option value="dada">Dada</option>
               <option value="reprogramada">Reprogramada</option>
               <option value="cancelada">Cancelada</option>
             </select>
-            <select onChange={e => e.target.value && bulkChangeModality(e.target.value)} defaultValue=""
-              disabled={!selected.size || bulkSaving}
-              style={{ padding: '5px 8px', borderRadius: '6px', fontSize: '12px', border: '1px solid #4338ca', background: '#312e81', color: '#c7d2fe', fontFamily: 'inherit' }}>
-              <option value="">Cambiar modalidad...</option>
+            <select className="bulk-control" aria-label="Cambiar modalidad de lo seleccionado"
+              onChange={e => e.target.value && bulkChangeModality(e.target.value)} defaultValue=""
+              disabled={!selected.size || bulkSaving}>
+              <option value="">Cambiar modalidad…</option>
               <option value="presencial">Presencial</option>
               <option value="virtual">Virtual</option>
             </select>
-            <button onClick={bulkChangeResponsible} disabled={!selected.size || bulkSaving}
-              style={{ padding: '5px 12px', borderRadius: '6px', fontSize: '12px', border: '1px solid #4338ca', background: '#312e81', color: '#c7d2fe', fontFamily: 'inherit', opacity: selected.size ? 1 : 0.5, cursor: selected.size ? 'pointer' : 'default' }}>
+            <button className="bulk-control" onClick={bulkChangeResponsible} disabled={!selected.size || bulkSaving}>
               Cambiar responsable
             </button>
             {canDelete && (
-              <button onClick={bulkDelete} disabled={!selected.size || bulkSaving}
-                style={{ padding: '5px 12px', borderRadius: '6px', fontSize: '12px', border: '1px solid #dc2626', background: '#450a0a', color: '#fca5a5', fontFamily: 'inherit', opacity: selected.size ? 1 : 0.5, cursor: selected.size ? 'pointer' : 'default' }}>
+              <button className="bulk-control is-danger" onClick={bulkDelete} disabled={!selected.size || bulkSaving}>
                 <i className="ti ti-trash" aria-hidden="true"></i> Eliminar
               </button>
             )}

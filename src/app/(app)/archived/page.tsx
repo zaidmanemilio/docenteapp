@@ -194,7 +194,7 @@ export default function ArchivedPage() {
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button onClick={() => restore(c.id)} style={{
                   padding: '7px 14px', background: 'var(--badge-success-bg)', color: 'var(--badge-success-fg)',
-                  border: '1px solid #6ee7b7', borderRadius: '8px', fontSize: '12px',
+                  border: '1px solid var(--badge-success-bd)', borderRadius: '8px', fontSize: '12px',
                   cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '5px',
                 }}>
                   <i className="ti ti-restore" aria-hidden="true"></i> Restaurar

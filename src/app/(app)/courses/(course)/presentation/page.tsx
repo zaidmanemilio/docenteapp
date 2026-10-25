@@ -49,7 +49,7 @@ function LinkRow({ label, url, icon }: { label: string; url: string; icon: strin
 function InfoRow({ label, value }: { label: string; value?: string }) {
   if (!value) return null
   return (
-    <div style={{ display: 'flex', gap: '12px', padding: '8px 0', borderBottom: '1px solid #f3f4f6' }}>
+    <div style={{ display: 'flex', gap: '12px', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
       <span style={{ fontSize: '12px', color: 'var(--text-muted)', width: '140px', flexShrink: 0, fontWeight: 500 }}>{label}</span>
       <span style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{value}</span>
     </div>
@@ -143,7 +143,7 @@ export default function PresentationPage() {
           <InfoRow label="Encuentros esperados" value={String(course.expected_sessions)} />
           <InfoRow label="Días y horarios" value={course.schedule_text} />
           {course.description && (
-            <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #f3f4f6' }}>
+            <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--border)' }}>
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '6px' }}>Descripción</p>
               <RichText texto={course.description} />
             </div>
@@ -157,7 +157,7 @@ export default function PresentationPage() {
               Comisiones
             </h3>
             {commissions.map(c => (
-              <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0', borderBottom: '1px solid #f3f4f6' }}>
+              <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0', borderBottom: '1px solid var(--border)' }}>
                 <i className="ti ti-users" style={{ color: 'var(--accent)', fontSize: '15px' }} aria-hidden="true"></i>
                 <span style={{ fontSize: '13px', fontWeight: 500 }}>{c.name}</span>
                 {c.description && <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>— {c.description}</span>}
@@ -173,7 +173,7 @@ export default function PresentationPage() {
               const com = p.commission_id ? commissions.find(c => c.id === p.commission_id) : null
               const name = (p.profiles as { full_name: string } | null)?.full_name || 'Usuario'
               return (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0', borderBottom: '1px solid #f3f4f6' }}>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0', borderBottom: '1px solid var(--border)' }}>
                   <i className="ti ti-user" style={{ color: 'var(--text-muted)', fontSize: '15px' }} aria-hidden="true"></i>
                   <span style={{ fontSize: '13px', fontWeight: 500, flex: 1 }}>{name}</span>
                   <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{com ? com.name : 'Todas'}</span>

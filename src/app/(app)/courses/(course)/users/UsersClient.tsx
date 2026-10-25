@@ -12,6 +12,7 @@ import {
   PERM_ORDER, PERM_LABEL, PERM_HINT, ROLE_ORDER, ROLE_LABEL, ROLE_HINT, roleLabel,
 } from '@/lib/permissions'
 import { RoleBadge, PermBadge } from '@/components/ui/Badges'
+import { colorDeCurso } from '@/lib/course-color'
 
 interface Permission {
   id: string
@@ -25,11 +26,9 @@ interface Permission {
 function getInitials(name: string) {
   return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
 }
-const COLORS = ['#6366f1','#0d9488','#be185d','#d97706','#059669','#6b7280']
-function getColor(id: string) {
-  let n = 0; for (const c of id) n += c.charCodeAt(0)
-  return COLORS[n % COLORS.length]
-}
+// El color del avatar sale de la misma función que el de los cursos:
+// eran dos paletas distintas calculadas igual, en dos archivos.
+const getColor = colorDeCurso
 
 // Normaliza texto para búsqueda: minúsculas, sin espacios extremos y sin
 // diacríticos/acentos. Reutilizable para nombre, apellido, email y DNI.

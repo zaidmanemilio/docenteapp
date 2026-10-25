@@ -7,6 +7,9 @@ import { isChecklistComplete, normalizeChecklist } from '@/lib/moodle'
 import PageLoading from '@/components/layout/PageLoading'
 import Link from 'next/link'
 import { useCourseId } from '@/lib/use-course'
+import { TYPE_COLORS } from '@/components/schedule/SessionCard'
+import { SESSION_TYPE_LABELS } from '@/types'
+import type { SessionType } from '@/types'
 
 function KpiCard({ label, value, sub, variant = 'default' }: {
   label: string; value: string | number; sub?: string
@@ -135,8 +138,9 @@ export default function DashboardPage() {
 
   const typeCounts: Record<string, number> = {}
   sessions.forEach(s => { typeCounts[s.type] = (typeCounts[s.type] || 0) + 1 })
-  const typeLabels: Record<string,string> = { teorica:'Teórica', practica:'Práctica', taller:'Taller', invitado:'Invitado', parcial:'Parcial', recuperatorio:'Recuperatorio', exposicion:'Exposición', proyecto:'Proyecto' }
-  const typeColors: Record<string,string> = { teorica:'#6366f1', practica:'#0d9488', taller:'#d97706', invitado:'#be185d', parcial:'#dc2626', recuperatorio:'#f97316', exposicion:'#7c3aed', proyecto:'#059669' }
+  // Etiquetas y colores de tipo: los mismos que usa el cronograma. Antes
+  // cada pantalla tenía su copia, y ya habían empezado a diferir.
+  const typeLabels = SESSION_TYPE_LABELS
   const maxType = Math.max(...Object.values(typeCounts), 1)
 
   const presencial = sessions.filter(s => s.modality === 'presencial').length
@@ -207,10 +211,10 @@ export default function DashboardPage() {
               </div>
             </div>
             <div style={{ flex:1, textAlign:'center' }}>
-              <div style={{ fontSize:'28px', fontWeight:600, color:'#0d9488' }}>{virtual}</div>
+              <div style={{ fontSize:'28px', fontWeight:600, color:'var(--success)' }}>{virtual}</div>
               <div style={{ fontSize:'11px', color:'var(--text-muted)', marginTop:'2px' }}>Virtual</div>
               <div className="progress-bar" style={{ marginTop:'6px' }}>
-                <div className="progress-fill" style={{ width: total ? `${Math.round(virtual/total*100)}%`:'0%', background:'#0d9488' }}></div>
+                <div className="progress-fill" style={{ width: total ? `${Math.round(virtual/total*100)}%`:'0%', background:'var(--success)' }}></div>
               </div>
             </div>
           </div>
@@ -229,9 +233,9 @@ export default function DashboardPage() {
           <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
             {Object.entries(typeCounts).map(([type, count]) => (
               <div key={type} style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-                <span style={{ fontSize:'12px', color:'var(--text-muted)', width:'90px', textAlign:'right', flexShrink:0 }}>{typeLabels[type]||type}</span>
+                <span style={{ fontSize:'12px', color:'var(--text-muted)', width:'90px', textAlign:'right', flexShrink:0 }}>{typeLabels[type as SessionType]||type}</span>
                 <div style={{ flex:1, height:'20px', background:'var(--hover-bg)', borderRadius:'4px', overflow:'hidden' }}>
-                  <div style={{ width:`${Math.round(count/maxType*100)}%`, height:'100%', background:typeColors[type]||'#6366f1', borderRadius:'4px', display:'flex', alignItems:'center', paddingLeft:'8px' }}>
+                  <div style={{ width:`${Math.round(count/maxType*100)}%`, height:'100%', background:TYPE_COLORS[type]||'var(--accent-solid)', borderRadius:'4px', display:'flex', alignItems:'center', paddingLeft:'8px' }}>
                     <span style={{ fontSize:'11px', fontWeight:600, color:'white' }}>{count}</span>
                   </div>
                 </div>
