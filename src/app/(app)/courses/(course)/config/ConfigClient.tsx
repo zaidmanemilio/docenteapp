@@ -12,6 +12,7 @@ import { validateBackup, restoreCourseFromBackup } from '@/lib/backup/course-res
 import { useDialog } from '@/components/ui/Dialog'
 import { PERM_ORDER, PERM_LABEL, PERM_HINT } from '@/lib/permissions'
 import { PermBadge } from '@/components/ui/Badges'
+import { unaFila } from '@/lib/supabase/relation'
 
 type ConfigTab = 'general' | 'links' | 'commissions' | 'teachers' | 'backup'
 
@@ -22,6 +23,13 @@ interface Permission {
   permission: string
   profiles: { full_name: string; global_role: string } | null
 }
+
+/** Lo que trae el padrón de perfiles: tres columnas, no un Profile entero. */
+type PerfilBreve = Pick<Profile, 'id' | 'full_name' | 'global_role'>
+
+/** Los cuatro links del curso que se editan con el mismo campo. */
+const CAMPOS_LINK = ['zoom_url', 'program_url', 'moodle_url', 'materials_url'] as const
+type CampoLink = typeof CAMPOS_LINK[number]
 
 type CourseDetail = Course & {
   full_name?: string; career?: string; faculty?: string
@@ -36,7 +44,7 @@ interface ConfigClientProps {
   initialCourse: CourseDetail | null
   initialCommissions: Commission[]
   initialPermissions: Permission[]
-  initialAllProfiles: Profile[]
+  initialAllProfiles: PerfilBreve[]
 }
 
 export default function ConfigClient({
@@ -49,7 +57,7 @@ export default function ConfigClient({
   const [course, setCourse] = useState<CourseDetail | null>(initialCourse)
   const [commissions,  setCommissions]  = useState<Commission[]>(initialCommissions)
   const [permissions,  setPermissions]  = useState<Permission[]>(initialPermissions)
-  const [allProfiles,  setAllProfiles]  = useState<Profile[]>(initialAllProfiles)
+  const [allProfiles,  setAllProfiles]  = useState<PerfilBreve[]>(initialAllProfiles)
   const [saving,       setSaving]       = useState(false)
   const [saved,        setSaved]        = useState(false)
   const [tab,          setTab]          = useState<ConfigTab>('general')
@@ -78,7 +86,8 @@ export default function ConfigClient({
     ])
     setCourse(courseRes.data)
     setCommissions(commsRes.data || [])
-    setPermissions(permsRes.data || [])
+    // profiles(...) es una relación a-uno: viene un objeto, no un arreglo.
+    setPermissions((permsRes.data || []).map(p => ({ ...p, profiles: unaFila(p.profiles) })))
     setAllProfiles(allProfilesRes.data || [])
   }, [courseId, supabase])
 
@@ -189,7 +198,7 @@ export default function ConfigClient({
       year:              course.year,
       modality:          course.modality || 'presencial',
       timezone:          course.timezone || 'America/Argentina/Buenos_Aires',
-      level:             (course as Record<string, unknown>).level || 'grado',
+      level:             course.level || 'grado',
       schedule_text:     course.schedule_text || '',
       zoom_url:          course.zoom_url || '',
       program_url:       course.program_url || '',
@@ -365,7 +374,7 @@ export default function ConfigClient({
               <div style={{ marginBottom: '14px' }}>
   <label className="field-label">Nivel académico</label>
   <select
-    value={(course as Record<string, unknown>).level as string || 'grado'}
+    value={course.level || 'grado'}
     onChange={e => setCourse({...course, level: e.target.value})}
     disabled={!isAdmin}
     className="field-input"
@@ -448,16 +457,19 @@ export default function ConfigClient({
             <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '20px' }}>
               Links generales del curso. El link de Zoom aparece en el cronograma para encuentros virtuales sin link específico.
             </p>
-            {[
-              { key: 'zoom_url',     label: '📹 Link general de Zoom',     placeholder: 'https://zoom.us/j/...' },
-              { key: 'program_url',  label: '📄 Programa de la materia',   placeholder: 'https://drive.google.com/...' },
-              { key: 'moodle_url',   label: '🎓 Aula virtual / Moodle',    placeholder: 'https://campus.edu.ar/...' },
-              { key: 'materials_url',label: '📁 Carpeta de materiales',    placeholder: 'https://drive.google.com/...' },
-            ].map(({ key, label, placeholder }) => (
+            {([
+              { key: 'zoom_url',      label: 'Link general de Zoom',   icono: 'ti-video',      placeholder: 'https://zoom.us/j/...' },
+              { key: 'program_url',   label: 'Programa de la materia', icono: 'ti-file-text',  placeholder: 'https://drive.google.com/...' },
+              { key: 'moodle_url',    label: 'Aula virtual / Moodle',  icono: 'ti-school',     placeholder: 'https://campus.edu.ar/...' },
+              { key: 'materials_url', label: 'Carpeta de materiales',  icono: 'ti-folder',     placeholder: 'https://drive.google.com/...' },
+            ] as { key: CampoLink; label: string; icono: string; placeholder: string }[])
+              .map(({ key, label, icono, placeholder }) => (
               <div key={key} style={{ marginBottom: '16px' }}>
-                <label className="field-label">{label}</label>
+                <label className="field-label">
+                  <i className={`ti ${icono}`} aria-hidden="true"></i> {label}
+                </label>
                 <input
-                  value={(course as Record<string, unknown>)[key] as string || ''}
+                  value={course[key] || ''}
                   onChange={e => setCourse({...course, [key]: e.target.value})}
                   disabled={!isAdmin} placeholder={placeholder} className="field-input"
                 />

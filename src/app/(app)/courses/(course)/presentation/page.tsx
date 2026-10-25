@@ -6,6 +6,7 @@ import { useCourseId } from '@/lib/use-course'
 import RichText from '@/components/ui/RichText'
 import { createClient } from '@/lib/supabase/client'
 import { PermBadge } from '@/components/ui/Badges'
+import { unaFila } from '@/lib/supabase/relation'
 
 interface CourseData {
   id: string
@@ -91,7 +92,8 @@ export default function PresentationPage() {
     ])
     setCourse(courseRes.data)
     setCommissions(commsRes.data || [])
-    setPermissions(permsRes.data || [])
+    // profiles(...) es una relación a-uno: viene un objeto, no un arreglo.
+    setPermissions((permsRes.data || []).map(p => ({ ...p, profiles: unaFila(p.profiles) })))
     setLoading(false)
   }, [courseId])
 

@@ -195,44 +195,41 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
         </p>
       </div>
 
-      {/* Step indicators */}
-      <div style={{ display: 'flex', gap: '0', marginBottom: '24px' }}>
-        {STEP_LABELS.map((l, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{
-                width: '28px', height: '28px', borderRadius: '50%',
-                background: step > i+1 ? 'var(--success)' : step === i+1 ? 'var(--accent)' : 'var(--border)',
-                color: step >= i+1 ? 'white' : 'var(--text-muted)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '13px', fontWeight: 600, flexShrink: 0,
-              }}>
-                {step > i+1 ? <i className="ti ti-check" aria-hidden="true"></i> : i+1}
-              </div>
-              <span style={{ fontSize: '12px', fontWeight: step === i+1 ? 600 : 400, color: step === i+1 ? 'var(--text-primary)' : 'var(--text-muted)' }}>{l}</span>
-            </div>
-            {i < 3 && <div style={{ width: '32px', height: '1px', background: 'var(--border)', margin: '0 8px' }}></div>}
-          </div>
-        ))}
-      </div>
+      <ol className="steps">
+        {STEP_LABELS.map((l, i) => {
+          const hecho = step > i + 1
+          const ahora = step === i + 1
+          return (
+            <li key={i} className={`step${hecho ? ' is-done' : ''}${ahora ? ' is-now' : ''}`}
+              aria-current={ahora ? 'step' : undefined}>
+              <span className="step-dot" aria-hidden="true">
+                {hecho ? <i className="ti ti-check"></i> : i + 1}
+              </span>
+              <span className="step-label">{l}</span>
+              {i < STEP_LABELS.length - 1 && <span className="step-line" aria-hidden="true"></span>}
+            </li>
+          )
+        })}
+      </ol>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '20px' }}>
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '24px' }}>
+      <div className="import-grid">
+        <div className="card">
 
           {/* Step 1: Upload */}
           {step === 1 && (
             <>
-              <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '16px' }}>Seleccioná el archivo</h3>
-              <div
-                onClick={() => document.getElementById('file-input')?.click()}
-                style={{ border: '2px dashed var(--border)', borderRadius: '12px', padding: '40px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.15s' }}
-                onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
-                onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--input-border)')}
-              >
-                <i className="ti ti-upload" style={{ fontSize: '36px', color: 'var(--text-muted)', display: 'block', marginBottom: '8px' }} aria-hidden="true"></i>
-                <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '4px' }}>Hacé clic para seleccionar archivo</p>
-                <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>CSV o Excel (.xlsx) — máx. 5MB</p>
-              </div>
+              <h2 className="card-title">Seleccioná el archivo</h2>
+              {/* Era un <div> con onClick: con teclado no se podía abrir. */}
+              <button type="button" className="dropzone"
+                onClick={() => document.getElementById('file-input')?.click()}>
+                <i className="ti ti-upload" aria-hidden="true"></i>
+                <span style={{ display: 'block', fontSize: 'var(--text-base)', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  Elegí un archivo
+                </span>
+                <span style={{ display: 'block', fontSize: 'var(--text-sm)', color: 'var(--text-muted)', marginTop: 'var(--space-1)' }}>
+                  CSV o Excel (.xlsx), hasta 5 MB
+                </span>
+              </button>
               <input id="file-input" type="file" accept=".csv,.xlsx,.xls" style={{ display: 'none' }} onChange={handleFile} />
 
               {fileName && (
@@ -242,13 +239,11 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
                 </div>
               )}
 
-              <div style={{ marginTop: '20px', textAlign: 'right' }}>
-                <button
+              <div style={{ marginTop: 'var(--space-6)', display: 'flex', justifyContent: 'flex-end' }}>
+                <button className="btn btn-primary"
                   onClick={() => rawData.length > 0
                     ? setStep(2)
-                    : dialog.alert({ title: 'Falta el archivo', message: 'Subí primero el CSV con el cronograma.' })}
-                  style={{ padding: '8px 20px', background: 'var(--accent-solid)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                >
+                    : dialog.alert({ title: 'Falta el archivo', message: 'Subí primero el CSV con el cronograma.' })}>
                   Siguiente <i className="ti ti-arrow-right" aria-hidden="true"></i>
                 </button>
               </div>
@@ -258,39 +253,43 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
           {/* Step 2: Mapping */}
           {step === 2 && (
             <>
-              <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '6px' }}>Mapeá las columnas</h3>
-              <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>Asigná cada campo del sistema a la columna de tu archivo.</p>
+              <h2 className="card-title">Mapeá las columnas</h2>
+              <p className="card-sub">Asigná cada campo del sistema a la columna de tu archivo.</p>
 
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '5px' }}>Comisión por defecto (si el archivo no la trae)</label>
-                <select value={commissionScope} onChange={e => setCommissionScope(e.target.value)} style={{ padding: '8px 10px', border: '1px solid var(--input-border)', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit' }}>
+              <div className="field">
+                <label className="field-label" htmlFor="com-defecto">
+                  Comisión por defecto, si el archivo no la trae
+                </label>
+                <select id="com-defecto" className="field-input" style={{ maxWidth: '320px' }}
+                  value={commissionScope} onChange={e => setCommissionScope(e.target.value)}>
                   <option value="all">Todas las comisiones</option>
                   <option value="first">Primera comisión del curso</option>
                 </select>
               </div>
 
               {FIELD_DEFS.map(f => (
-                <div key={f.key} style={{ display: 'grid', gridTemplateColumns: '160px 24px 1fr', gap: '8px', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid var(--border)' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 500 }}>
-                    {f.label}{f.required ? <span style={{ color: 'var(--danger)' }}> *</span> : <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}> (opc.)</span>}
-                  </span>
-                  <i className="ti ti-arrow-right" style={{ color: 'var(--text-muted)', fontSize: '14px' }} aria-hidden="true"></i>
-                  <select
+                <div key={f.key} className="map-row">
+                  <label className="map-name" htmlFor={`map-${f.key}`}>
+                    {f.label}
+                    {f.required
+                      ? <span style={{ color: 'var(--danger)' }}> *</span>
+                      : <small> (opcional)</small>}
+                  </label>
+                  <i className="ti ti-arrow-right" aria-hidden="true"></i>
+                  <select id={`map-${f.key}`} className="field-input"
                     value={mapping[f.key] || ''}
-                    onChange={e => setMapping({...mapping, [f.key]: e.target.value})}
-                    style={{ padding: '6px 8px', border: '1px solid var(--input-border)', borderRadius: '6px', fontSize: '12px', fontFamily: 'inherit' }}
-                  >
+                    onChange={e => setMapping({...mapping, [f.key]: e.target.value})}>
                     <option value="">— No mapear —</option>
                     {columns.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
               ))}
 
-              <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between' }}>
-                <button onClick={() => setStep(1)} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ marginTop: 'var(--space-6)', display: 'flex', justifyContent: 'space-between', gap: 'var(--space-2)' }}>
+                <button className="btn btn-ghost" onClick={() => setStep(1)}>
                   <i className="ti ti-arrow-left" aria-hidden="true"></i> Atrás
                 </button>
-                <button onClick={buildPreview} style={{ padding: '8px 20px', background: 'var(--accent-solid)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <button className="btn btn-primary" onClick={buildPreview}>
                   Previsualizar <i className="ti ti-arrow-right" aria-hidden="true"></i>
                 </button>
               </div>
@@ -300,7 +299,7 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
           {/* Step 3: Preview */}
           {step === 3 && (
             <>
-              <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '8px' }}>Previsualizar ({preview.length} filas)</h3>
+              <h2 className="card-title">Previsualizar · {preview.length} filas</h2>
               {hasErrors ? (
                 <div className="alert alert-warning" style={{ padding: '8px 12px', borderRadius: '8px', alignItems: 'center', gap: '8px', fontSize: '12px', marginBottom: '12px' }}>
                   <i className="ti ti-alert-triangle" aria-hidden="true"></i>
@@ -313,36 +312,39 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
                 </div>
               )}
               <div className="table-scroll">
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                <table className="data-table">
                   <thead>
                     <tr>
-                      {['#','Fecha','Clase','Título','Tipo','Resp.','Estado','Error'].map(h => (
-                        <th key={h} style={{ textAlign: 'left', padding: '6px 8px', fontSize: '11px', fontWeight: 600, background: 'var(--hover-bg)', border: '1px solid var(--border)' }}>{h}</th>
+                      {['#','Fecha','Clase','Título','Tipo','Resp.','Estado','Problema'].map(h => (
+                        <th key={h} scope="col">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {preview.map((r, i) => (
-                      <tr key={i} style={{ background: r._errors.length ? 'var(--badge-danger-bg)' : 'var(--surface)' }}>
-                        <td style={{ padding: '5px 8px', border: '1px solid var(--border)' }}>{i+1}</td>
-                        <td style={{ padding: '5px 8px', border: '1px solid var(--border)' }}>{r.date}</td>
-                        <td style={{ padding: '5px 8px', border: '1px solid var(--border)' }}>{r.class_number}</td>
-                        <td style={{ padding: '5px 8px', border: '1px solid var(--border)', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</td>
-                        <td style={{ padding: '5px 8px', border: '1px solid var(--border)' }}>{r.type}</td>
-                        <td style={{ padding: '5px 8px', border: '1px solid var(--border)' }}>{r.responsible}</td>
-                        <td style={{ padding: '5px 8px', border: '1px solid var(--border)' }}>{r.status}</td>
-                        <td style={{ padding: '5px 8px', border: '1px solid var(--border)', color: 'var(--danger)', fontSize: '11px' }}>{r._errors.join(', ')}</td>
+                      <tr key={i} style={r._errors.length ? { background: 'var(--badge-danger-bg)' } : undefined}>
+                        <td className="tabular" style={{ color: 'var(--text-muted)' }}>{i+1}</td>
+                        <td className="tabular" style={{ whiteSpace: 'nowrap' }}>{r.date}</td>
+                        <td className="tabular">{r.class_number}</td>
+                        <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</td>
+                        <td>{r.type}</td>
+                        <td>{r.responsible}</td>
+                        <td>{r.status}</td>
+                        <td style={{ color: 'var(--badge-danger-fg)', fontSize: 'var(--text-xs)' }}>{r._errors.join(', ')}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between' }}>
-                <button onClick={() => setStep(2)} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ marginTop: 'var(--space-6)', display: 'flex', justifyContent: 'space-between', gap: 'var(--space-2)' }}>
+                <button className="btn btn-ghost" onClick={() => setStep(2)}>
                   <i className="ti ti-arrow-left" aria-hidden="true"></i> Atrás
                 </button>
-                <button onClick={confirmImport} disabled={importing} style={{ padding: '8px 20px', background: 'var(--accent-solid)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: importing ? 'wait' : 'pointer', opacity: importing ? 0.7 : 1, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                  {importing ? 'Importando...' : `Importar ${preview.filter(r=>!r._errors.length).length} encuentros`}
+                <button className="btn btn-primary" onClick={confirmImport} disabled={importing}
+                  style={{ cursor: importing ? 'wait' : 'pointer' }}>
+                  {importing
+                    ? 'Importando…'
+                    : `Importar ${preview.filter(r => !r._errors.length).length} encuentros`}
                   <i className="ti ti-check" aria-hidden="true"></i>
                 </button>
               </div>
@@ -351,15 +353,20 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
 
           {/* Step 4: Success */}
           {step === 4 && (
-            <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-              <i className="ti ti-circle-check" style={{ fontSize: '56px', color: 'var(--success)', display: 'block', marginBottom: '16px' }} aria-hidden="true"></i>
-              <h3 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>¡Importación exitosa!</h3>
-              <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Se importaron <strong>{importedCount}</strong> encuentros al cronograma.</p>
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                <a href={`/courses/schedule?c=${courseId}`} style={{ padding: '10px 20px', background: 'var(--accent-solid)', color: 'white', textDecoration: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ textAlign: 'center', padding: 'var(--space-8) var(--space-4)' }}>
+              <i className="ti ti-circle-check" style={{ fontSize: '48px', color: 'var(--success)', display: 'block', marginBottom: 'var(--space-4)' }} aria-hidden="true"></i>
+              <h2 style={{ margin: 0, fontSize: 'var(--text-2xl)', fontWeight: 700, letterSpacing: '-.02em' }}>
+                Listo
+              </h2>
+              <p style={{ margin: 'var(--space-2) 0 var(--space-6)', fontSize: 'var(--text-base)', color: 'var(--text-muted)' }}>
+                Se importaron <strong style={{ color: 'var(--text-primary)' }}>{importedCount}</strong> encuentros al cronograma.
+              </p>
+              <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <a className="btn btn-primary" href={`/courses/schedule?c=${courseId}`} style={{ textDecoration: 'none' }}>
                   <i className="ti ti-calendar-event" aria-hidden="true"></i> Ver cronograma
                 </a>
-                <button onClick={() => { setStep(1); setRawData([]); setFileName(''); setPreview([]) }} style={{ padding: '10px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)' }}>
+                <button className="btn btn-ghost"
+                  onClick={() => { setStep(1); setRawData([]); setFileName(''); setPreview([]) }}>
                   Importar otro
                 </button>
               </div>
@@ -367,18 +374,24 @@ const toInsert = preview.filter(r => !r._errors.length).map(r => ({
           )}
         </div>
 
-        {/* Sidebar: sample CSV */}
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px', height: 'fit-content' }}>
-          <p style={{ fontSize: '12px', fontWeight: 600, marginBottom: '8px' }}>Formato de ejemplo</p>
-          <pre style={{ fontSize: '10px', color: 'var(--text-muted)', whiteSpace: 'pre-wrap', fontFamily: 'monospace', background: 'var(--hover-bg)', padding: '10px', borderRadius: '6px', overflowX: 'auto' }}>{SAMPLE_CSV}</pre>
-          <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '10px' }}>
-            Podés copiar esto en un archivo .csv o armarlo en Excel y guardarlo como CSV.
+        {/* Ayuda: qué forma tiene que tener el archivo. */}
+        <aside className="card" style={{ padding: 'var(--space-4)' }}>
+          <h2 className="card-title" style={{ fontSize: 'var(--text-base)' }}>Formato de ejemplo</h2>
+          <pre className="code-block">{SAMPLE_CSV}</pre>
+          <p className="field-help">
+            Copiá esto en un archivo .csv, o armalo en Excel y guardalo como CSV.
           </p>
-          <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '10px', fontWeight: 500 }}>Tipos válidos:</p>
-          <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>teorica, practica, taller, invitado, parcial, recuperatorio, exposicion, proyecto</p>
-          <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px', fontWeight: 500 }}>Estados válidos:</p>
-          <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>pendiente, dada, reprogramada, cancelada</p>
-        </div>
+
+          <p className="field-label" style={{ marginTop: 'var(--space-4)' }}>Tipos válidos</p>
+          <p className="field-help" style={{ marginTop: 0 }}>
+            teorica, practica, taller, invitado, parcial, recuperatorio, exposicion, proyecto
+          </p>
+
+          <p className="field-label" style={{ marginTop: 'var(--space-3)' }}>Estados válidos</p>
+          <p className="field-help" style={{ marginTop: 0 }}>
+            pendiente, dada, reprogramada, cancelada
+          </p>
+        </aside>
       </div>
     </div>
   )

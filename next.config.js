@@ -10,9 +10,16 @@ const nextConfig = {
   trailingSlash: true,
 
   reactStrictMode: true,
+
+  // El build vuelve a fallar ante un error de tipos.
+  //
+  // Estuvo en `ignoreBuildErrors: true` desde el MVP por seis errores que
+  // nadie había arreglado. El precio lo pagamos una vez: una edición rompió
+  // una cadena de métodos (`.filter(...).length.sort(...)`), el build pasó
+  // igual porque la bandera lo tapaba, y la pantalla de Cronograma se cayó
+  // en producción con "Application error". tsc lo habría atajado.
   typescript: {
-    // Durante el MVP, ignoramos errores de tipos en el build.
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   eslint: {
     ignoreDuringBuilds: true,
