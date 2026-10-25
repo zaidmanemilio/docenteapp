@@ -10,6 +10,7 @@ import { useCourseId } from '@/lib/use-course'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 interface Data {
+  courseId: string
   course: any
   commissions: any[]
   permissions: any[]
@@ -35,6 +36,7 @@ export default function ConfigPage() {
       ])
       if (cancelled) return
       setData({
+        courseId,
         course: courseRes.data,
         commissions: commsRes.data || [],
         permissions: permsRes.data || [],
@@ -44,7 +46,15 @@ export default function ConfigPage() {
     return () => { cancelled = true }
   }, [courseId, supabase])
 
-  if (!data) return <PageLoading />
+  // Los datos traen el curso al que pertenecen, y la pantalla no se dibuja
+  // hasta que ese curso es el de la URL.
+  //
+  // Sin esto, al cambiar de curso sin cambiar de sección el contenido quedaba
+  // congelado en el curso anterior: el `key` se actualizaba antes que los
+  // datos, así que el componente se volvía a montar con los datos viejos y,
+  // cuando llegaban los nuevos, el key ya no cambiaba y useState(initial…) los
+  // ignoraba. Había que irse a otra sección y volver para verlo bien.
+  if (!data || data.courseId !== courseId) return <PageLoading />
 
   return (
     <ConfigClient

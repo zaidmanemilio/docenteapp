@@ -11,7 +11,7 @@ import TodosClient from './TodosClient'
 import type { Todo } from '@/types'
 
 interface SessionRef { id: string; class_number: number | null; title: string }
-interface Data { courseName: string; todos: Todo[]; sessions: SessionRef[] }
+interface Data { courseId: string; courseName: string; todos: Todo[]; sessions: SessionRef[] }
 
 export default function TodosPage() {
   const courseId = useCourseId()
@@ -29,6 +29,7 @@ export default function TodosPage() {
       ])
       if (cancelled) return
       setData({
+        courseId,
         courseName: courseRes.data?.name || '',
         todos: todosRes.data || [],
         sessions: sessionsRes.data || [],
@@ -37,7 +38,15 @@ export default function TodosPage() {
     return () => { cancelled = true }
   }, [courseId, supabase])
 
-  if (!data) return <PageLoading />
+  // Los datos traen el curso al que pertenecen, y la pantalla no se dibuja
+  // hasta que ese curso es el de la URL.
+  //
+  // Sin esto, al cambiar de curso sin cambiar de sección el contenido quedaba
+  // congelado en el curso anterior: el `key` se actualizaba antes que los
+  // datos, así que el componente se volvía a montar con los datos viejos y,
+  // cuando llegaban los nuevos, el key ya no cambiaba y useState(initial…) los
+  // ignoraba. Había que irse a otra sección y volver para verlo bien.
+  if (!data || data.courseId !== courseId) return <PageLoading />
 
   return (
     <TodosClient

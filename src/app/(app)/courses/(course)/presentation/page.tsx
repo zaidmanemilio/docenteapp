@@ -79,6 +79,9 @@ export default function PresentationPage() {
   const [loading, setLoading] = useState(true)
 
   const load = useCallback(async () => {
+    // Al cambiar de curso hay que volver a "cargando": si no, la ficha del
+    // curso anterior se queda en pantalla hasta que llegan los datos nuevos.
+    setLoading(true)
     const [courseRes, commsRes, permsRes] = await Promise.all([
       supabase.from('courses').select('*').eq('id', courseId).single(),
       supabase.from('commissions').select('*').eq('course_id', courseId),
