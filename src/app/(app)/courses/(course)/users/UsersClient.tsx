@@ -340,14 +340,6 @@ export default function UsersClient({
     </div>
   )
 
-  const tabStyle = (t: string): React.CSSProperties => ({
-    padding: '8px 16px', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
-    color: tab === t ? 'var(--accent)' : 'var(--text-muted)',
-    borderBottom: tab === t ? '2px solid var(--accent)' : '2px solid transparent',
-    marginBottom: '-1px', background: 'none', border: 'none', fontFamily: 'inherit',
-    borderBottomStyle: 'solid' as const,
-  })
-
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
 
@@ -361,37 +353,20 @@ export default function UsersClient({
             con acceso a este curso
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button onClick={() => { setShowNewUser(true); setCreateError('') }} style={{
-            padding: '7px 14px', background: 'var(--accent-solid)', border: 'none',
-            borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit',
-            color: 'white', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px',
-          }}>
+        <div className="filter-row">
+          <button onClick={() => { setShowNewUser(true); setCreateError('') }} className="btn btn-primary">
             <i className="ti ti-user-plus" aria-hidden="true"></i>
             Nuevo usuario
           </button>
-          <button onClick={() => { setShowImport(true); setImportRows([]); setImportPreview(null); setImportMsg('') }} style={{
-            padding: '7px 14px', background: 'var(--surface)', border: '1px solid var(--border)',
-            borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit',
-            color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px',
-          }}>
+          <button onClick={() => { setShowImport(true); setImportRows([]); setImportPreview(null); setImportMsg('') }} className="btn btn-ghost">
             <i className="ti ti-upload" aria-hidden="true"></i>
             Importar CSV
           </button>
-          <button onClick={exportUsersCSV} style={{
-            padding: '7px 14px', background: 'var(--surface)', border: '1px solid var(--border)',
-            borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit',
-            color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px',
-          }}>
+          <button onClick={exportUsersCSV} className="btn btn-ghost">
             <i className="ti ti-download" aria-hidden="true"></i>
             Exportar CSV
           </button>
-          <button onClick={syncUsers} disabled={syncing} style={{
-            padding: '7px 14px', background: 'var(--surface)', border: '1px solid var(--border)',
-            borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit',
-            color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px',
-            opacity: syncing ? 0.6 : 1,
-          }}>
+          <button onClick={syncUsers} disabled={syncing} className="btn btn-ghost">
             <i className="ti ti-refresh" aria-hidden="true"></i>
             {syncing ? 'Sincronizando...' : 'Sincronizar usuarios'}
           </button>
@@ -416,26 +391,27 @@ export default function UsersClient({
         </span>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', marginBottom: '20px' }}>
-        <button style={tabStyle('by-course')} onClick={() => setTab('by-course')}>Permisos de este curso</button>
-        <button style={tabStyle('by-user')}   onClick={() => setTab('by-user')}>Todos los usuarios</button>
+      <div className="tabs" role="tablist" aria-label="Vista de usuarios">
+        <button className="tab" role="tab" aria-selected={tab === 'by-course'}
+          onClick={() => setTab('by-course')}>Acceso a este curso</button>
+        <button className="tab" role="tab" aria-selected={tab === 'by-user'}
+          onClick={() => setTab('by-user')}>Todas las personas</button>
       </div>
 
       {/* TAB: Permisos del curso */}
       {tab === 'by-course' && (
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden' }}>
+        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
           {permissions.length === 0 ? (
             <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>
               No hay permisos asignados a este curso todavía.
             </div>
           ) : (
             <div className="table-scroll">
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <table className="data-table">
                 <thead>
-                  <tr style={{ background: 'var(--hover-bg)' }}>
+                  <tr>
                     {['Persona','Comisión','Permiso',''].map(h => (
-                      <th key={h} style={{ textAlign: 'left', padding: '8px 16px', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>{h}</th>
+                      <th key={h} scope="col">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -444,8 +420,8 @@ export default function UsersClient({
                     const u = p.profiles as Profile | null
                     const com = p.commission_id ? commissions.find(c => c.id === p.commission_id) : null
                     return (
-                      <tr key={p.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                        <td style={{ padding: '10px 16px' }}>
+                      <tr key={p.id}>
+                        <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             {u && (
                               <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: getColor(u.id), color: 'white', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -458,19 +434,20 @@ export default function UsersClient({
                             </div>
                           </div>
                         </td>
-                        <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text-muted)' }}>
+                        <td style={{ color: 'var(--text-muted)' }}>
                           {com ? <span className="badge badge-success" style={{ fontSize: '11px' }}>{com.name}</span> : <span style={{ color: 'var(--text-muted)' }}>Todas</span>}
                         </td>
-                        <td style={{ padding: '10px 16px' }}>
+                        <td>
                           <select value={p.permission} onChange={e => changePerm(p.id, e.target.value)}
-                            style={{ padding: '4px 8px', border: '1px solid var(--input-border)', borderRadius: '6px', fontSize: '12px', fontFamily: 'inherit' }}>
+                            className="bulk-control">
                             {PERM_ORDER.map(k => (
                               <option key={k} value={k}>{PERM_LABEL[k]}</option>
                             ))}
                           </select>
                         </td>
-                        <td style={{ padding: '10px 16px' }}>
-                          <button onClick={() => removePerm(p.id)} style={{ background: 'none', border: '1px solid var(--badge-danger-bd)', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', color: 'var(--danger)', fontSize: '12px' }}>
+                        <td>
+                          <button className="row-danger" onClick={() => removePerm(p.id)}
+                            aria-label="Quitar este acceso" title="Quitar acceso">
                             <i className="ti ti-trash" aria-hidden="true"></i>
                           </button>
                         </td>
@@ -486,7 +463,7 @@ export default function UsersClient({
 
       {/* TAB: Todos los usuarios */}
       {tab === 'by-user' && (
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '4px 20px' }}>
+        <div className="card" style={{ padding: '0 var(--space-6)' }}>
           <div style={{ padding: '14px 0 10px', borderBottom: '1px solid var(--border)' }}>
             <div style={{ position: 'relative' }}>
               <i className="ti ti-search" aria-hidden="true" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: '14px' }}></i>

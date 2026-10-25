@@ -65,26 +65,6 @@ export interface SessionModalProps {
   onAddLinksChange: (links: AdditionalLink[]) => void
 }
 
-// ─── Estilos locales (idénticos a los de schedule/page.tsx) ──────────────────
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '8px 10px',
-  border: '1px solid var(--input-border)',
-  borderRadius: '8px',
-  fontSize: '13px',
-  fontFamily: 'inherit',
-}
-
-const labelStyle: React.CSSProperties = {
-  display: 'block',
-  fontSize: '11px',
-  fontWeight: 600,
-  color: 'var(--text-muted)',
-  textTransform: 'uppercase',
-  letterSpacing: '0.04em',
-  marginBottom: '5px',
-}
-
 type ModalTab = 'basic' | 'links' | 'notes' | 'review' | 'schedule' | 'moodle'
 
 // ─── Componente ──────────────────────────────────────────────────────────────
@@ -193,7 +173,7 @@ export default function SessionModal({
             <>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
                 <div>
-                  <label style={labelStyle}>Nº de clase</label>
+                  <label className="field-label">Nº de clase</label>
                   {/* ?? y no ||: 0 es un número válido (el encuentro
                       "ESTRUCTURA DEL CURSO" lleva 0) y con || se mostraba
                       vacío, como si no se hubiera guardado. */}
@@ -211,11 +191,11 @@ export default function SessionModal({
                         class_number: (n === null || Number.isNaN(n)) ? null : n,
                       })
                     }}
-                    style={inputStyle}
+                    className="field-input"
                   />
                 </div>
                 <div>
-                  <label style={labelStyle}>Fecha *</label>
+                  <label className="field-label">Fecha *</label>
                   <input
                     type="date"
                     // Un <input type="date"> vacío devuelve "", no null, y
@@ -224,28 +204,28 @@ export default function SessionModal({
                     // realmente vacío (lo usa el encuentro 0).
                     value={session.date ?? ''}
                     onChange={e => onSessionChange({ ...session, date: e.target.value || null })}
-                    style={inputStyle}
+                    className="field-input"
                   />
                 </div>
               </div>
 
               <div style={{ marginBottom: '12px' }}>
-                <label style={labelStyle}>Título *</label>
+                <label className="field-label">Título *</label>
                 <input
                   value={session.title}
                   onChange={e => onSessionChange({ ...session, title: e.target.value })}
                   placeholder="Ej: Introducción al pensamiento sistémico"
-                  style={inputStyle}
+                  className="field-input"
                 />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
                 <div>
-                  <label style={labelStyle}>Tipo</label>
+                  <label className="field-label">Tipo</label>
                   <select
                     value={session.type}
                     onChange={e => onSessionChange({ ...session, type: e.target.value as SessionType })}
-                    style={inputStyle}
+                    className="field-input"
                   >
                     {Object.entries(SESSION_TYPE_LABELS).map(([v, l]) => (
                       <option key={v} value={v}>{l}</option>
@@ -253,11 +233,11 @@ export default function SessionModal({
                   </select>
                 </div>
                 <div>
-                  <label style={labelStyle}>Estado del dictado</label>
+                  <label className="field-label">Estado del dictado</label>
                   <select
                     value={session.status}
                     onChange={e => onSessionChange({ ...session, status: e.target.value as SessionStatus })}
-                    style={inputStyle}
+                    className="field-input"
                   >
                     {Object.entries(SESSION_STATUS_LABELS).map(([v, l]) => (
                       <option key={v} value={v}>{l}</option>
@@ -268,11 +248,11 @@ export default function SessionModal({
 
               {/* Estado de preparación (armado de la clase) */}
               <div style={{ marginBottom: '14px' }}>
-                <label style={labelStyle}>Estado de preparación</label>
+                <label className="field-label">Estado de preparación</label>
                 <select
                   value={session.prep_status || 'a_terminar'}
                   onChange={e => onSessionChange({ ...session, prep_status: e.target.value as PrepStatus })}
-                  style={{ ...inputStyle, maxWidth: '240px' }}
+                  className="field-input" style={{ maxWidth: '240px' }}
                   disabled={!canEdit}
                 >
                   {Object.entries(PREP_STATUS_LABELS).map(([v, l]) => (
@@ -286,11 +266,11 @@ export default function SessionModal({
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
                 <div>
-                  <label style={labelStyle}>Responsable</label>
+                  <label className="field-label">Responsable</label>
                   <select
                     value={session.responsible || ''}
                     onChange={e => onSessionChange({ ...session, responsible: e.target.value })}
-                    style={inputStyle}
+                    className="field-input"
                     disabled={!canEdit}
                   >
                     <option value="">— Sin asignar —</option>
@@ -306,11 +286,11 @@ export default function SessionModal({
                   </select>
                 </div>
                 <div>
-                  <label style={labelStyle}>Modalidad</label>
+                  <label className="field-label">Modalidad</label>
                   <select
                     value={session.modality}
                     onChange={e => onSessionChange({ ...session, modality: e.target.value as SessionModality })}
-                    style={inputStyle}
+                    className="field-input"
                   >
                     <option value="presencial">Presencial</option>
                     <option value="virtual">Virtual</option>
@@ -320,11 +300,11 @@ export default function SessionModal({
 
               {commissions.length > 1 && (
                 <div style={{ marginBottom: '12px' }}>
-                  <label style={labelStyle}>Comisión</label>
+                  <label className="field-label">Comisión</label>
                   <select
                     value={session.commission_scope}
                     onChange={e => onSessionChange({ ...session, commission_scope: e.target.value })}
-                    style={inputStyle}
+                    className="field-input"
                   >
                     <option value="all">Todas las comisiones</option>
                     {commissions.map(c => (
@@ -340,53 +320,53 @@ export default function SessionModal({
           {modalTab === 'links' && (
             <>
               <div style={{ marginBottom: '12px' }}>
-                <label style={labelStyle}>Canva / Presentación</label>
+                <label className="field-label">Canva / Presentación</label>
                 <input
                   value={session.canva_url || ''}
                   onChange={e => onSessionChange({ ...session, canva_url: e.target.value })}
                   placeholder="https://canva.com/..."
-                  style={inputStyle}
+                  className="field-input"
                 />
               </div>
 
               {showPartial && (
                 <div style={{ marginBottom: '12px' }}>
-                  <label style={labelStyle}>Archivo del parcial</label>
+                  <label className="field-label">Archivo del parcial</label>
                   <input
                     value={session.partial_file_url || ''}
                     onChange={e => onSessionChange({ ...session, partial_file_url: e.target.value })}
                     placeholder="https://drive.google.com/..."
-                    style={inputStyle}
+                    className="field-input"
                   />
                 </div>
               )}
 
               {showBio && (
                 <div style={{ marginBottom: '12px' }}>
-                  <label style={labelStyle}>Bio del invitado</label>
+                  <label className="field-label">Bio del invitado</label>
                   <input
                     value={session.guest_bio_url || ''}
                     onChange={e => onSessionChange({ ...session, guest_bio_url: e.target.value })}
                     placeholder="https://linkedin.com/..."
-                    style={inputStyle}
+                    className="field-input"
                   />
                 </div>
               )}
 
               {showBrief && (
                 <div style={{ marginBottom: '12px' }}>
-                  <label style={labelStyle}>Brief / Consigna del taller</label>
+                  <label className="field-label">Brief / Consigna del taller</label>
                   <input
                     value={session.workshop_brief_url || ''}
                     onChange={e => onSessionChange({ ...session, workshop_brief_url: e.target.value })}
                     placeholder="https://drive.google.com/..."
-                    style={inputStyle}
+                    className="field-input"
                   />
                 </div>
               )}
 
               <div>
-                <label style={labelStyle}>Links adicionales</label>
+                <label className="field-label">Links adicionales</label>
                 {addLinks.map((l, i) => (
                   <div key={i} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                     <input
@@ -431,7 +411,7 @@ export default function SessionModal({
           {modalTab === 'notes' && (
             <>
               <div style={{ marginBottom: '16px' }}>
-                <label style={labelStyle}>Alcance del encuentro / Notas compartidas</label>
+                <label className="field-label">Alcance del encuentro / Notas compartidas</label>
                 <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px' }}>
                   Visibles para todo el equipo con acceso a este curso.
                 </p>
@@ -440,11 +420,11 @@ export default function SessionModal({
                   onChange={e => onSessionChange({ ...session, shared_notes: e.target.value })}
                   rows={4}
                   placeholder="Notas del equipo docente..."
-                  style={{ ...inputStyle, resize: 'vertical', minHeight: '80px' }}
+                  className="field-input" style={{ resize: 'vertical', minHeight: '80px' }}
                 />
               </div>
               <div>
-                <label style={{ ...labelStyle, color: 'var(--text-muted)' }}>
+                <label className="field-label" style={{ color: 'var(--text-muted)' }}>
                   Notas privadas <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(solo vos)</span>
                 </label>
                 <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px' }}>Solo vos las ves.</p>
@@ -453,7 +433,7 @@ export default function SessionModal({
                   onChange={e => onSessionChange({ ...session, private_notes: e.target.value })}
                   rows={3}
                   placeholder="Solo vos las verás..."
-                  style={{ ...inputStyle, resize: 'vertical', opacity: 0.7 }}
+                  className="field-input" style={{ resize: 'vertical', opacity: 0.7 }}
                 />
               </div>
             </>
@@ -477,34 +457,34 @@ export default function SessionModal({
                 { key: 'review_next_year',    label: '📌 Observaciones para el próximo año',       placeholder: '' },
               ] as { key: keyof ExtendedSession; label: string; placeholder: string }[]).map(({ key, label, placeholder }) => (
                 <div key={key} style={{ marginBottom: '14px' }}>
-                  <label style={labelStyle}>{label}</label>
+                  <label className="field-label">{label}</label>
                   <textarea
                     value={(session[key] as string) || ''}
                     onChange={e => onSessionChange({ ...session, [key]: e.target.value })}
                     rows={2}
                     placeholder={placeholder}
-                    style={{ ...inputStyle, resize: 'vertical' }}
+                    className="field-input" style={{ resize: 'vertical' }}
                   />
                 </div>
               ))}
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label style={labelStyle}>⏱ Tiempo estimado de clase</label>
+                  <label className="field-label">⏱ Tiempo estimado de clase</label>
                   <input
                     value={session.review_time_estimated || ''}
                     onChange={e => onSessionChange({ ...session, review_time_estimated: e.target.value })}
                     placeholder="Ej: 90 min"
-                    style={inputStyle}
+                    className="field-input"
                   />
                 </div>
                 <div>
-                  <label style={labelStyle}>⏱ Tiempo real demandado</label>
+                  <label className="field-label">⏱ Tiempo real demandado</label>
                   <input
                     value={session.review_time_real || ''}
                     onChange={e => onSessionChange({ ...session, review_time_real: e.target.value })}
                     placeholder="Ej: 110 min"
-                    style={inputStyle}
+                    className="field-input"
                   />
                 </div>
               </div>
@@ -519,21 +499,21 @@ export default function SessionModal({
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
                 <div>
-                  <label style={labelStyle}>Hora de inicio</label>
+                  <label className="field-label">Hora de inicio</label>
                   <input
                     type="time"
                     value={session.start_time || ''}
                     onChange={e => onSessionChange({ ...session, start_time: e.target.value })}
-                    style={inputStyle}
+                    className="field-input"
                   />
                 </div>
                 <div>
-                  <label style={labelStyle}>Hora de fin</label>
+                  <label className="field-label">Hora de fin</label>
                   <input
                     type="time"
                     value={session.end_time || ''}
                     onChange={e => onSessionChange({ ...session, end_time: e.target.value })}
-                    style={inputStyle}
+                    className="field-input"
                   />
                 </div>
               </div>
@@ -567,12 +547,12 @@ export default function SessionModal({
               )}
 
               <div>
-                <label style={labelStyle}>Aula / Sala / Lugar</label>
+                <label className="field-label">Aula / Sala / Lugar</label>
                 <input
                   value={session.location || ''}
                   onChange={e => onSessionChange({ ...session, location: e.target.value })}
                   placeholder="Ej: Aula 2 - Edificio A"
-                  style={inputStyle}
+                  className="field-input"
                 />
               </div>
             </>
@@ -586,11 +566,11 @@ export default function SessionModal({
 
               {/* Estado Moodle */}
               <div style={{ marginBottom: '20px' }}>
-                <label style={labelStyle}>Estado de publicación</label>
+                <label className="field-label">Estado de publicación</label>
                 <select
                   value={session.moodle_status || 'no_iniciado'}
                   onChange={e => onSessionChange({ ...session, moodle_status: e.target.value })}
-                  style={inputStyle}
+                  className="field-input"
                   disabled={!canEdit}
                 >
                   {MOODLE_STATUSES.map(s => (
@@ -601,7 +581,7 @@ export default function SessionModal({
 
               {/* Checklist */}
               <div>
-                <label style={labelStyle}>Checklist de publicación</label>
+                <label className="field-label">Checklist de publicación</label>
                 {(() => {
                   const cl = normalizeChecklist(session.moodle_checklist)
                   const complete = isChecklistComplete(cl)

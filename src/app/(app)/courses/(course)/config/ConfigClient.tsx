@@ -13,21 +13,14 @@ import { useDialog } from '@/components/ui/Dialog'
 import { PERM_ORDER, PERM_LABEL, PERM_HINT } from '@/lib/permissions'
 import { PermBadge } from '@/components/ui/Badges'
 
+type ConfigTab = 'general' | 'links' | 'commissions' | 'teachers' | 'backup'
+
 interface Permission {
   id: string
   user_id: string
   commission_id: string | null
   permission: string
   profiles: { full_name: string; global_role: string } | null
-}
-
-const labelStyle: React.CSSProperties = {
-  display: 'block', fontSize: '11px', fontWeight: 600,
-  color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '5px',
-}
-const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '8px 10px', border: '1px solid var(--input-border)',
-  borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit', color: 'var(--text-primary)',
 }
 
 type CourseDetail = Course & {
@@ -59,7 +52,7 @@ export default function ConfigClient({
   const [allProfiles,  setAllProfiles]  = useState<Profile[]>(initialAllProfiles)
   const [saving,       setSaving]       = useState(false)
   const [saved,        setSaved]        = useState(false)
-  const [tab,          setTab]          = useState<'general'|'links'|'commissions'|'teachers'|'backup'>('general')
+  const [tab,          setTab]          = useState<ConfigTab>('general')
   // Respaldo / restauración
   const [backupBusy,   setBackupBusy]   = useState(false)
   const [backupMsg,    setBackupMsg]    = useState('')
@@ -293,14 +286,6 @@ export default function ConfigClient({
   const usersWithPerm = new Set(permissions.map(p => p.user_id))
   const availableProfiles = allProfiles.filter(p => !usersWithPerm.has(p.id))
 
-  const tabStyle = (t: string): React.CSSProperties => ({
-    padding: '8px 14px', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
-    color: tab === t ? 'var(--accent)' : 'var(--text-muted)',
-    borderBottom: tab === t ? '2px solid var(--accent)' : '2px solid transparent',
-    marginBottom: '-1px', background: 'none', border: 'none', fontFamily: 'inherit',
-    borderBottomStyle: 'solid' as const,
-  })
-
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
 
@@ -317,21 +302,14 @@ export default function ConfigClient({
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           {isAdmin && (
-            <button onClick={archiveCourse} style={{
-              padding: '7px 14px', background: 'transparent', border: '1px solid var(--input-border)',
-              borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit',
-              color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '5px',
-            }}>
-              <i className="ti ti-archive" aria-hidden="true"></i> Archivar
+            <button className="btn btn-ghost" onClick={archiveCourse} disabled={archiving}>
+              <i className="ti ti-archive" aria-hidden="true"></i>
+              {archiving ? 'Archivando…' : 'Archivar'}
             </button>
           )}
           {isAdmin && (
-            <button onClick={saveCourse} disabled={saving} style={{
-              padding: '7px 16px', background: saving ? 'var(--text-muted)' : 'var(--accent)',
-              color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px',
-              fontWeight: 500, cursor: saving ? 'wait' : 'pointer', fontFamily: 'inherit',
-              display: 'flex', alignItems: 'center', gap: '5px',
-            }}>
+            <button className="btn btn-primary" onClick={saveCourse} disabled={saving}
+              style={{ cursor: saving ? 'wait' : 'pointer' }}>
               {saved
                 ? <><i className="ti ti-check" aria-hidden="true"></i> Guardado</>
                 : <><i className="ti ti-device-floppy" aria-hidden="true"></i> Guardar</>}
@@ -340,66 +318,73 @@ export default function ConfigClient({
         </div>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', marginBottom: '20px' }}>
-        <button style={tabStyle('general')}     onClick={() => setTab('general')}>General</button>
-        <button style={tabStyle('links')}       onClick={() => setTab('links')}>Links del curso</button>
-        <button style={tabStyle('commissions')} onClick={() => setTab('commissions')}>Comisiones</button>
-        <button style={tabStyle('teachers')}    onClick={() => setTab('teachers')}>Docentes y permisos</button>
-        {isAdmin && <button style={tabStyle('backup')} onClick={() => setTab('backup')}>Respaldo</button>}
+      <div className="tabs" role="tablist" aria-label="Secciones de la configuración">
+        {([
+          ['general',     'General'],
+          ['links',       'Links del curso'],
+          ['commissions', 'Comisiones'],
+          ['teachers',    'Accesos'],
+          ...(isAdmin ? [['backup', 'Respaldo'] as const] : []),
+        ] as readonly (readonly [ConfigTab, string])[]).map(([k, label]) => (
+          <button key={k} className="tab" role="tab"
+            aria-selected={tab === k}
+            onClick={() => setTab(k)}>
+            {label}
+          </button>
+        ))}
       </div>
 
       <div style={{ maxWidth: '620px' }}>
 
         {/* TAB: General */}
         {tab === 'general' && (
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '24px' }}>
+          <div className="card">
             <div style={{ marginBottom: '14px' }}>
-              <label style={labelStyle}>Nombre corto del curso</label>
-              <input value={course.name} onChange={e => setCourse({...course, name: e.target.value})} disabled={!isAdmin} style={inputStyle} />
+              <label className="field-label">Nombre corto del curso</label>
+              <input value={course.name} onChange={e => setCourse({...course, name: e.target.value})} disabled={!isAdmin} className="field-input" />
             </div>
             <div style={{ marginBottom: '14px' }}>
-              <label style={labelStyle}>Nombre completo de la materia</label>
-              <input value={course.full_name || ''} onChange={e => setCourse({...course, full_name: e.target.value})} disabled={!isAdmin} placeholder="Nombre oficial de la materia" style={inputStyle} />
+              <label className="field-label">Nombre completo de la materia</label>
+              <input value={course.full_name || ''} onChange={e => setCourse({...course, full_name: e.target.value})} disabled={!isAdmin} placeholder="Nombre oficial de la materia" className="field-input" />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
               <div>
-                <label style={labelStyle}>Carrera</label>
-                <input value={course.career || ''} onChange={e => setCourse({...course, career: e.target.value})} disabled={!isAdmin} placeholder="Ej: Ing. en Sistemas" style={inputStyle} />
+                <label className="field-label">Carrera</label>
+                <input value={course.career || ''} onChange={e => setCourse({...course, career: e.target.value})} disabled={!isAdmin} placeholder="Ej: Ing. en Sistemas" className="field-input" />
               </div>
               <div>
-                <label style={labelStyle}>Año</label>
-                <input type="number" value={course.year} onChange={e => setCourse({...course, year: parseInt(e.target.value)})} disabled={!isAdmin} style={inputStyle} />
+                <label className="field-label">Año</label>
+                <input type="number" value={course.year} onChange={e => setCourse({...course, year: parseInt(e.target.value)})} disabled={!isAdmin} className="field-input" />
               </div>
             </div>
             <div style={{ marginBottom: '14px' }}>
-              <label style={labelStyle}>Facultad / Universidad</label>
-              <input value={course.faculty || ''} onChange={e => setCourse({...course, faculty: e.target.value})} disabled={!isAdmin} placeholder="Ej: UNLP - Informática" style={inputStyle} />
+              <label className="field-label">Facultad / Universidad</label>
+              <input value={course.faculty || ''} onChange={e => setCourse({...course, faculty: e.target.value})} disabled={!isAdmin} placeholder="Ej: UNLP - Informática" className="field-input" />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
               <div style={{ marginBottom: '14px' }}>
-  <label style={labelStyle}>Nivel académico</label>
+  <label className="field-label">Nivel académico</label>
   <select
     value={(course as Record<string, unknown>).level as string || 'grado'}
     onChange={e => setCourse({...course, level: e.target.value})}
     disabled={!isAdmin}
-    style={inputStyle}
+    className="field-input"
   >
     <option value="grado">Grado</option>
     <option value="posgrado">Posgrado</option>
   </select>
 </div>
               <div>
-                <label style={labelStyle}>Modalidad predominante</label>
-                <select value={course.modality || 'presencial'} onChange={e => setCourse({...course, modality: e.target.value})} disabled={!isAdmin} style={inputStyle}>
+                <label className="field-label">Modalidad predominante</label>
+                <select value={course.modality || 'presencial'} onChange={e => setCourse({...course, modality: e.target.value})} disabled={!isAdmin} className="field-input">
                   <option value="presencial">Presencial</option>
                   <option value="virtual">Virtual</option>
                   <option value="hibrida">Híbrida</option>
                 </select>
               </div>
               <div>
-                <label style={labelStyle}>Zona horaria de las clases</label>
-                <select value={course.timezone || 'America/Argentina/Buenos_Aires'} onChange={e => setCourse({...course, timezone: e.target.value})} disabled={!isAdmin} style={inputStyle}>
+                <label className="field-label">Zona horaria de las clases</label>
+                <select value={course.timezone || 'America/Argentina/Buenos_Aires'} onChange={e => setCourse({...course, timezone: e.target.value})} disabled={!isAdmin} className="field-input">
                   <option value="America/Argentina/Buenos_Aires">Argentina (Buenos Aires)</option>
                   <option value="Europe/Madrid">España (Madrid)</option>
                   <option value="America/Montevideo">Uruguay (Montevideo)</option>
@@ -414,14 +399,14 @@ export default function ConfigClient({
                 </p>
               </div>
               <div>
-                <label style={labelStyle}>Encuentros esperados</label>
-                <input type="number" value={course.expected_sessions} onChange={e => setCourse({...course, expected_sessions: parseInt(e.target.value)})} disabled={!isAdmin} style={inputStyle} />
+                <label className="field-label">Encuentros esperados</label>
+                <input type="number" value={course.expected_sessions} onChange={e => setCourse({...course, expected_sessions: parseInt(e.target.value)})} disabled={!isAdmin} className="field-input" />
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
               <div>
-                <label style={labelStyle}>Estado</label>
-                <select value={course.status} onChange={e => setCourse({...course, status: e.target.value as Course['status']})} disabled={!isAdmin} style={inputStyle}>
+                <label className="field-label">Estado</label>
+                <select value={course.status} onChange={e => setCourse({...course, status: e.target.value as Course['status']})} disabled={!isAdmin} className="field-input">
                   <option value="draft">Borrador</option>
                   <option value="active">Activo</option>
                   <option value="closed">Cerrado</option>
@@ -429,21 +414,21 @@ export default function ConfigClient({
               </div>
             </div>
             <div style={{ marginBottom: '14px' }}>
-              <label style={labelStyle}>Días y horarios</label>
-              <input value={course.schedule_text || ''} onChange={e => setCourse({...course, schedule_text: e.target.value})} disabled={!isAdmin} placeholder="Ej: Martes 18-21hs y Jueves 18-21hs" style={inputStyle} />
+              <label className="field-label">Días y horarios</label>
+              <input value={course.schedule_text || ''} onChange={e => setCourse({...course, schedule_text: e.target.value})} disabled={!isAdmin} placeholder="Ej: Martes 18-21hs y Jueves 18-21hs" className="field-input" />
             </div>
             <div style={{ marginBottom: '14px' }}>
-              <label style={labelStyle}>Descripción</label>
-              <RichTextArea value={course.description || ''} onChange={v => setCourse({...course, description: v})} disabled={!isAdmin} rows={4} style={{...inputStyle, resize: 'vertical', minHeight: '90px', width: '100%'}} />
+              <label className="field-label">Descripción</label>
+              <RichTextArea value={course.description || ''} onChange={v => setCourse({...course, description: v})} disabled={!isAdmin} rows={4} className="field-input" style={{ resize: 'vertical', minHeight: '90px' }} />
             </div>
             <div>
-              <label style={labelStyle}>Observaciones internas</label>
-              <RichTextArea value={course.internal_notes || ''} onChange={v => setCourse({...course, internal_notes: v})} disabled={!isAdmin} rows={4} placeholder="Notas visibles solo para el equipo docente..." style={{...inputStyle, resize: 'vertical', minHeight: '90px', width: '100%'}} />
+              <label className="field-label">Observaciones internas</label>
+              <RichTextArea value={course.internal_notes || ''} onChange={v => setCourse({...course, internal_notes: v})} disabled={!isAdmin} rows={4} placeholder="Notas visibles solo para el equipo docente..." className="field-input" style={{ resize: 'vertical', minHeight: '90px' }} />
             </div>
 
             {isAdmin && (
               <div style={{ marginTop: '8px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
-                <label style={{ ...labelStyle, marginBottom: '8px' }}>Archivar curso</label>
+                <label className="field-label">Archivar curso</label>
                 <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '10px' }}>
                   Al archivar, el curso deja de aparecer en el menú lateral. Podrás restaurarlo o reutilizarlo cuando quieras desde &quot;Cursos archivados&quot;. No se borra nada.
                 </p>
@@ -459,7 +444,7 @@ export default function ConfigClient({
 
         {/* TAB: Links */}
         {tab === 'links' && (
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '24px' }}>
+          <div className="card">
             <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '20px' }}>
               Links generales del curso. El link de Zoom aparece en el cronograma para encuentros virtuales sin link específico.
             </p>
@@ -470,11 +455,11 @@ export default function ConfigClient({
               { key: 'materials_url',label: '📁 Carpeta de materiales',    placeholder: 'https://drive.google.com/...' },
             ].map(({ key, label, placeholder }) => (
               <div key={key} style={{ marginBottom: '16px' }}>
-                <label style={labelStyle}>{label}</label>
+                <label className="field-label">{label}</label>
                 <input
                   value={(course as Record<string, unknown>)[key] as string || ''}
                   onChange={e => setCourse({...course, [key]: e.target.value})}
-                  disabled={!isAdmin} placeholder={placeholder} style={inputStyle}
+                  disabled={!isAdmin} placeholder={placeholder} className="field-input"
                 />
               </div>
             ))}
@@ -483,9 +468,9 @@ export default function ConfigClient({
 
         {/* TAB: Comisiones */}
         {tab === 'commissions' && (
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '24px' }}>
+          <div className="card">
             {commissions.map(c => (
-              <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+              <div key={c.id} className="list-row">
                 <i className="ti ti-users" style={{ color: 'var(--accent)', fontSize: '16px' }} aria-hidden="true"></i>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 500, fontSize: '13px' }}>{c.name}</div>
@@ -493,10 +478,12 @@ export default function ConfigClient({
                 </div>
                 {isAdmin && (
                   <div style={{ display: 'flex', gap: '4px' }}>
-                    <button onClick={() => editCommission(c)} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '12px' }}>
+                    <button className="row-danger" style={{ borderColor: 'var(--border)' }}
+                      onClick={() => editCommission(c)} aria-label={`Renombrar ${c.name}`} title="Renombrar">
                       <i className="ti ti-pencil" aria-hidden="true"></i>
                     </button>
-                    <button onClick={() => deleteCommission(c.id)} style={{ background: 'none', border: '1px solid var(--badge-danger-bd)', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', color: 'var(--danger)', fontSize: '12px' }}>
+                    <button className="row-danger" onClick={() => deleteCommission(c.id)}
+                      aria-label={`Eliminar ${c.name}`} title="Eliminar">
                       <i className="ti ti-trash" aria-hidden="true"></i>
                     </button>
                   </div>
@@ -504,7 +491,7 @@ export default function ConfigClient({
               </div>
             ))}
             {isAdmin && (
-              <button onClick={addCommission} style={{ marginTop: '12px', background: 'none', border: '1px dashed var(--input-border)', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: 'inherit' }}>
+              <button className="btn-dashed" onClick={addCommission} style={{ marginTop: 'var(--space-3)' }}>
                 <i className="ti ti-plus" aria-hidden="true"></i> Agregar comisión
               </button>
             )}
@@ -513,7 +500,7 @@ export default function ConfigClient({
 
         {/* TAB: Docentes y permisos */}
         {tab === 'teachers' && (
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '24px' }}>
+          <div className="card">
             <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
               Quién tiene acceso a este curso y con qué alcance.
               {PERM_ORDER.map((k, i) => (
@@ -525,11 +512,11 @@ export default function ConfigClient({
             </p>
 
             <div className="table-scroll">
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', marginBottom: '16px' }}>
+              <table className="data-table" style={{ marginBottom: 'var(--space-4)' }}>
                 <thead>
-                  <tr style={{ background: 'var(--hover-bg)' }}>
+                  <tr>
                     {['Persona','Comisión','Permiso',''].map(h => (
-                      <th key={h} style={{ textAlign: 'left', padding: '7px 10px', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>{h}</th>
+                      <th key={h} scope="col">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -538,12 +525,10 @@ export default function ConfigClient({
                     const u = p.profiles as { full_name: string; global_role: string } | null
                     const com = p.commission_id ? commissions.find(c => c.id === p.commission_id) : null
                     return (
-                      <tr key={p.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                        <td style={{ padding: '9px 10px', fontWeight: 500 }}>{u?.full_name || '—'}</td>
-                        <td style={{ padding: '9px 10px', color: 'var(--text-muted)' }}>
-                          {com ? com.name : <span style={{ color: 'var(--text-muted)' }}>Todas</span>}
-                        </td>
-                        <td style={{ padding: '9px 10px' }}>
+                      <tr key={p.id}>
+                        <td style={{ fontWeight: 500 }}>{u?.full_name || '—'}</td>
+                        <td style={{ color: 'var(--text-muted)' }}>{com ? com.name : 'Todas'}</td>
+                        <td>
                           {isAdmin ? (
                             <select value={p.permission} onChange={e => changePermission(p.id, e.target.value)}
                               aria-label="Permiso en el curso"
@@ -556,9 +541,10 @@ export default function ConfigClient({
                             <PermBadge permission={p.permission} />
                           )}
                         </td>
-                        <td style={{ padding: '9px 10px' }}>
+                        <td>
                           {isAdmin && (
-                            <button onClick={() => removePermission(p.id)} style={{ background: 'none', border: '1px solid var(--badge-danger-bd)', borderRadius: '6px', padding: '3px 7px', cursor: 'pointer', color: 'var(--danger)', fontSize: '12px' }}>
+                            <button className="row-danger" onClick={() => removePermission(p.id)}
+                              aria-label={`Quitar el acceso de ${u?.full_name || 'esta persona'}`} title="Quitar acceso">
                               <i className="ti ti-trash" aria-hidden="true"></i>
                             </button>
                           )}
@@ -572,23 +558,19 @@ export default function ConfigClient({
 
             {/* Formulario inline para agregar docente */}
             {isAdmin && !addingTeacher && (
-              <button onClick={() => setAddingTeacher(true)} style={{
-                background: 'none', border: '1px dashed var(--input-border)', borderRadius: '8px',
-                padding: '8px 16px', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '13px',
-                display: 'flex', alignItems: 'center', gap: '6px', fontFamily: 'inherit',
-              }}>
-                <i className="ti ti-user-plus" aria-hidden="true"></i> Agregar docente
+              <button className="btn-dashed" onClick={() => setAddingTeacher(true)}>
+                <i className="ti ti-user-plus" aria-hidden="true"></i> Dar acceso a alguien
               </button>
             )}
 
             {isAdmin && addingTeacher && (
-              <div style={{ background: 'var(--hover-bg)', border: '1px solid var(--border)', borderRadius: '10px', padding: '16px', marginTop: '8px' }}>
-                <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '12px' }}>Agregar docente al curso</p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+              <div style={{ background: 'var(--hover-bg)', border: '1px solid var(--border)', borderRadius: '10px', padding: 'var(--space-4)', marginTop: 'var(--space-2)' }}>
+                <p className="field-label" style={{ marginBottom: 'var(--space-3)' }}>Dar acceso al curso</p>
+                <div className="field-grid">
                   <div>
-                    <label style={labelStyle}>Usuario</label>
+                    <label className="field-label">Usuario</label>
                     <select value={newTeacherUserId} onChange={e => setNewTeacherUserId(e.target.value)}
-                      style={inputStyle}>
+                      className="field-input">
                       <option value="">— Seleccionar —</option>
                       {availableProfiles.map(p => (
                         <option key={p.id} value={p.id}>{p.full_name}</option>
@@ -601,15 +583,15 @@ export default function ConfigClient({
                     )}
                   </div>
                   <div>
-                    <label style={labelStyle}>Comisión</label>
-                    <select value={newTeacherCommId} onChange={e => setNewTeacherCommId(e.target.value)} style={inputStyle}>
+                    <label className="field-label">Comisión</label>
+                    <select value={newTeacherCommId} onChange={e => setNewTeacherCommId(e.target.value)} className="field-input">
                       <option value="">Todas las comisiones</option>
                       {commissions.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label style={labelStyle}>Permiso</label>
-                    <select value={newTeacherPerm} onChange={e => setNewTeacherPerm(e.target.value)} style={inputStyle}>
+                    <label className="field-label">Permiso</label>
+                    <select value={newTeacherPerm} onChange={e => setNewTeacherPerm(e.target.value)} className="field-input">
                       {PERM_ORDER.map(k => (
                         <option key={k} value={k}>{PERM_LABEL[k]}</option>
                       ))}
@@ -620,15 +602,9 @@ export default function ConfigClient({
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <button onClick={handleAddTeacher} style={{
-                    padding: '7px 16px', background: 'var(--accent-solid)', color: 'white',
-                    border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
-                    cursor: 'pointer', fontFamily: 'inherit',
-                  }}>
-                    Agregar
-                  </button>
-                  <button onClick={() => { setAddingTeacher(false); setNewTeacherUserId(''); setNewTeacherCommId(''); setNewTeacherPerm('edit') }}
-                    style={{ padding: '7px 14px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)' }}>
+                  <button className="btn btn-primary" onClick={handleAddTeacher}>Dar acceso</button>
+                  <button className="btn btn-ghost"
+                    onClick={() => { setAddingTeacher(false); setNewTeacherUserId(''); setNewTeacherCommId(''); setNewTeacherPerm('edit') }}>
                     Cancelar
                   </button>
                 </div>
@@ -640,7 +616,7 @@ export default function ConfigClient({
         {tab === 'backup' && isAdmin && (
           <div style={{ maxWidth: '640px' }}>
             {/* Exportar */}
-            <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px', marginBottom: '16px' }}>
+            <div className="card">
               <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '6px' }}>Exportar y respaldar</h3>
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px' }}>
                 El respaldo JSON guarda el curso completo (clases, comisiones, tareas) y sirve para restaurarlo. Los CSV son para leer o compartir en Excel.
@@ -664,7 +640,7 @@ export default function ConfigClient({
             </div>
 
             {/* Restaurar */}
-            <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px' }}>
+            <div className="card">
               <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '6px' }}>Restaurar desde respaldo</h3>
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
                 Subí un archivo JSON de respaldo. Se creará un <strong>curso nuevo</strong> con su contenido — no se modifica ningún curso existente.

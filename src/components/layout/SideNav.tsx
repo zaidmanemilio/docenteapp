@@ -53,6 +53,11 @@ export default function SideNav({ profile, courses, pinnedCourseId = null }: Sid
   // Solo se usa en el cajón: ahí no hay puntero, así que el panel de
   // cursos se abre tocando el botón en vez de al apuntarle.
   const [cursosAbiertos, setCursosAbiertos] = useState(false)
+  // En escritorio el panel se abre al apuntarle, así que después de elegir
+  // un curso el puntero sigue encima y el panel queda abierto tapando la
+  // pantalla que acabás de pedir. Esta bandera lo cierra igual, y se limpia
+  // cuando el puntero sale del menú.
+  const [reciénElegido, setReciénElegido] = useState(false)
   const userBox = useRef<HTMLDivElement>(null)
 
   const isAdmin = profile.global_role === 'admin'
@@ -82,11 +87,16 @@ export default function SideNav({ profile, courses, pinnedCourseId = null }: Sid
   }, [userMenu])
 
   // Al navegar se cierra todo: en celular el cajón quedaría tapando.
+  //
+  // Depende también del curso activo, no solo de pathname: al cambiar de
+  // curso dentro de la misma sección lo único que cambia es la query
+  // (?c=...), y usePathname() no la mira. Sin esto, elegir un curso desde
+  // el cajón dejaba el cajón abierto.
   useEffect(() => {
     setUserMenu(false)
     setCajonAbierto(false)
     setCursosAbiertos(false)
-  }, [pathname])
+  }, [pathname, activeCourseId])
 
   // Escape cierra el cajón.
   useEffect(() => {
@@ -99,10 +109,14 @@ export default function SideNav({ profile, courses, pinnedCourseId = null }: Sid
   function irASeccion(key: string) {
     const destino = activeCourseId || courses[0]?.id
     if (!destino) return
+    setCajonAbierto(false)
     router.push(`/courses/${key}?c=${destino}`)
   }
 
   function elegirCurso(id: string) {
+    setReciénElegido(true)
+    setCursosAbiertos(false)
+    setCajonAbierto(false)
     // Se mantiene la sección al cambiar de curso: si estabas mirando el
     // Cronograma, seguís en el Cronograma del otro curso.
     const seccion = seccionActual || 'presentation'
@@ -196,7 +210,10 @@ export default function SideNav({ profile, courses, pinnedCourseId = null }: Sid
         </div>
 
         {/* Selector de curso. */}
-        <div className={`course-menu${cursosAbiertos ? ' is-expanded' : ''}`}>
+        <div
+          className={`course-menu${cursosAbiertos ? ' is-expanded' : ''}${reciénElegido ? ' is-dismissed' : ''}`}
+          onMouseLeave={() => setReciénElegido(false)}
+        >
           <button
             className="course-btn"
             style={{ borderLeftColor: colorCurso }}
@@ -233,18 +250,18 @@ export default function SideNav({ profile, courses, pinnedCourseId = null }: Sid
 
               <button
                 className={`course-item${enCalendario ? ' is-current' : ''}`}
-                onClick={() => router.push('/calendar')}
+                onClick={() => { setReciénElegido(true); setCajonAbierto(false); router.push('/calendar') }}
               >
                 <i className="ti ti-calendar-stats" style={{ width: '16px', fontSize: '15px' }} aria-hidden="true"></i>
                 <span className="course-label">Calendario unificado</span>
               </button>
               {isAdmin && (
                 <>
-                  <button className="course-item" onClick={() => router.push('/archived')}>
+                  <button className="course-item" onClick={() => { setReciénElegido(true); setCajonAbierto(false); router.push('/archived') }}>
                     <i className="ti ti-archive" style={{ width: '16px', fontSize: '15px' }} aria-hidden="true"></i>
                     <span className="course-label">Cursos archivados</span>
                   </button>
-                  <button className="course-item" onClick={() => router.push('/courses/new')}>
+                  <button className="course-item" onClick={() => { setReciénElegido(true); setCajonAbierto(false); router.push('/courses/new') }}>
                     <i className="ti ti-plus" style={{ width: '16px', fontSize: '15px' }} aria-hidden="true"></i>
                     <span className="course-label">Nuevo curso</span>
                   </button>

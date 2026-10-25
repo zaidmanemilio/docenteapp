@@ -104,15 +104,6 @@ export default function NewCoursePage() {
     router.refresh()
   }
 
-  const labelStyle: React.CSSProperties = {
-    display: 'block', fontSize: '11px', fontWeight: 600,
-    color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '5px',
-  }
-  const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '8px 10px', border: '1px solid var(--input-border)',
-    borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit', color: 'var(--text-primary)',
-  }
-
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
 
@@ -129,35 +120,35 @@ export default function NewCoursePage() {
           <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: '16px' }}>Identificación</p>
 
           <div style={{ marginBottom: '14px' }}>
-            <label style={labelStyle}>Nombre corto del curso *</label>
-            <input value={form.name} onChange={e => updateField('name', e.target.value)} placeholder="Ej: TISI 2027" style={inputStyle} />
+            <label className="field-label">Nombre corto del curso *</label>
+            <input value={form.name} onChange={e => updateField('name', e.target.value)} placeholder="Ej: TISI 2027" className="field-input" />
             <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>Nombre que aparece en el menú lateral.</p>
           </div>
 
           <div style={{ marginBottom: '14px' }}>
-            <label style={labelStyle}>Nombre completo de la materia</label>
-            <input value={form.full_name} onChange={e => updateField('full_name', e.target.value)} placeholder="Ej: Tecnología Informática y Sistemas de Información" style={inputStyle} />
+            <label className="field-label">Nombre completo de la materia</label>
+            <input value={form.full_name} onChange={e => updateField('full_name', e.target.value)} placeholder="Ej: Tecnología Informática y Sistemas de Información" className="field-input" />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
             <div>
-              <label style={labelStyle}>Carrera</label>
-              <input value={form.career} onChange={e => updateField('career', e.target.value)} placeholder="Ej: Licenciatura en Administración" style={inputStyle} />
+              <label className="field-label">Carrera</label>
+              <input value={form.career} onChange={e => updateField('career', e.target.value)} placeholder="Ej: Licenciatura en Administración" className="field-input" />
             </div>
             <div>
-              <label style={labelStyle}>Año</label>
-              <input type="number" value={form.year} onChange={e => updateField('year', parseInt(e.target.value))} style={inputStyle} />
+              <label className="field-label">Año</label>
+              <input type="number" value={form.year} onChange={e => updateField('year', parseInt(e.target.value))} className="field-input" />
             </div>
           </div>
 
           <div style={{ marginBottom: '14px' }}>
-            <label style={labelStyle}>Facultad / Universidad</label>
-            <input value={form.faculty} onChange={e => updateField('faculty', e.target.value)} placeholder="Ej: FCE - UNLP" style={inputStyle} />
+            <label className="field-label">Facultad / Universidad</label>
+            <input value={form.faculty} onChange={e => updateField('faculty', e.target.value)} placeholder="Ej: FCE - UNLP" className="field-input" />
           </div>
 
           <div style={{ marginBottom: '14px' }}>
-            <label style={labelStyle}>Descripción</label>
-            <textarea value={form.description} onChange={e => updateField('description', e.target.value)} rows={3} style={{ ...inputStyle, resize: 'vertical', minHeight: '72px' }} />
+            <label className="field-label">Descripción</label>
+            <textarea value={form.description} onChange={e => updateField('description', e.target.value)} rows={3} className="field-input" style={{ resize: 'vertical', minHeight: '72px' }} />
           </div>
         </div>
 
@@ -165,30 +156,30 @@ export default function NewCoursePage() {
         <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '24px', marginBottom: '16px' }}>
           <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: '16px' }}>Configuración</p>
 <div style={{ marginBottom: '14px' }}>
-  <label style={labelStyle}>Nivel académico</label>
-  <select value={form.level} onChange={e => updateField('level', e.target.value)} style={inputStyle}>
+  <label className="field-label">Nivel académico</label>
+  <select value={form.level} onChange={e => updateField('level', e.target.value)} className="field-input">
     <option value="grado">Grado</option>
     <option value="posgrado">Posgrado</option>
   </select>
 </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
             <div>
-              <label style={labelStyle}>Modalidad predominante</label>
-              <select value={form.modality} onChange={e => updateField('modality', e.target.value)} style={inputStyle}>
+              <label className="field-label">Modalidad predominante</label>
+              <select value={form.modality} onChange={e => updateField('modality', e.target.value)} className="field-input">
                 <option value="presencial">Presencial</option>
                 <option value="virtual">Virtual</option>
                 <option value="hibrida">Híbrida</option>
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Encuentros esperados</label>
-              <input type="number" value={form.expected_sessions} onChange={e => updateField('expected_sessions', parseInt(e.target.value))} style={inputStyle} />
+              <label className="field-label">Encuentros esperados</label>
+              <input type="number" value={form.expected_sessions} onChange={e => updateField('expected_sessions', parseInt(e.target.value))} className="field-input" />
             </div>
           </div>
 
           <div>
-            <label style={labelStyle}>Estado inicial</label>
-            <select value={form.status} onChange={e => updateField('status', e.target.value)} style={inputStyle}>
+            <label className="field-label">Estado inicial</label>
+            <select value={form.status} onChange={e => updateField('status', e.target.value)} className="field-input">
               <option value="draft">Borrador</option>
               <option value="active">Activo</option>
             </select>
@@ -225,7 +216,7 @@ export default function NewCoursePage() {
                 <div key={i} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                   <input value={c} onChange={e => setMultiCommissions(prev => prev.map((v, j) => j === i ? e.target.value : v))}
                     placeholder={`Comisión ${i + 1}`}
-                    style={{ ...inputStyle, flex: 1, marginBottom: 0 }} />
+                    className="field-input" style={{ flex: 1 }} />
                   {multiCommissions.length > 1 && (
                     <button onClick={() => setMultiCommissions(prev => prev.filter((_, j) => j !== i))}
                       style={{ background: 'none', border: '1px solid var(--badge-danger-bd)', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', color: 'var(--danger)', fontSize: '13px' }}>

@@ -16,6 +16,8 @@ interface Props {
   rows?: number
   placeholder?: string
   style?: React.CSSProperties
+  /** Clase del <textarea>. Lo normal es 'field-input'. */
+  className?: string
 }
 
 type Accion =
@@ -31,7 +33,7 @@ const BOTONES: { icono: string; titulo: string; accion: Accion }[] = [
   { icono: 'ti-link',            titulo: 'Enlace',         accion: { tipo: 'envolver', marca: '[]()' } },
 ]
 
-export default function RichTextArea({ value, onChange, disabled, rows = 4, placeholder, style }: Props) {
+export default function RichTextArea({ value, onChange, disabled, rows = 4, placeholder, style, className }: Props) {
   const ref = useRef<HTMLTextAreaElement>(null)
 
   function aplicar(accion: Accion) {
@@ -109,6 +111,7 @@ export default function RichTextArea({ value, onChange, disabled, rows = 4, plac
         disabled={disabled}
         rows={rows}
         placeholder={placeholder}
+        className={className}
         style={style}
       />
 

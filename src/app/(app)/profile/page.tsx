@@ -91,8 +91,6 @@ export default function ProfilePage() {
 
   if (loading) return <div style={{ padding: '24px', color: 'var(--text-muted)' }}>Cargando...</div>
 
-  const labelStyle = { fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }
-  const inputStyle = { width: '100%', padding: '8px 10px', border: '1px solid var(--input-border)', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit' }
   const cardStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '24px', marginBottom: '16px' }
 
   return (
@@ -111,17 +109,17 @@ export default function ProfilePage() {
         {nameMsg && <div className="alert alert-success" style={{ padding: '8px 12px', borderRadius: '8px', fontSize: '12px', marginBottom: '12px' }}>{nameMsg}</div>}
         <div style={{ display: 'flex', gap: '12px', marginBottom: '12px' }}>
           <div style={{ flex: 1 }}>
-            <label style={labelStyle}>Nombre</label>
-            <input style={inputStyle} value={firstName} onChange={e => setFirstName(e.target.value)} />
+            <label className="field-label">Nombre</label>
+            <input className="field-input" value={firstName} onChange={e => setFirstName(e.target.value)} />
           </div>
           <div style={{ flex: 1 }}>
-            <label style={labelStyle}>Apellido</label>
-            <input style={inputStyle} value={lastName} onChange={e => setLastName(e.target.value)} />
+            <label className="field-label">Apellido</label>
+            <input className="field-input" value={lastName} onChange={e => setLastName(e.target.value)} />
           </div>
         </div>
         <div style={{ marginBottom: '16px' }}>
-          <label style={labelStyle}>Email</label>
-          <input style={{ ...inputStyle, opacity: 0.6, cursor: 'not-allowed' }} value={email} disabled />
+          <label className="field-label">Email</label>
+          <input className="field-input" value={email} disabled />
           <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
             El email solo lo puede cambiar un administrador.
           </p>
@@ -137,17 +135,17 @@ export default function ProfilePage() {
         {pwErr && <div className="alert alert-danger" style={{ padding: '8px 12px', borderRadius: '8px', fontSize: '12px', marginBottom: '12px' }}>{pwErr}</div>}
         {pwMsg && <div className="alert alert-success" style={{ padding: '8px 12px', borderRadius: '8px', fontSize: '12px', marginBottom: '12px' }}>{pwMsg}</div>}
         <div style={{ marginBottom: '12px' }}>
-          <label style={labelStyle}>Contraseña actual</label>
-          <input type="password" style={inputStyle} value={currentPw} onChange={e => setCurrentPw(e.target.value)} />
+          <label className="field-label">Contraseña actual</label>
+          <input type="password" className="field-input" value={currentPw} onChange={e => setCurrentPw(e.target.value)} />
         </div>
         <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
           <div style={{ flex: 1 }}>
-            <label style={labelStyle}>Nueva contraseña (mín. 8)</label>
-            <input type="password" style={inputStyle} value={newPw} onChange={e => setNewPw(e.target.value)} />
+            <label className="field-label">Nueva contraseña (mín. 8)</label>
+            <input type="password" className="field-input" value={newPw} onChange={e => setNewPw(e.target.value)} />
           </div>
           <div style={{ flex: 1 }}>
-            <label style={labelStyle}>Repetir nueva contraseña</label>
-            <input type="password" style={inputStyle} value={newPw2} onChange={e => setNewPw2(e.target.value)} />
+            <label className="field-label">Repetir nueva contraseña</label>
+            <input type="password" className="field-input" value={newPw2} onChange={e => setNewPw2(e.target.value)} />
           </div>
         </div>
         <button onClick={changePassword} disabled={savingPw} style={{ padding: '8px 16px', background: 'var(--accent-solid)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', opacity: savingPw ? 0.6 : 1 }}>
