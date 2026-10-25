@@ -76,8 +76,10 @@ export default function NewCoursePage() {
     await supabase.from('commissions').insert(commissionsToCreate)
 
     // Crear el Encuentro #0 fijo: "ESTRUCTURA DEL CURSO".
-    // Es la ficha del curso, no una clase: nace SIN fecha, y por eso no
-    // aparece en los calendarios ni en la exportación a iCal.
+    // Es la ficha del curso, no una clase: nace SIN fecha (por eso no
+    // aparece en los calendarios ni en la exportación a iCal) y como 'dada',
+    // porque algo que no se dicta no puede quedar pendiente: contaba como
+    // clase por dar y no dejaba que el curso llegara al 100%.
     await supabase.from('sessions').insert({
       course_id: courseId,
       class_number: 0,
@@ -85,7 +87,8 @@ export default function NewCoursePage() {
       type: 'teorica',
       responsible: '',
       modality: form.modality === 'virtual' ? 'virtual' : 'presencial',
-      status: 'pendiente',
+      status: 'dada',
+      prep_status: 'a_terminar',
       commission_scope: 'all',
       date: null,
     })

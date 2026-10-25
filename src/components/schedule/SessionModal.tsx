@@ -92,14 +92,27 @@ export default function SessionModal({
 
   const hasReview = session.review_what_worked || session.review_what_didnt || session.review_change_next
 
+  // El encuentro 0 es la ficha del curso, no una clase. No tiene fecha, ni
+  // tipo, ni estado de dictado, ni modalidad, ni horario, ni review: nada de
+  // eso aplica a algo que no se dicta. Lo que sí tiene es cómo está armado
+  // (estado de preparación), quién lo mantiene, sus links, sus notas y su
+  // publicación en Moodle.
+  const esFicha = session.class_number === 0
+  const TITULO_FICHA = 'ESTRUCTURA DEL CURSO'
+
+  // Si el usuario estaba en una solapa que la ficha no tiene y abre la
+  // ficha, se cae a Básico en vez de mostrar un cuerpo vacío.
+  const solapasOcultas: ModalTab[] = ['review', 'schedule']
+  const solapa: ModalTab = esFicha && solapasOcultas.includes(modalTab) ? 'basic' : modalTab
+
   function tabStyle(t: ModalTab): React.CSSProperties {
     return {
       padding: '7px 12px',
       fontSize: '12px',
       fontWeight: 500,
       cursor: 'pointer',
-      color: modalTab === t ? 'var(--accent)' : 'var(--text-muted)',
-      borderBottom: modalTab === t ? '2px solid var(--accent)' : '2px solid transparent',
+      color: solapa === t ? 'var(--accent)' : 'var(--text-muted)',
+      borderBottom: solapa === t ? '2px solid var(--accent)' : '2px solid transparent',
       marginBottom: '-1px',
       background: 'none',
       border: 'none',
@@ -131,9 +144,9 @@ export default function SessionModal({
         <div style={{ padding: '16px 22px 0', borderBottom: '1px solid var(--border)' }}>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
             <h3 style={{ fontSize: '16px', fontWeight: 600, flex: 1 }}>
-              {isNew ? 'Nueva clase' : 'Editar clase'}
+              {esFicha ? 'Estructura del curso' : isNew ? 'Nueva clase' : 'Editar clase'}
             </h3>
-            {session.status === 'dada' && (
+            {!esFicha && session.status === 'dada' && (
               <span className="badge badge-success" style={{ marginRight: '8px' }}>
                 Clase dada
               </span>
@@ -154,13 +167,17 @@ export default function SessionModal({
             <button style={tabStyle('basic')} onClick={() => setModalTab('basic')}>Básico</button>
             <button style={tabStyle('links')} onClick={() => setModalTab('links')}>Links</button>
             <button style={tabStyle('notes')} onClick={() => setModalTab('notes')}>Notas</button>
-            <button style={tabStyle('review')} onClick={() => setModalTab('review')}>
-              Review post-clase{' '}
-              {session.status === 'dada' && !hasReview && (
-                <span style={{ color: 'var(--warning)' }}>⚠</span>
-              )}
-            </button>
-            <button style={tabStyle('schedule')} onClick={() => setModalTab('schedule')}>Horario</button>
+            {!esFicha && (
+              <button style={tabStyle('review')} onClick={() => setModalTab('review')}>
+                Review post-clase{' '}
+                {session.status === 'dada' && !hasReview && (
+                  <span style={{ color: 'var(--warning)' }}>⚠</span>
+                )}
+              </button>
+            )}
+            {!esFicha && (
+              <button style={tabStyle('schedule')} onClick={() => setModalTab('schedule')}>Horario</button>
+            )}
             <button style={tabStyle('moodle')} onClick={() => setModalTab('moodle')}>Moodle</button>
           </div>
         </div>
@@ -169,9 +186,16 @@ export default function SessionModal({
         <div style={{ padding: '20px 22px' }}>
 
           {/* TAB: Básico */}
-          {modalTab === 'basic' && (
+          {solapa === 'basic' && (
             <>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+              {esFicha && (
+                <p style={{ margin: '0 0 var(--space-4)', fontSize: 'var(--text-sm)', lineHeight: 1.55, color: 'var(--text-muted)' }}>
+                  Encuentro 0 · la ficha del curso. No se dicta, así que no
+                  lleva fecha, tipo, modalidad ni estado de dictado.
+                </p>
+              )}
+
+              <div style={{ display: esFicha ? 'none' : 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
                 <div>
                   <label className="field-label">Nº de clase</label>
                   {/* ?? y no ||: 0 es un número válido (el encuentro
@@ -210,16 +234,24 @@ export default function SessionModal({
               </div>
 
               <div style={{ marginBottom: '12px' }}>
-                <label className="field-label">Título *</label>
-                <input
-                  value={session.title}
-                  onChange={e => onSessionChange({ ...session, title: e.target.value })}
-                  placeholder="Ej: Introducción al pensamiento sistémico"
-                  className="field-input"
-                />
+                <label className="field-label">Título {esFicha ? '' : '*'}</label>
+                {esFicha ? (
+                  // El título de la ficha es siempre el mismo en todos los
+                  // cursos: es un rótulo, no un dato que se edite.
+                  <p className="field-input" style={{ display: 'flex', alignItems: 'center', background: 'var(--hover-bg)', color: 'var(--text-secondary)', margin: 0 }}>
+                    {TITULO_FICHA}
+                  </p>
+                ) : (
+                  <input
+                    value={session.title}
+                    onChange={e => onSessionChange({ ...session, title: e.target.value })}
+                    placeholder="Ej: Introducción al pensamiento sistémico"
+                    className="field-input"
+                  />
+                )}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+              <div style={{ display: esFicha ? 'none' : 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
                 <div>
                   <label className="field-label">Tipo</label>
                   <select
@@ -260,11 +292,13 @@ export default function SessionModal({
                   ))}
                 </select>
                 <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                  Si ya terminaste de armar esta clase, marcala como Finalizada (independiente de si ya se dictó o se subió a Moodle).
+                  {esFicha
+                    ? 'Marcala como Finalizada cuando la estructura del curso esté cerrada.'
+                    : 'Si ya terminaste de armar esta clase, marcala como Finalizada (independiente de si ya se dictó o se subió a Moodle).'}
                 </p>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: esFicha ? '1fr' : '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
                 <div>
                   <label className="field-label">Responsable</label>
                   <select
@@ -285,20 +319,22 @@ export default function SessionModal({
                       && <option value={session.responsible}>{session.responsible} (actual)</option>}
                   </select>
                 </div>
-                <div>
-                  <label className="field-label">Modalidad</label>
-                  <select
-                    value={session.modality}
-                    onChange={e => onSessionChange({ ...session, modality: e.target.value as SessionModality })}
-                    className="field-input"
-                  >
-                    <option value="presencial">Presencial</option>
-                    <option value="virtual">Virtual</option>
-                  </select>
-                </div>
+                {!esFicha && (
+                  <div>
+                    <label className="field-label">Modalidad</label>
+                    <select
+                      value={session.modality}
+                      onChange={e => onSessionChange({ ...session, modality: e.target.value as SessionModality })}
+                      className="field-input"
+                    >
+                      <option value="presencial">Presencial</option>
+                      <option value="virtual">Virtual</option>
+                    </select>
+                  </div>
+                )}
               </div>
 
-              {commissions.length > 1 && (
+              {!esFicha && commissions.length > 1 && (
                 <div style={{ marginBottom: '12px' }}>
                   <label className="field-label">Comisión</label>
                   <select
@@ -317,7 +353,7 @@ export default function SessionModal({
           )}
 
           {/* TAB: Links */}
-          {modalTab === 'links' && (
+          {solapa === 'links' && (
             <>
               <div style={{ marginBottom: '12px' }}>
                 <label className="field-label">Canva / Presentación</label>
@@ -408,7 +444,7 @@ export default function SessionModal({
           )}
 
           {/* TAB: Notas */}
-          {modalTab === 'notes' && (
+          {solapa === 'notes' && (
             <>
               <div style={{ marginBottom: '16px' }}>
                 <label className="field-label">Alcance del encuentro / Notas compartidas</label>
@@ -440,7 +476,7 @@ export default function SessionModal({
           )}
 
           {/* TAB: Review post-clase */}
-          {modalTab === 'review' && (
+          {solapa === 'review' && (
             <>
               {session.status !== 'dada' && (
                 <div className="alert alert-warning" style={{ padding: '10px 14px', borderRadius: '8px', fontSize: '12px', marginBottom: '16px' }}>
@@ -492,7 +528,7 @@ export default function SessionModal({
           )}
 
           {/* TAB: Horario */}
-          {modalTab === 'schedule' && (
+          {solapa === 'schedule' && (
             <>
               <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
                 Horario y aula del encuentro. Se usa para la vista de Agenda y detección de superposiciones.
@@ -558,7 +594,7 @@ export default function SessionModal({
             </>
           )}
 
-          {modalTab === 'moodle' && (
+          {solapa === 'moodle' && (
             <>
               <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
                 Seguimiento de la publicación de esta clase en Moodle.

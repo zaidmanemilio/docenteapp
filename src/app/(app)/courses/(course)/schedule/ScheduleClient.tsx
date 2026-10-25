@@ -273,11 +273,13 @@ export default function ScheduleClient({
     // camino futuro vuelva a mandar texto vacío.
     const finalPayload = {
       ...payload,
-      // El encuentro 0 es la ficha del curso: no se dicta, así que no puede
-      // quedar "pendiente". Si no, un curso con todas sus clases dadas nunca
-      // llega al 100% en el Panel, porque la ficha arrastra el conteo.
+      // La ficha del curso no se dicta: su título es el mismo rótulo en
+      // todos los cursos, nunca lleva fecha, y no puede quedar "pendiente"
+      // (si no, un curso con todas sus clases dadas no llega al 100% en el
+      // Panel, porque la ficha arrastra el conteo).
+      title: esFicha ? 'ESTRUCTURA DEL CURSO' : payload.title,
       status: esFicha ? 'dada' : payload.status,
-      date: payload.date || null,
+      date: esFicha ? null : (payload.date || null),
       additional_links: addLinks,
       course_id: courseId,
     }
