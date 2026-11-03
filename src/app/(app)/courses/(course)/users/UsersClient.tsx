@@ -8,6 +8,7 @@ import { callEdgeFunction } from '@/lib/edge'
 import type { Profile, Commission } from '@/types'
 import { readCsvFile } from '@/lib/csv-encoding'
 import { useDialog } from '@/components/ui/Dialog'
+import { useEscape } from '@/lib/use-escape'
 import {
   PERM_ORDER, PERM_LABEL, PERM_HINT, ROLE_ORDER, ROLE_LABEL, ROLE_HINT, roleLabel,
 } from '@/lib/permissions'
@@ -92,6 +93,13 @@ export default function UsersClient({
 
   const dialog = useDialog()
 
+  // Escape cierra el modal que esté abierto. Ninguno de los cuatro lo tenía,
+  // y tres tampoco tenían X: la única salida era tocar fuera del panel, que
+  // no se adivina.
+  useEscape(() => setShowNewUser(false), showNewUser && !creating)
+  useEscape(() => setShowImport(false),  showImport && !importing)
+  useEscape(() => setEditUser(null),     !!editUser && !savingUser)
+
   // Se sigue usando para refrescar tras crear usuarios o cambiar permisos.
   const load = useCallback(async () => {
     const [allProfilesRes, permsRes] = await Promise.all([
@@ -129,6 +137,8 @@ export default function UsersClient({
   // se elige de una lista con su explicación al lado.
   const [grantTo, setGrantTo] = useState<Profile | null>(null)
   const [grantPerm, setGrantPerm] = useState<string>('read')
+
+  useEscape(() => setGrantTo(null), !!grantTo)
 
   async function confirmGrant() {
     if (!grantTo) return
@@ -572,8 +582,12 @@ export default function UsersClient({
       {showNewUser && (
         <div onClick={() => !creating && setShowNewUser(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '20px' }}>
           <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: '12px', width: '440px', maxWidth: '100%', maxHeight: '90vh', overflow: 'auto' }}>
-            <div style={{ padding: '18px 22px 14px', borderBottom: '1px solid var(--border)' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 600 }}>Nuevo usuario</h3>
+            <div className="modal-head" style={{ padding: '18px 22px 14px', display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+              <h3 style={{ flex: 1, fontSize: '16px', fontWeight: 600 }}>Nuevo usuario</h3>
+              <button className="modal-close" onClick={() => setShowNewUser(false)} disabled={creating}
+                aria-label="Cerrar" title="Cerrar (Esc)">
+                <i className="ti ti-x" aria-hidden="true"></i>
+              </button>
             </div>
             <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {createError && (
@@ -637,8 +651,12 @@ export default function UsersClient({
       {showImport && (
         <div onClick={() => !importing && setShowImport(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '20px' }}>
           <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: '12px', width: '560px', maxWidth: '100%', maxHeight: '90vh', overflow: 'auto' }}>
-            <div style={{ padding: '18px 22px 14px', borderBottom: '1px solid var(--border)' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 600 }}>Importar usuarios desde CSV</h3>
+            <div className="modal-head" style={{ padding: '18px 22px 14px', display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+              <h3 style={{ flex: 1, fontSize: '16px', fontWeight: 600 }}>Importar usuarios desde CSV</h3>
+              <button className="modal-close" onClick={() => setShowImport(false)} disabled={importing}
+                aria-label="Cerrar" title="Cerrar (Esc)">
+                <i className="ti ti-x" aria-hidden="true"></i>
+              </button>
             </div>
             <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
@@ -683,8 +701,12 @@ export default function UsersClient({
       {editUser && (
         <div onClick={() => !savingUser && setEditUser(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '20px' }}>
           <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: '12px', width: '440px', maxWidth: '100%', maxHeight: '90vh', overflow: 'auto' }}>
-            <div style={{ padding: '18px 22px 14px', borderBottom: '1px solid var(--border)' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 600 }}>Editar usuario</h3>
+            <div className="modal-head" style={{ padding: '18px 22px 14px', display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+              <h3 style={{ flex: 1, fontSize: '16px', fontWeight: 600 }}>Editar usuario</h3>
+              <button className="modal-close" onClick={() => setEditUser(null)} disabled={savingUser}
+                aria-label="Cerrar" title="Cerrar (Esc)">
+                <i className="ti ti-x" aria-hidden="true"></i>
+              </button>
             </div>
             <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {editError && (
@@ -742,9 +764,15 @@ export default function UsersClient({
           <div className="modal-panel" role="dialog" aria-modal="true" aria-label="Dar acceso al curso"
             style={{ background: 'var(--surface)', borderRadius: '12px', width: '420px', maxWidth: '100%', border: '1px solid var(--border)', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
             <div style={{ padding: 'var(--space-6) var(--space-6) var(--space-6)' }}>
-              <h3 style={{ margin: 0, fontSize: 'var(--text-lg)', fontWeight: 600, letterSpacing: '-0.01em' }}>
-                Dar acceso a {grantTo.full_name}
-              </h3>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-3)' }}>
+                <h3 style={{ margin: 0, flex: 1, fontSize: 'var(--text-lg)', fontWeight: 600, letterSpacing: '-0.01em' }}>
+                  Dar acceso a {grantTo.full_name}
+                </h3>
+                <button className="modal-close" onClick={() => setGrantTo(null)}
+                  aria-label="Cerrar" title="Cerrar (Esc)">
+                  <i className="ti ti-x" aria-hidden="true"></i>
+                </button>
+              </div>
               <p style={{ margin: 'var(--space-2) 0 0', fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
                 Rol global: {roleLabel(grantTo.global_role)}. Este permiso vale solo para este curso.
               </p>

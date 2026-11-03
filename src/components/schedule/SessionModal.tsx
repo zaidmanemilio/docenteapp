@@ -7,6 +7,7 @@ import type { Commission, AdditionalLink, MoodleChecklist } from '@/types'
 import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS, PREP_STATUS_LABELS } from '@/types'
 import type { SessionType, SessionStatus, SessionModality, PrepStatus } from '@/types'
 import { MOODLE_STATUSES, CHECKLIST_ITEMS, normalizeChecklist, isChecklistComplete } from '@/lib/moodle'
+import { useEscape } from '@/lib/use-escape'
 
 // Tipo extendido con campos de review y horario (v2)
 export interface ExtendedSession {
@@ -86,6 +87,10 @@ export default function SessionModal({
 }: SessionModalProps) {
   const [modalTab, setModalTab] = useState<ModalTab>('basic')
 
+  // Escape cierra, como en cualquier diálogo. Mientras se está guardando no,
+  // para no dejar a medias una operación que ya salió a la base.
+  useEscape(onClose, !saving)
+
   const showPartial = session.type === 'parcial' || session.type === 'recuperatorio'
   const showBio = session.type === 'invitado'
   const showBrief = session.type === 'taller'
@@ -140,8 +145,10 @@ export default function SessionModal({
           boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
         }}
       >
-        {/* ── Header + tabs ── */}
-        <div style={{ padding: '16px 22px 0', borderBottom: '1px solid var(--border)' }}>
+        {/* ── Header + tabs ──
+            Fijo arriba: el panel entero scrollea, y antes la X se iba de
+            pantalla en los modales largos. */}
+        <div className="modal-head" style={{ padding: '16px 22px 0' }}>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
             <h3 style={{ fontSize: '16px', fontWeight: 600, flex: 1 }}>
               {esFicha ? 'Estructura del curso' : isNew ? 'Nueva clase' : 'Editar clase'}
@@ -151,13 +158,8 @@ export default function SessionModal({
                 Clase dada
               </span>
             )}
-            <button
-              onClick={onClose}
-              style={{
-                background: 'none', border: '1px solid var(--border)',
-                borderRadius: '6px', padding: '4px 8px', cursor: 'pointer',
-              }}
-            >
+            <button className="modal-close" onClick={onClose}
+              aria-label="Cerrar sin guardar" title="Cerrar sin guardar (Esc)">
               <i className="ti ti-x" aria-hidden="true"></i>
             </button>
           </div>
@@ -676,35 +678,15 @@ export default function SessionModal({
           )}
         </div>
 
-        {/* ── Footer ── */}
-        <div style={{
-          padding: '14px 22px',
-          borderTop: '1px solid var(--border)',
-          display: 'flex', justifyContent: 'flex-end', gap: '8px',
-        }}>
-          <button
-            onClick={onClose}
-            style={{
-              padding: '8px 16px', background: 'transparent',
-              border: '1px solid var(--border)', borderRadius: '8px',
-              fontSize: '13px', cursor: 'pointer',
-              fontFamily: 'inherit', color: 'var(--text-muted)',
-            }}
-          >
-            Cancelar
-          </button>
+        {/* ── Footer ──
+            Fijo abajo, por lo mismo que el cabezal: guardar no puede
+            depender de llegar scrolleando al fondo. */}
+        <div className="modal-foot">
+          <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
           {canEdit && (
-            <button
-              onClick={onSave}
-              disabled={saving}
-              style={{
-                padding: '8px 16px', background: 'var(--accent-solid)', color: 'white',
-                border: 'none', borderRadius: '8px', fontSize: '13px',
-                fontWeight: 500, cursor: saving ? 'wait' : 'pointer',
-                opacity: saving ? 0.7 : 1, fontFamily: 'inherit',
-              }}
-            >
-              {saving ? 'Guardando...' : isNew ? 'Crear clase' : 'Guardar cambios'}
+            <button className="btn btn-primary" onClick={onSave} disabled={saving}
+              style={{ cursor: saving ? 'wait' : 'pointer' }}>
+              {saving ? 'Guardando…' : isNew ? 'Crear clase' : 'Guardar cambios'}
             </button>
           )}
         </div>

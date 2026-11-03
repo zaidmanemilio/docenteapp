@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useDialog } from '@/components/ui/Dialog'
+import { useEscape } from '@/lib/use-escape'
 
 interface Course {
   id: string; name: string; year: number; status: string
@@ -26,6 +27,8 @@ export default function ArchivedPage() {
   const [dupForm, setDupForm] = useState<null | {
     course: Course; name: string; year: string; copySessions: boolean
   }>(null)
+
+  useEscape(() => setDupForm(null), !!dupForm)
 
   function openDuplicate(course: Course) {
     setDupForm({
@@ -223,9 +226,15 @@ export default function ArchivedPage() {
           <div className="modal-panel" role="dialog" aria-modal="true" aria-label="Reutilizar curso"
             style={{ background: 'var(--surface)', borderRadius: '12px', width: '460px', maxWidth: '100%', border: '1px solid var(--border)', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
             <div style={{ padding: 'var(--space-6) var(--space-6) var(--space-6)' }}>
-              <h3 style={{ margin: 0, fontSize: 'var(--text-lg)', fontWeight: 600, letterSpacing: '-0.01em' }}>
-                Reutilizar &quot;{dupForm.course.name}&quot;
-              </h3>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-3)' }}>
+                <h3 style={{ margin: 0, flex: 1, fontSize: 'var(--text-lg)', fontWeight: 600, letterSpacing: '-0.01em' }}>
+                  Reutilizar &quot;{dupForm.course.name}&quot;
+                </h3>
+                <button className="modal-close" onClick={() => setDupForm(null)}
+                  aria-label="Cerrar" title="Cerrar (Esc)">
+                  <i className="ti ti-x" aria-hidden="true"></i>
+                </button>
+              </div>
               <p style={{ margin: 'var(--space-2) 0 0', fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
                 Se crea un curso nuevo en borrador. El archivado no se modifica.
               </p>

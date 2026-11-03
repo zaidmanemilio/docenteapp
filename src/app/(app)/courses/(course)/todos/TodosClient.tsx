@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Todo, Profile } from '@/types'
 import { TODO_PRIORITY_LABELS } from '@/types'
 import { useDialog } from '@/components/ui/Dialog'
+import { useEscape } from '@/lib/use-escape'
 
 const PRIO_CLS: Record<string, string> = {
   high:   'badge-danger',
@@ -47,6 +48,9 @@ export default function TodosClient({
   const [saving, setSaving] = useState(false)
 
   const dialog = useDialog()
+
+  // Escape cierra el modal de la tarea, salvo mientras se guarda.
+  useEscape(() => setEditTodo(null), !!editTodo && !saving)
 
   // Relee solo lo que puede haber cambiado tras una alta/baja/edición.
   // El perfil y el nombre del curso vienen del servidor y no cambian acá.
@@ -224,7 +228,8 @@ export default function TodosClient({
           <div style={{ background: 'var(--surface)', borderRadius: '12px', width: '480px', maxWidth: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
             <div style={{ padding: '18px 22px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center' }}>
               <h3 style={{ fontSize: '16px', fontWeight: 600, flex: 1 }}>{isNew ? 'Nueva tarea' : 'Editar tarea'}</h3>
-              <button onClick={() => setEditTodo(null)} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer' }}>
+              <button className="modal-close" onClick={() => setEditTodo(null)}
+                aria-label="Cerrar sin guardar" title="Cerrar sin guardar (Esc)">
                 <i className="ti ti-x" aria-hidden="true"></i>
               </button>
             </div>

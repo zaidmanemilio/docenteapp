@@ -1227,3 +1227,34 @@ select.field-input { cursor: pointer; }
   padding: var(--space-3); margin: 0;
   max-height: 220px; overflow: auto;
 }
+
+/* ── CABEZAL Y PIE FIJOS DE UN MODAL ──────────────────────────────────
+   El modal de una clase tiene seis solapas y puede ser más alto que la
+   pantalla: el panel entero scrollea. Con el cabezal dentro del scroll,
+   la X se iba hacia arriba y había que volver al tope para cerrar; con
+   el pie adentro, había que bajar hasta el fondo para guardar. Fijos,
+   las dos salidas están siempre a la vista. */
+.modal-head {
+  position: sticky; top: 0; z-index: 2;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.modal-foot {
+  position: sticky; bottom: 0; z-index: 2;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: flex-end; gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+}
+
+/* La X de cerrar, igual en todos los modales. */
+.modal-close {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; flex-shrink: 0;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface); color: var(--text-muted);
+  cursor: pointer; font-size: 17px;
+  transition: border-color .16s ease, color .16s ease, background .16s ease;
+}
+.modal-close:hover { border-color: var(--text-muted); color: var(--text-primary); background: var(--hover-bg); }
+@media (pointer: coarse) { .modal-close { width: 44px; height: 44px; } }
