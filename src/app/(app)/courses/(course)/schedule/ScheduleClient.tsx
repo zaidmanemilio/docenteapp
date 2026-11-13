@@ -8,6 +8,7 @@ import type { Commission, Profile, AdditionalLink } from '@/types'
 import { SESSION_TYPE_LABELS, SESSION_STATUS_LABELS } from '@/types'
 import SessionModal, { type ExtendedSession } from '@/components/schedule/SessionModal'
 import SessionCard from '@/components/schedule/SessionCard'
+import GeneradorCronograma, { type NuevaSesion } from '@/components/schedule/GeneradorCronograma'
 import SessionLinks from '@/components/schedule/SessionLinks'
 import { TYPE_COLORS, TYPE_BADGE } from '@/components/schedule/SessionCard'
 import {
@@ -100,6 +101,8 @@ export default function ScheduleClient({
   const ahora = new Date()
   const [monthCursor,  setMonthCursor]  = useState({ year: ahora.getFullYear(), month: ahora.getMonth() })
   const [weekRef,      setWeekRef]      = useState(() => new Date())
+
+  const [generando,    setGenerando]    = useState(false)
 
   const [bulkMode,     setBulkMode]     = useState(false)
   const [selected,     setSelected]     = useState<Set<string>>(new Set())
@@ -227,6 +230,21 @@ export default function ScheduleClient({
   function openEditById(id: string) {
     const s = sessions.find(x => x.id === id)
     if (s) openEdit(s)
+  }
+
+  /** Alta de varios encuentros de una, desde el generador. */
+  async function crearVarios(filas: NuevaSesion[]) {
+    const { error } = await supabase.from('sessions').insert(filas)
+    if (error) {
+      await dialog.alert({
+        title: 'No se pudieron crear los encuentros',
+        message: error.message,
+        tone: 'danger',
+      })
+      return
+    }
+    setGenerando(false)
+    load()
   }
 
   // ─── Handlers modal ───────────────────────────────────────────────────────
@@ -585,6 +603,18 @@ export default function ScheduleClient({
             </button>
           )}
           {canEdit && (
+            <button onClick={() => setGenerando(true)} title="Crear varios encuentros de una, con repetición" style={{
+              padding: '7px 14px', background: 'var(--surface)',
+              border: '1px solid var(--border)', color: 'var(--text-secondary)',
+              borderRadius: '8px', fontSize: '13px',
+              cursor: 'pointer', fontFamily: 'inherit',
+              display: 'flex', alignItems: 'center', gap: '6px',
+            }}>
+              <i className="ti ti-calendar-plus" aria-hidden="true"></i>
+              Generar cronograma
+            </button>
+          )}
+          {canEdit && (
             <button onClick={openAdd} style={{
               padding: '7px 16px', background: 'var(--accent-solid)', color: 'white',
               border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
@@ -633,6 +663,33 @@ export default function ScheduleClient({
                 <i className="ti ti-trash" aria-hidden="true"></i> Eliminar
               </button>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Curso recién creado: las tres formas de cargar el cronograma.
+          Antes, al crear un curso caías directo en Importar, que da por
+          sentado que ya tenés un CSV armado. */}
+      {canEdit && totalClases === 0 && !foco && (
+        <div className="card" style={{ marginBottom: 'var(--space-6)' }}>
+          <h2 className="card-title">Este curso todavía no tiene encuentros</h2>
+          <p className="card-sub">Elegí por dónde arrancar. Después podés mezclar: generar la base y agregar o editar lo que haga falta.</p>
+          <div className="arranque">
+            <button className="arranque-op is-primary" onClick={() => setGenerando(true)}>
+              <i className="ti ti-calendar-plus" aria-hidden="true"></i>
+              <span className="arranque-t">Generar por repetición</span>
+              <span className="arranque-d">Elegís el día de inicio, qué días se repite y cuántos encuentros. Se crean todos juntos.</span>
+            </button>
+            <a className="arranque-op" href={`/courses/import?c=${courseId}`}>
+              <i className="ti ti-upload" aria-hidden="true"></i>
+              <span className="arranque-t">Importar un CSV</span>
+              <span className="arranque-d">Si ya tenés el cronograma armado en una planilla.</span>
+            </a>
+            <button className="arranque-op" onClick={openAdd}>
+              <i className="ti ti-plus" aria-hidden="true"></i>
+              <span className="arranque-t">Cargar uno por uno</span>
+              <span className="arranque-d">Para cursos cortos o fechas sin ninguna regla.</span>
+            </button>
           </div>
         </div>
       )}
@@ -862,6 +919,18 @@ export default function ScheduleClient({
             </table>
           </div>
         </div>
+      )}
+
+      {generando && (
+        <GeneradorCronograma
+          courseId={courseId}
+          commissions={commissions}
+          teachers={courseTeachers}
+          numeroInicial={Math.max(0, ...sessions.map(s => s.class_number ?? 0)) + 1}
+          fechasExistentes={sessions.map(s => s.date || '').filter(Boolean)}
+          onClose={() => setGenerando(false)}
+          onConfirmar={crearVarios}
+        />
       )}
 
       {/* Modal */}

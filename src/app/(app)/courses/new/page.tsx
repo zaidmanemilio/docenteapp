@@ -102,8 +102,10 @@ export default function NewCoursePage() {
     }
 
     setSaving(false)
-    // Redirigir a Importar cronograma en vez de Dashboard
-    router.push(`/courses/import?c=${courseId}`)
+    // Al Cronograma, no a Importar: ahí están las tres formas de cargarlo
+    // (generar por repetición, importar un CSV, o de a uno). Caer directo
+    // en Importar daba por sentado que ya tenías la planilla hecha.
+    router.push(`/courses/schedule?c=${courseId}`)
     router.refresh()
   }
 
@@ -114,7 +116,7 @@ export default function NewCoursePage() {
         <div style={{ marginBottom: '24px' }}>
           <h2 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-primary)' }}>Nuevo curso</h2>
           <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
-            Una vez creado, vas a poder importar el cronograma desde un archivo CSV o Excel.
+            Al terminar vas a poder cargar el cronograma: generándolo por repetición, importando un CSV, o de a un encuentro por vez.
           </p>
         </div>
 

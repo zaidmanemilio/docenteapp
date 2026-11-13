@@ -176,7 +176,8 @@ export default function SessionCard({
               <i className="ti ti-circle-check" aria-hidden="true"></i> Review
             </span>
           )}
-          {s.status === 'dada' && !hayReview && (
+          {/* La ficha del curso no se dicta: no le corresponde review. */}
+          {!esFicha && s.status === 'dada' && !hayReview && (
             <span className="session-flag" style={{ color: 'var(--warning)' }}>
               <i className="ti ti-alert-circle" aria-hidden="true"></i> Sin review
             </span>
